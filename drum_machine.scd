@@ -545,8 +545,8 @@ Synth(\SOShats)
 
 (
 SynthDef(\SOStom,
-	{arg out = 0, sustain = 0.3, drum_mode_level = 0.25,
-	freq = 60, drum_timbre = 1.0, amp = 0.1;
+	{arg out = 0, sustain = 0.6, drum_mode_level = 0.8,
+	freq = 60, drum_timbre = 2.0, amp = 0.1;
 	var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix, drum_mode_env;
 	var stick_noise, stick_env;
 	var drum_reson, tom_mix;

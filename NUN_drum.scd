@@ -214,28 +214,42 @@ SynthDef("nun_drum_b", {
  * SNARE A
  */
 SynthDef("nun_snare_a", {
-	arg freq1, freq2, filt, decay, dist, amp = 0.65, out = 0;
-	var snare, filtWhite, dist_sig, sig, amCoef;
 
+	arg out=0, amp=0.7, decay, freq1, freq2, filt, dist;
+	var env0, env1, env2, env1m, oscs, noise, dist_sig, sig, amCoef;
+	var lf1, lf2;
+	lf1 = LFNoise2.kr(40).range(-0.05,0.05);
+	lf2 = LFNoise2.kr(12).range(-0.1,0.1);
 	// busses
 	decay = In.kr(82).lag(0.05);
-	freq1 = In.kr(83).lag(0.05);
-	freq2 = In.kr(84).lag(0.05);
+	freq1 = In.kr(83).lag(0.05).cpsmidi;
+	freq2 = In.kr(84).lag(0.05).cpsmidi;
 	filt = In.kr(85).lag(0.05);
+	filt = filt + (lf1*filt);
 	dist = In.kr(86).lag(0.05);
+	dist = dist+(lf2*dist);
 
-	filtWhite = LPF.ar(WhiteNoise.ar(1), filt, 1);
+	env0 = EnvGen.ar(Env.new([0.9, 1, 0.5, 0], [0.001, 0.01, 0.03], [-2, -2, -2]));
+	env1 = EnvGen.ar(Env.new([110, freq2, freq1], [0.001, 0.1], [-4, -5]));
+	env1m = env1.midicps;
+		env2 = EnvGen.ar(Env.new([1, 0.4, 0], [0.05, decay+(decay*lf2)], [-2, -2]), doneAction:2);
 
-	snare = ((SinOsc.ar(freq2,0,0.25) * EnvGen.ar(Env.perc(0.0005,0.055)))
-			+(SinOsc.ar(freq1,0,0.25) * EnvGen.ar(Env.perc(0.0005,0.075)))
-			+(filtWhite * EnvGen.ar(Env.perc(0.0005,decay)) * 0.8)
-			+(HPF.ar(filtWhite, 523, 1) * EnvGen.ar(Env.perc(0.0005,0.183)) * 0.5)
-		);
+	oscs = LFPulse.ar(env1m+(env1m*lf1), 0, 0.5, 1, -0.5) + LFPulse.ar(env1m * 2, 0, 0.5, 0.5, -0.25);
+	oscs = LPF.ar(oscs, env1m*2, env0);
+	oscs = oscs + SinOsc.ar(env1m, 0.8, env0) + Impulse.ar(1);
+
+	noise = PinkNoise.ar(0.2);
+	noise = HPF.ar(noise, 200, 2);
+	noise = BPF.ar(noise, 7000, 0.6, 3) + noise;
+	noise = noise * env2;
+
+	sig = (oscs + noise)*0.6;
 	amCoef = 2*0.99/(1-0.99);
-	dist_sig = MidEQ.ar(LPF.ar((1+amCoef)*snare/(1+(amCoef*snare.abs)), 8000), 900, 0.7, 8);
+	dist_sig = MidEQ.ar(LPF.ar((1+amCoef)*sig/(1+(amCoef*sig.abs)), 8000), 900, 0.7, 8);
 	dist_sig = dist_sig*EnvGen.ar(Env.perc(0.0005,decay+0.05), doneAction: 2) * 0.5;
-	sig = SelectX.ar(dist * 2, [snare, dist_sig] );
-	Out.ar(out, Pan2.ar(sig * amp , 0));
+	sig = SelectX.ar(dist * 2, [sig, dist_sig] ) * amp;
+	sig = DFM1.ar(sig,filt);
+	Out.ar(out, sig.dup);
 }).add;
 
 /******************************************
@@ -253,7 +267,7 @@ SynthDef("nun_snare_b", {
 
 	// busses
 	sustain = In.kr(92).lag(0.05);
-	freq = In.kr(93).lag(0.05) + LFNoise2.kr(5).range(-20,20);
+	freq = In.kr(93).lag(0.05) + LFNoise2.kr(5).range(-5,5);
 	snare_tightness = In.kr(94).lag(0.05);
 	drum_mode_level = In.kr(95).lag(0.05);
 	snare_level = In.kr(96).lag(0.05);
@@ -305,10 +319,40 @@ SynthDef("nun_drum_c", {
 	excitation = EnvGen.kr(Env.perc(aT),1,timeScale: ts, doneAction: 0) * PinkNoise.ar(0.4);
 	tension = te;
 	loss = lo;
-	brane = HPF.ar(MembraneCircle.ar(excitation, tension, loss), filtFreq)*amp*EnvGen.ar(Env.perc(aT),timeScale: ts*2, doneAction: 2);
+	brane = HPF.ar(MembraneHexagon.ar(excitation, tension, loss), filtFreq)*amp*EnvGen.ar(Env.perc(aT),timeScale: ts*2, doneAction: 2);
 	brane = CompanderD.ar(brane, thresh: -25.dbamp, slopeBelow: 1, slopeAbove: 0.15, clampTime: 0.003, relaxTime: 0.08);
 	brane = (brane * (16.dbamp));
     Out.ar(out, brane ! 2);
+}).add;
+
+/******************************************
+ * CLAP
+ */
+SynthDef("nun_clap", {
+	arg outBus=0, amp = 0.5, sustain = 0.2, filt;
+	var env1, env2, out, noise1, noise2, lf1;
+	// busses
+	sustain = In.kr(112).lag(0.05);
+	filt = In.kr(113).lag(0.05);
+
+	lf1 = LFNoise0.kr(3).range(-0.005, 0.006);
+
+	env1 = EnvGen.ar(Env.new([0, 1, 0, 1, 0, 1, 0, 1, 0], [0.003, 0.013+lf1, 0, 0.02, 0, 0.013+lf1, 0, 0.08+lf1], [0, -3, 0, -3, 0, -3, 0, -4]));
+	env2 = EnvGen.ar(Env.new([0, 1, 0], [0.02, sustain], [0, -4]), doneAction:2);
+
+	noise1 = BrownNoise.ar(env1);
+	noise1 = HPF.ar(noise1, 600);
+	noise1 = BPF.ar(noise1, 2000, 3);
+
+	noise2 = BrownNoise.ar(env2);
+	noise2 = HPF.ar(noise2, 1000);
+	noise2 = BPF.ar(noise2, 1200, 0.7, 0.7);
+
+	out = noise1 + noise2;
+	out = out * 10;
+	out = out.softclip * amp;
+	Out.ar(outBus, MoogFF.ar(out.dup,filt));
+
 }).add;
 
 /******************************************
@@ -362,7 +406,11 @@ asnare_controls,
 // snare b
 bsnare_panel,
 bsnare_lbl,
-bsnare_controls
+bsnare_controls,
+// clap
+clap_panel,
+clap_lbl,
+clap_controls
 ;
 
 main_window = Window.new("Drum Synth Controller", Rect(0,0,800,530));
@@ -437,12 +485,12 @@ hbkick_controls.add(EZKnob(hbkick_panel, 40@74, "dec1", [0.05, 1].asSpec.default
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 // shape1
-hakick_controls.add(EZKnob(hbkick_panel, 40@74, "shp1", [30, 100].asSpec.default = 50, { |widget|
+hakick_controls.add(EZKnob(hbkick_panel, 40@74, "shp1", [30, 100].asSpec.default = 59, { |widget|
 	var bus = Bus.new('control',43,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 // shape2
-hakick_controls.add(EZKnob(hbkick_panel, 40@74, "shp2", [20, 50].asSpec.default = 20, { |widget|
+hakick_controls.add(EZKnob(hbkick_panel, 40@74, "shp2", [20, 50].asSpec.default = 29, { |widget|
 	var bus = Bus.new('control',44,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
@@ -638,12 +686,12 @@ asnare_controls.add(EZKnob(asnare_panel, 40@74, "dec1", [0.05, 2].asSpec.default
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 // freq1
-asnare_controls.add(EZKnob(asnare_panel, 40@74, "freq1", [80,400].asSpec.default = 135, { |widget|
+asnare_controls.add(EZKnob(asnare_panel, 40@74, "freq1", [40,400].asSpec.default = 138, { |widget|
 	var bus = Bus.new('control',83,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 // freq2
-asnare_controls.add(EZKnob(asnare_panel, 40@74, "freq1", [80,400].asSpec.default = 380, { |widget|
+asnare_controls.add(EZKnob(asnare_panel, 40@74, "freq1", [40,400].asSpec.default = 261, { |widget|
 	var bus = Bus.new('control',84,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
@@ -670,7 +718,7 @@ bsnare_lbl.string = "SNARE B";
 
 bsnare_controls = [];
 bsnare_controls.add(Button(bsnare_panel,Rect(0,0,15,10)).action_({ Synth("nun_snare_b"); }));
-View(asnare_panel,Rect(0,0,5,10));// spacer
+View(bsnare_panel,Rect(0,0,5,10));// spacer
 
 // dec1
 bsnare_controls.add(EZKnob(bsnare_panel, 40@74, "dec1", [0.05, 2].asSpec.default = 0.1, { |widget|
@@ -697,4 +745,29 @@ bsnare_controls.add(EZKnob(bsnare_panel, 40@74, "snare", [1,100].asSpec.default 
 	var bus = Bus.new('control',96,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
+
+/******************************************
+ * CLAP
+ * 112 113 114 115 116
+ */
+clap_panel = HLayoutView(main_window, Rect(325, 330,305,75));
+clap_panel.background_(Color.fromHexString("#5599CC"));
+
+clap_lbl = StaticText(main_window, Rect(325, 310, 150, 20));
+clap_lbl.string = "HAND CLAP";
+
+clap_controls = [];
+clap_controls.add(Button(clap_panel,Rect(0,0,15,10)).action_({ Synth("nun_clap"); }));
+View(clap_panel,Rect(0,0,5,10));// spacer
+// dec1
+clap_controls.add(EZKnob(clap_panel, 40@74, "dec1", [0.05, 2].asSpec.default = 0.2, { |widget|
+	var bus = Bus.new('control',112,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// filt
+clap_controls.add(EZKnob(clap_panel, 40@74, "filt", \freq.asSpec.default = 12000, { |widget|
+	var bus = Bus.new('control',113,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+/// end
 )

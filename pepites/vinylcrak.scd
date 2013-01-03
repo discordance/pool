@@ -22,6 +22,6 @@
 	sig = sig + BPF.ar(BrownNoise.ar([0.0025,0.0025]), 7200, 0.4);
 	sig = sig + HPF.ar(Crackle.ar([1.999,1.999], 0.0025),2000);
 	sig = LPF.ar(sig,12000);
-	Out.ar(0, sig*1);
+	Out.ar(0, sig*6);
 }.play
 
