@@ -205,7 +205,7 @@ SynthDef("nun_drum_b", {
 								add: 0);
 	drum_mode_mix = Mix.new([drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc]) * drum_mode_level;
 	stick_noise = Crackle.ar(2.01, 1);
-	stick_env = EnvGen.ar(Env.perc(0.01, 0.01), 1.0) * 3;
+	stick_env = EnvGen.ar(Env.perc(0.008, 0.01), 1.0) * 3;
 	tom_mix = Mix.new([drum_mode_mix, stick_env]) * 2 * amp;
 	Out.ar(out, [tom_mix, tom_mix])
 }).add;
@@ -253,7 +253,7 @@ SynthDef("nun_snare_b", {
 
 	// busses
 	sustain = In.kr(92).lag(0.05);
-	freq = In.kr(93).lag(0.05);
+	freq = In.kr(93).lag(0.05) + LFNoise2.kr(5).range(-20,20);
 	snare_tightness = In.kr(94).lag(0.05);
 	drum_mode_level = In.kr(95).lag(0.05);
 	snare_level = In.kr(96).lag(0.05);
@@ -281,6 +281,34 @@ SynthDef("nun_snare_b", {
 	snare_drum_mix = CompanderD.ar(snare_drum_mix, thresh: -30.dbamp, slopeBelow: 1, slopeAbove: 0.15, clampTime: 0.003, relaxTime: 0.08);
 	snare_drum_mix = (snare_drum_mix * (16.dbamp));
 	Out.ar(out, [snare_drum_mix, snare_drum_mix])
+}).add;
+
+/******************************************
+ * DRUM C
+ */
+SynthDef("nun_drum_c", {
+	arg out=0,
+		amp=0.05,
+		te=0.003,
+		lo=1,
+		ts=0.4,
+		aT=0.005,
+		sn=0, filtFreq=30, vol=1;
+	var excitation, tension, loss, brane;
+    // busses
+	te = In.kr(102).lag(0.05);
+	lo = In.kr(103).lag(0.05);
+	ts = In.kr(104).lag(0.05);
+	aT = In.kr(105).lag(0.05);
+	filtFreq = In.kr(106).lag(0.05);
+
+	excitation = EnvGen.kr(Env.perc(aT),1,timeScale: ts, doneAction: 0) * PinkNoise.ar(0.4);
+	tension = te;
+	loss = lo;
+	brane = HPF.ar(MembraneCircle.ar(excitation, tension, loss), filtFreq)*amp*EnvGen.ar(Env.perc(aT),timeScale: ts*2, doneAction: 2);
+	brane = CompanderD.ar(brane, thresh: -25.dbamp, slopeBelow: 1, slopeAbove: 0.15, clampTime: 0.003, relaxTime: 0.08);
+	brane = (brane * (16.dbamp));
+    Out.ar(out, brane ! 2);
 }).add;
 
 /******************************************
@@ -323,6 +351,10 @@ adrum_controls,
 bdrum_panel,
 bdrum_lbl,
 bdrum_controls,
+//drum C
+cdrum_panel,
+cdrum_lbl,
+cdrum_controls,
 // snare a
 asnare_panel,
 asnare_lbl,
@@ -547,13 +579,53 @@ bdrum_controls.add(EZKnob(bdrum_panel, 40@74, "timbr", [0, 50].asSpec.default = 
 },layout:\vert2, initAction:true ));
 
 /******************************************
+ * DRUM C
+ * 102 103 104 105 106
+ */
+cdrum_panel = HLayoutView(main_window, Rect(325, 30,305,75));
+cdrum_panel.background_(Color.fromHexString("#559999"));
+
+cdrum_lbl = StaticText(main_window, Rect(325, 10, 150, 20));
+cdrum_lbl.string = "DRUM C";
+
+cdrum_controls = [];
+cdrum_controls.add(Button(cdrum_panel,Rect(0,0,15,10)).action_({ Synth("nun_drum_c"); }));
+View(bdrum_panel,Rect(0,0,5,10));// spacer
+// tension
+cdrum_controls.add(EZKnob(cdrum_panel, 40@74, "tens", [0.0005, 0.02].asSpec.default = 0.00411, { |widget|
+	var bus = Bus.new('control',102,1,s);
+	bus.set(widget.value);
+	widget.value.postln;
+},layout:\vert2, initAction:true ));
+// loss
+cdrum_controls.add(EZKnob(cdrum_panel, 40@74, "loss", [0.9990, 2].asSpec.default = 0.9998, { |widget|
+	var bus = Bus.new('control',103,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// time
+cdrum_controls.add(EZKnob(cdrum_panel, 40@74, "time", [0.1, 1].asSpec.default = 0.2, { |widget|
+	var bus = Bus.new('control',104,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// attack
+cdrum_controls.add(EZKnob(cdrum_panel, 40@74, "atk", [0.001, 0.5].asSpec.default = 0.01, { |widget|
+	var bus = Bus.new('control',105,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// hpf
+cdrum_controls.add(EZKnob(cdrum_panel, 40@74, "hpf", \freq.asSpec.default = 30, { |widget|
+	var bus = Bus.new('control',106,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+
+/******************************************
  * SNARE A
  * 82 83 84 85 86
  */
-asnare_panel = HLayoutView(main_window, Rect(325, 30,305,75));
-asnare_panel.background_(Color.fromHexString("#559999"));
+asnare_panel = HLayoutView(main_window, Rect(325, 130,305,75));
+asnare_panel.background_(Color.fromHexString("#5599AA"));
 
-asnare_lbl = StaticText(main_window, Rect(325, 10, 150, 20));
+asnare_lbl = StaticText(main_window, Rect(325, 110, 150, 20));
 asnare_lbl.string = "SNARE A";
 
 asnare_controls = [];
@@ -580,7 +652,7 @@ asnare_controls.add(EZKnob(asnare_panel, 40@74, "filt", \freq.asSpec.default = 7
 	var bus = Bus.new('control',85,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
-// filt
+// dist
 asnare_controls.add(EZKnob(asnare_panel, 40@74, "dist", [0, 1].asSpec.default = 0, { |widget|
 	var bus = Bus.new('control',86,1,s);
 	bus.set(widget.value);
@@ -590,10 +662,10 @@ asnare_controls.add(EZKnob(asnare_panel, 40@74, "dist", [0, 1].asSpec.default = 
  * SNARE B
  * 92 93 94 95 96
  */
-bsnare_panel = HLayoutView(main_window, Rect(325, 130,305,75));
-bsnare_panel.background_(Color.fromHexString("#5599AA"));
+bsnare_panel = HLayoutView(main_window, Rect(325, 230,305,75));
+bsnare_panel.background_(Color.fromHexString("#5599CC"));
 
-bsnare_lbl = StaticText(main_window, Rect(325, 110, 150, 20));
+bsnare_lbl = StaticText(main_window, Rect(325, 210, 150, 20));
 bsnare_lbl.string = "SNARE B";
 
 bsnare_controls = [];
@@ -601,7 +673,7 @@ bsnare_controls.add(Button(bsnare_panel,Rect(0,0,15,10)).action_({ Synth("nun_sn
 View(asnare_panel,Rect(0,0,5,10));// spacer
 
 // dec1
-bsnare_controls.add(EZKnob(bsnare_panel, 40@74, "dec1", [0.05, 2].asSpec.default = 0.2, { |widget|
+bsnare_controls.add(EZKnob(bsnare_panel, 40@74, "dec1", [0.05, 2].asSpec.default = 0.1, { |widget|
 	var bus = Bus.new('control',92,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
@@ -626,5 +698,3 @@ bsnare_controls.add(EZKnob(bsnare_panel, 40@74, "snare", [1,100].asSpec.default 
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 )
-
-SynthDescLib.global.browse;
