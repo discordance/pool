@@ -11,7 +11,8 @@
  * HARD KICK A
  */
 SynthDef(\nun_kick_a,{
-	arg basefreq = 50,
+	arg out = 32,
+	basefreq = 50,
 	ratio = 7,
 	sweeptime = 0.05,
 	preamp = 0.8,
@@ -19,8 +20,7 @@ SynthDef(\nun_kick_a,{
 	dist = 0,
 	decay1 = 0.3,
     freq = 20000,
-	mover = 0,
-    out;
+	mover = 0;
 
 	//vars
     var fcurve, env, sig, dist_sig, d_lfo;
@@ -50,7 +50,6 @@ SynthDef(\nun_kick_a,{
     // filter quirked
 	freq = LFNoise2.kr(80).exprange(freq-100,freq+100).clip(20,20000);
 	sig = RLPF.ar(sig, freq, 1);
-	//sig = Compander.ar(sig, sig, 0.5, 1, 0.1, 0.01, 0.01);
     Out.ar(out, sig );
 }).add;
 
@@ -58,7 +57,7 @@ SynthDef(\nun_kick_a,{
  * HARD KICK B
  */
 SynthDef(\nun_kick_b,{
-	arg out=0, amp=0.5, pan=0,
+	arg out = 33, amp=0.5, pan=0,
 	click_rate = 110, shp1 = 50, shp2 = 20, freq = 20000, decay = 0.26, noise = 0;
 	var env0, env1, env1m, sig, noise_sig;
 
@@ -85,16 +84,14 @@ SynthDef(\nun_kick_b,{
 	freq = LFNoise2.kr(80).exprange(freq-100,freq+100).clip(20,20000);
 	sig = RLPF.ar(sig, freq, 1);
 	sig = sig * amp;
-	//sig = Compander.ar(sig, sig, 0.5, 1, 0.5, 0.1, 0.1);
-	Out.ar(out, sig ! 2);
-
+	Out.ar(out, sig);
 }).add;
 
 /******************************************
  * SOFT KICK
  */
 SynthDef(\nun_kick_c,{
-	arg out = 0,
+	arg out = 34,
 	freq = 50,
 	mod_freq = 3,
 	mod_index = 3,
@@ -130,7 +127,7 @@ SynthDef(\nun_kick_c,{
 	beater = beater * EnvGen.ar(Env.perc(0.001,0.1));
 	mix = beater+drum_env;
 	mix = DFM1.ar(mix, filter_freq, 0.1, 1+distortion, 0)*amp;//RLPF.ar(mix, filter_freq);
-	Out.ar(out, mix ! 2);
+	Out.ar(out, mix);
 
 }).add;
 
@@ -138,7 +135,7 @@ SynthDef(\nun_kick_c,{
  * DRUM A
  */
 SynthDef("nun_drum_a", {
-	|outBus = 0, midiFreq = 60, gate = 1.0, amp = 0.5, freqMult = 1,
+	|out = 35, midiFreq = 60, gate = 1.0, amp = 0.5, freqMult = 1,
 	waveType = 0, modType = 0, modDepth = 0.0, modSpeed = 4.0, ampDecay = 0.1|
 
 	var freq, output, modEnvGen, ampEnvGen, pitchMod, white, waveFreq;
@@ -176,7 +173,7 @@ SynthDef("nun_drum_a", {
 	ampEnvGen = EnvGen.kr(Env.perc(0.0001, ampDecay, 1, -6), gate, doneAction:2);
 	output = tanh(output) * ampEnvGen * amp;
 
-	Out.ar(outBus, output ! 2);
+	Out.ar(out, output);
 	}
 ).add;
 
@@ -184,7 +181,7 @@ SynthDef("nun_drum_a", {
  * DRUM B
  */
 SynthDef("nun_drum_b", {
-	arg out = 0, sustain = 0.6, drum_mode_level = 0.25,
+	arg out = 36, sustain = 0.6, drum_mode_level = 0.25,
 	freq = 60, drum_timbre = 1.0, amp = 0.1;
 	var drum_mode_sin_1, drum_mode_sin_2, drum_mode_pmosc, drum_mode_mix, drum_mode_env;
 	var stick_noise, stick_env;
@@ -207,7 +204,7 @@ SynthDef("nun_drum_b", {
 	stick_noise = Crackle.ar(2.01, 1);
 	stick_env = EnvGen.ar(Env.perc(0.008, 0.01), 1.0) * 3;
 	tom_mix = Mix.new([drum_mode_mix, stick_env]) * 2 * amp;
-	Out.ar(out, [tom_mix, tom_mix])
+	Out.ar(out, tom_mix)
 }).add;
 
 /******************************************
@@ -215,7 +212,7 @@ SynthDef("nun_drum_b", {
  */
 SynthDef("nun_snare_a", {
 
-	arg out=0, amp=0.7, decay, freq1, freq2, filt, dist;
+	arg out = 38, amp = 0.7, decay, freq1, freq2, filt, dist;
 	var env0, env1, env2, env1m, oscs, noise, dist_sig, sig, amCoef;
 	var lf1, lf2;
 	lf1 = LFNoise2.kr(40).range(-0.05,0.05);
@@ -249,14 +246,14 @@ SynthDef("nun_snare_a", {
 	dist_sig = dist_sig*EnvGen.ar(Env.perc(0.0005,decay+0.05), doneAction: 2) * 0.5;
 	sig = SelectX.ar(dist * 2, [sig, dist_sig] ) * amp;
 	sig = DFM1.ar(sig,filt);
-	Out.ar(out, sig.dup);
+	Out.ar(out, sig);
 }).add;
 
 /******************************************
  * SNARE B
  */
 SynthDef("nun_snare_b", {
-	arg out = 0, sustain = 0.1, drum_mode_level = 0.25,
+	arg out = 39, sustain = 0.1, drum_mode_level = 0.25,
 	snare_level = 40, snare_tightness = 1000,
 	freq = 405, amp = 0.2;
 
@@ -294,14 +291,14 @@ SynthDef("nun_snare_b", {
 	snare_drum_mix = Mix.new([drum_mode_mix, snare_reson]) * 5 * amp;
 	snare_drum_mix = CompanderD.ar(snare_drum_mix, thresh: -30.dbamp, slopeBelow: 1, slopeAbove: 0.15, clampTime: 0.003, relaxTime: 0.08);
 	snare_drum_mix = (snare_drum_mix * (16.dbamp));
-	Out.ar(out, [snare_drum_mix, snare_drum_mix])
+	Out.ar(out, snare_drum_mix)
 }).add;
 
 /******************************************
  * DRUM C
  */
 SynthDef("nun_drum_c", {
-	arg out=0,
+	arg out = 37 ,
 		amp=0.05,
 		te=0.003,
 		lo=1,
@@ -322,15 +319,15 @@ SynthDef("nun_drum_c", {
 	brane = HPF.ar(MembraneHexagon.ar(excitation, tension, loss), filtFreq)*amp*EnvGen.ar(Env.perc(aT),timeScale: ts*2, doneAction: 2);
 	brane = CompanderD.ar(brane, thresh: -25.dbamp, slopeBelow: 1, slopeAbove: 0.15, clampTime: 0.003, relaxTime: 0.08);
 	brane = (brane * (16.dbamp));
-    Out.ar(out, brane ! 2);
+    Out.ar(out, brane);
 }).add;
 
 /******************************************
  * CLAP
  */
 SynthDef("nun_clap", {
-	arg outBus=0, amp = 0.5, sustain = 0.2, filt;
-	var env1, env2, out, noise1, noise2, lf1;
+	arg out = 40, amp = 0.5, sustain = 0.2, filt;
+	var env1, env2, output, noise1, noise2, lf1;
 	// busses
 	sustain = In.kr(112).lag(0.05);
 	filt = In.kr(113).lag(0.05);
@@ -348,10 +345,10 @@ SynthDef("nun_clap", {
 	noise2 = HPF.ar(noise2, 1000);
 	noise2 = BPF.ar(noise2, 1200, 0.7, 0.7);
 
-	out = noise1 + noise2;
-	out = out * 10;
-	out = out.softclip * amp;
-	Out.ar(outBus, MoogFF.ar(out.dup,filt));
+	output = noise1 + noise2;
+	output = output * 10;
+	output = output.softclip * amp;
+	Out.ar(out, MoogFF.ar(output,filt));
 
 }).add;
 
@@ -359,7 +356,7 @@ SynthDef("nun_clap", {
  * HIHATS A
  */
 SynthDef("nun_hat_a", {
-	arg out = 0, decay = 0.3, freq = 6000, lf_rate, lf_depth;
+	arg out = 41, decay = 0.3, freq = 6000, lf_rate, lf_depth;
 	var hatosc, hatenv, hatnoise, hatoutput, lfo;
 
 	// busses
@@ -375,14 +372,14 @@ SynthDef("nun_hat_a", {
     hatenv = {Line.ar(1, 0, decay+(lfo*0.125), doneAction: 2)};
 
     hatoutput = (hatosc * hatenv) * 0.75;
-    Out.ar(out,hatoutput ! 2);
+    Out.ar(out, hatoutput);
 }).add;
 
 /******************************************
  * HIHATS B
  */
 SynthDef("nun_hat_b", {
-	arg out = 0, baseFreq = 300, time = 250, amp=0.2, lf_rate, lf_depth;
+	arg out = 42, baseFreq = 300, time = 250, amp=0.2, lf_rate, lf_depth;
 	var freqs, signal, pulseEnv, lfo;
 
 	// busses
@@ -403,7 +400,7 @@ SynthDef("nun_hat_b", {
 	signal = RHPF.ar(signal, 1200, 1.5);
 	signal = signal + FreeVerb.ar(signal);
 		signal = signal * EnvGen.ar(Env.new([0, 1, 0.4, 0, 0], [2, time, 50, 500], [0, -0.5, 0, -50]), timeScale:(1/1000), doneAction:2);
-	signal = [signal, DelayN.ar(signal, 0.005, 0.005)];
+	signal = signal + DelayN.ar(signal, 0.005, 0.005);
 	Out.ar(out, signal*4*amp);
 
 }).add;
@@ -412,7 +409,7 @@ SynthDef("nun_hat_b", {
  * CYMB A
  */
 SynthDef("nun_cymb_a", {
-	arg out = 0, freq = 1200, sustain = 0.8, amp = 0.08;
+	arg out = 43, freq = 1200, sustain = 0.8, amp = 0.08;
 	var root_cymbal, root_cymbal_square, root_cymbal_pmosc;
 	var initial_bpf_contour, initial_bpf, initial_env;
 	var body_hpf, body_env;
@@ -427,21 +424,21 @@ SynthDef("nun_cymb_a", {
 					[freq/1.3, 26/0.5, 11/3.4, 0.72772],
 					mul: 2,
 					add: 0);
-	root_cymbal = Mix.new([root_cymbal_pmosc,WhiteNoise.ar(1)]);
+	root_cymbal = root_cymbal_pmosc+WhiteNoise.ar(1);
 	initial_bpf_contour = Line.kr(12000, 7000, 0.1);
 	initial_env = EnvGen.ar(Env.perc(0.005, 0.1), 1.0);
 	initial_bpf = BPF.ar(root_cymbal, initial_bpf_contour, mul:initial_env);
 	body_env = EnvGen.ar(Env.perc(0.005, sustain, 1, -2), 1.0, doneAction: 2);
 	body_hpf =  HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, sustain),mul: body_env, add: 0);
-	cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp;
-	Out.ar(out, [cymbal_mix, cymbal_mix]);
+	cymbal_mix = (initial_bpf + body_hpf) * amp;
+	Out.ar(out, cymbal_mix ! 1);
 }).add;
 
 /******************************************
  * CYMB B
  */
 SynthDef("nun_cymb_b",{
-	arg out = 0, decay = 2, amp = 0.025, pan = 0;
+	arg out = 44, decay = 2, amp = 0.025;
 	var lodriver, locutoffenv, hidriver, hicutoffenv, freqs, amps, res, thwack;
 	decay = In.kr(152).lag(0.05);
 	locutoffenv = EnvGen.ar(Env.perc(0.5, 1)) * 20000 + 10;
@@ -458,14 +455,50 @@ SynthDef("nun_cymb_b",{
 
 	res = Klank.ar(`[freqs,amps],lodriver + hidriver + thwack);
 	res = res * EnvGen.ar(Env.perc(0.05,decay), doneAction:2);
-	Out.ar(out, Pan2.ar(((res * 1)+ thwack) * amp, pan));
+	Out.ar(out, ((res * 1)+ thwack) * amp);
 }).add;
 
 /******************************************
- * FX SYNTH DEFS
+ * SUMMATORS and FX SYNTH DEFS
+ */
+/**
+ * Summators/Compander
+ */
+SynthDef("nun_triple_sum", {
+	arg in0 = 0, in1 = 1, in2 = 2,
+		pan0 = 0, pan1 = 0, pan2 = 0,
+		out = 0;
+
+	var mixed, mix0, mix1, mix2;
+	// mix 0
+	mix0 = Pan2.ar(In.ar(in0,1), pan0);
+    mix1 = Pan2.ar(In.ar(in1,1), pan1);
+	mix2 = Pan2.ar(In.ar(in2,1), pan2);
+
+	mixed = Mix.new([mix0,mix1,mix2]);
+	Out.ar(out, mixed);
+}).add;
+
+SynthDef("nun_double_sum", {
+	arg in0 = 0, in1 = 1,
+		pan0 = 0, pan1 = 0,
+		out = 0;
+	var mixed, mix0, mix1;
+	mix0 = Pan2.ar(In.ar(in0,1), pan0);
+    mix1 = Pan2.ar(In.ar(in1,1), pan1);
+	mixed = Mix.new([mix0,mix1]);
+	Out.ar(out, mixed);
+}).add;
+// main console
+SynthDef("nun_five_console", {
+
+}).add;
+
+/**
+ * Nasty Distortion
  */
 SynthDef("nun_nasty", {
-	|in = 0, out = 0, drv = 30, amp = 0.4, jitf = 1, jit = 1,env = 0.1,
+	|in = 0, out = 0, drv = 40, amp = 0.2, jitf = 1, jit = 1,env = 0.1,
 	 lag = 1, lpp = 120, res = 0.2, gate = 1, att = 0.001, rel = 0.1|
 	var sig, x3, jitter, input, envf;
 	lag = lag*LFNoise2.kr(1).range(0.2,3);
@@ -493,11 +526,42 @@ s.sync;
  * ROUTE
  */
 ~drum_source = Group.head(s);
+~drum_premix = Group.tail(s);
 ~drum_fx = Group.tail(s);
+~drum_mixdown = Group.tail(s);
+
+/*****
+ * Premix
+ */
+~drum_kick_premixer = Synth.head(~drum_premix, "nun_triple_sum");
+~drum_kick_premixer.set(
+		\in0, 32, \in1, 33, \in2, 34,
+		\pan0, 0,\pan1, 0, \pan2, 0,
+		\out, 0);
+~drum_drums_premixer = Synth.head(~drum_premix, "nun_triple_sum");
+~drum_drums_premixer.set(
+		\in0, 35, \in1, 36, \in2, 37,
+		\pan0, -0.2,\pan1, 0.2, \pan2, 0,
+		\out, 0);
+~drum_snare_premixer = Synth.head(~drum_premix, "nun_triple_sum");
+~drum_snare_premixer.set(
+		\in0, 38, \in1, 39, \in2, 40,
+		\pan0, -0.1,\pan1, 0.1, \pan2, 0.3,
+		\out, 0);
+~drum_hh_premixer = Synth.head(~drum_premix, "nun_double_sum");
+~drum_hh_premixer.set(
+		\in0, 41, \in1, 42,
+		\pan0, -0.15,\pan1, 0.15,
+		\out, 0);
+~drum_cym_premixer = Synth.head(~drum_premix, "nun_double_sum");
+~drum_cym_premixer.set(
+		\in0, 43, \in1, 44,
+		\pan0, -0.3,\pan1, 0.3,
+		\out, 0);
 /*
  * EFFECTS STACK
  */
-~nasty = Synth.head(~drum_fx, "nun_nasty");
+//~nasty = Synth.head(~drum_fx, "nun_nasty");
 
 }.fork // asynchronous
 )
