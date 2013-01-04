@@ -152,7 +152,25 @@ Synth("snare_oto309");
 Synth(\cymbalic_mcld);
 (
 SynthDef(\cymbalic_mcld, { |out=0, pan=0, amp=0.1|
+	var lodriver, locutoffenv, hidriver, hicutoffenv, freqs, amps, res, thwack;
 
+	locutoffenv = EnvGen.ar(Env.perc(0.5, 1)) * 20000 + 10;
+	lodriver = LPF.ar(WhiteNoise.ar(0.1), locutoffenv);
+
+	hicutoffenv = 10001 - (EnvGen.ar(Env.perc(1, 0.5)) * 10000);
+	hidriver = HPF.ar(WhiteNoise.ar(0.1), hicutoffenv);
+	hidriver = hidriver * EnvGen.ar(Env.perc(1, 1, 0.25));
+
+	thwack = EnvGen.ar(Env.perc(0.001,0.001,1));
+
+	// This bit will regenerate new freqs every time you evaluate the SynthDef!
+
+	freqs  = {exprand(700, 12000)}.dup(80);
+	amps   = Array.fill(80, {rrand(0.1,0.9)});
+
+	res = Klank.ar(`[freqs,amps],lodriver + hidriver + thwack);
+	res = res * EnvGen.ar(Env.perc(0.05,2), doneAction:2);
+	Out.ar(out, Pan2.ar(((res * 1)+ thwack) * amp, pan));
 }
 ).add;
 )

@@ -51,7 +51,7 @@ SynthDef(\nun_kick_a,{
 	freq = LFNoise2.kr(80).exprange(freq-100,freq+100).clip(20,20000);
 	sig = RLPF.ar(sig, freq, 1);
 	//sig = Compander.ar(sig, sig, 0.5, 1, 0.1, 0.01, 0.01);
-    Out.ar(out, sig ! 2);
+    Out.ar(out, sig );
 }).add;
 
 /******************************************
@@ -462,6 +462,29 @@ SynthDef("nun_cymb_b",{
 }).add;
 
 /******************************************
+ * FX SYNTH DEFS
+ */
+SynthDef("nun_nasty", {
+	|in = 0, out = 0, drv = 30, amp = 0.4, jitf = 1, jit = 1,env = 0.1,
+	 lag = 1, lpp = 120, res = 0.2, gate = 1, att = 0.001, rel = 0.1|
+	var sig, x3, jitter, input, envf;
+	lag = lag*LFNoise2.kr(1).range(0.2,3);
+	input = In.ar(in, 2);
+	drv = Lag.kr(drv, lag).dbamp;
+	sig = drv * Clipper8.ar(input, -1.875,1.875);
+	envf = AmplitudeMod.ar(input,att, rel);
+	jitter =  (envf * jit*LFNoise2.kr(1).range(0.7,1.3))+1;
+	x3 = sig.pow(3);
+	sig = ((x3 *(-0.18963)) + sig) + (x3*sig.pow(2) * 0.0161817*jitter*LFNoise2.kr(1).range(0.7,1.3));
+	sig = SoftClipper8.ar(sig);
+	sig = XFade2.ar(sig, sig*envf, (env * 2)-1);
+	sig = LeakDC.ar(sig);
+	sig = LPF.ar(sig,12000);
+	sig = Mix.ar([input,sig]);
+	Out.ar(out, sig * Lag.kr(amp, 1));
+}).add;
+
+/******************************************
  * SERVER SYNC
  */
 s.sync;
@@ -470,6 +493,11 @@ s.sync;
  * ROUTE
  */
 ~drum_source = Group.head(s);
+~drum_fx = Group.tail(s);
+/*
+ * EFFECTS STACK
+ */
+~nasty = Synth.head(~drum_fx, "nun_nasty");
 
 }.fork // asynchronous
 )
@@ -549,7 +577,7 @@ hakick_lbl = StaticText(main_window, Rect(10, 10, 150, 20));
 hakick_lbl.string = "HARD KICK A";
 
 hakick_controls = [];
-hakick_controls.add(Button(hakick_panel,Rect(0,0,15,10)).action_({ Synth("nun_kick_a"); }));
+hakick_controls.add(Button(hakick_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_kick_a"); }));
 View(hakick_panel,Rect(0,0,5,10));// spacer
 //dec1
 hakick_controls.add(EZKnob(hakick_panel, 40@74, "dec1", [0.05, 1].asSpec.default = 0.3, { |widget|
@@ -598,7 +626,7 @@ hbkick_lbl = StaticText(main_window, Rect(10, 110, 150, 20));
 hbkick_lbl.string = "HARD KICK B";
 
 hbkick_controls = [];
-hbkick_controls.add(Button(hbkick_panel,Rect(0,0,15,10)).action_({ Synth("nun_kick_b"); }));
+hbkick_controls.add(Button(hbkick_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_kick_b"); }));
 View(hbkick_panel,Rect(0,0,5,10));// spacer
 
 //dec1
@@ -643,7 +671,7 @@ skick_lbl = StaticText(main_window, Rect(10, 210, 150, 20));
 skick_lbl.string = "SOFT KICK";
 
 skick_controls = [];
-skick_controls.add(Button(skick_panel,Rect(0,0,15,10)).action_({ Synth("nun_kick_c"); }));
+skick_controls.add(Button(skick_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_kick_c"); }));
 View(skick_panel,Rect(0,0,5,10));// spacer
 //dec1
 skick_controls.add(EZKnob(skick_panel, 40@74, "dec1", [0.05, 1].asSpec.default = 0.3, { |widget|
@@ -680,7 +708,7 @@ adrum_panel.background_(Color.fromHexString("#99AA55"));
 adrum_lbl = StaticText(main_window, Rect(10, 310, 150, 20));
 adrum_lbl.string = "DRUM A";
 
-adrum_controls.add(Button(adrum_panel,Rect(0,0,15,10)).action_({ Synth("nun_drum_a"); }));
+adrum_controls.add(Button(adrum_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_drum_a"); }));
 View(skick_panel,Rect(0,0,5,10));// spacer
 // dec1
 adrum_controls.add(EZKnob(adrum_panel, 40@74, "dec1", [0.05, 2].asSpec.default = 0.35, { |widget|
@@ -724,7 +752,7 @@ bdrum_lbl = StaticText(main_window, Rect(10, 410, 150, 20));
 bdrum_lbl.string = "DRUM B";
 
 bdrum_controls = [];
-bdrum_controls.add(Button(bdrum_panel,Rect(0,0,15,10)).action_({ Synth("nun_drum_b"); }));
+bdrum_controls.add(Button(bdrum_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_drum_b"); }));
 View(bdrum_panel,Rect(0,0,5,10));// spacer
 
 // dec1
@@ -759,7 +787,7 @@ cdrum_lbl = StaticText(main_window, Rect(325, 10, 150, 20));
 cdrum_lbl.string = "DRUM C";
 
 cdrum_controls = [];
-cdrum_controls.add(Button(cdrum_panel,Rect(0,0,15,10)).action_({ Synth("nun_drum_c"); }));
+cdrum_controls.add(Button(cdrum_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_drum_c"); }));
 View(bdrum_panel,Rect(0,0,5,10));// spacer
 // tension
 cdrum_controls.add(EZKnob(cdrum_panel, 40@74, "tens", [0.0005, 0.02].asSpec.default = 0.00411, { |widget|
@@ -799,7 +827,7 @@ asnare_lbl = StaticText(main_window, Rect(325, 110, 150, 20));
 asnare_lbl.string = "SNARE A";
 
 asnare_controls = [];
-asnare_controls.add(Button(asnare_panel,Rect(0,0,15,10)).action_({ Synth("nun_snare_a"); }));
+asnare_controls.add(Button(asnare_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_snare_a"); }));
 View(asnare_panel,Rect(0,0,5,10));// spacer
 
 // dec1
@@ -839,7 +867,7 @@ bsnare_lbl = StaticText(main_window, Rect(325, 210, 150, 20));
 bsnare_lbl.string = "SNARE B";
 
 bsnare_controls = [];
-bsnare_controls.add(Button(bsnare_panel,Rect(0,0,15,10)).action_({ Synth("nun_snare_b"); }));
+bsnare_controls.add(Button(bsnare_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_snare_b"); }));
 View(bsnare_panel,Rect(0,0,5,10));// spacer
 
 // dec1
@@ -879,7 +907,7 @@ clap_lbl = StaticText(main_window, Rect(325, 310, 150, 20));
 clap_lbl.string = "HAND CLAP";
 
 clap_controls = [];
-clap_controls.add(Button(clap_panel,Rect(0,0,15,10)).action_({ Synth("nun_clap"); }));
+clap_controls.add(Button(clap_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_clap"); }));
 View(clap_panel,Rect(0,0,5,10));// spacer
 // dec1
 clap_controls.add(EZKnob(clap_panel, 40@74, "dec1", [0.05, 2].asSpec.default = 0.2, { |widget|
@@ -904,7 +932,7 @@ ahat_lbl.string = "HH A";
 
 ahat_controls = [];
 
-ahat_controls.add(Button(ahat_panel,Rect(0,0,15,10)).action_({ Synth("nun_hat_a"); }));
+ahat_controls.add(Button(ahat_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_hat_a"); }));
 View(ahat_panel,Rect(0,0,5,10));// spacer
 // dec1
 ahat_controls.add(EZKnob(ahat_panel, 40@74, "dec1", [0.02, 1].asSpec.default = 0.2, { |widget|
@@ -940,7 +968,7 @@ bhat_lbl.string = "HH B";
 
 bhat_controls = [];
 
-bhat_controls.add(Button(bhat_panel,Rect(0,0,15,10)).action_({ Synth("nun_hat_b"); }));
+bhat_controls.add(Button(bhat_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_hat_b"); }));
 View(bhat_panel,Rect(0,0,5,10));// spacer
 // dec1
 bhat_controls.add(EZKnob(bhat_panel, 40@74, "dec1", [10, 1000].asSpec.default = 250, { |widget|
@@ -975,7 +1003,7 @@ acymb_lbl.string = "CYMB A";
 
 acymb_controls = [];
 
-acymb_controls.add(Button(acymb_panel,Rect(0,0,15,10)).action_({ Synth("nun_cymb_a"); }));
+acymb_controls.add(Button(acymb_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_cymb_a"); }));
 View(acymb_panel,Rect(0,0,5,10));// spacer
 // dec1
 acymb_controls.add(EZKnob(acymb_panel, 40@74, "dec1", [0.1, 2].asSpec.default = 0.6, { |widget|
@@ -999,7 +1027,7 @@ bcymb_lbl.string = "CYMB B";
 
 bcymb_controls = [];
 
-bcymb_controls.add(Button(bcymb_panel,Rect(0,0,15,10)).action_({ Synth("nun_cymb_b"); }));
+bcymb_controls.add(Button(bcymb_panel,Rect(0,0,15,10)).action_({ Synth.head(~drum_source,"nun_cymb_b"); }));
 View(bcymb_panel,Rect(0,0,5,10));// spacer
 // dec1
 bcymb_controls.add(EZKnob(bcymb_panel, 40@74, "dec1", [0.1, 2].asSpec.default = 2, { |widget|
@@ -1010,3 +1038,5 @@ bcymb_controls.add(EZKnob(bcymb_panel, 40@74, "dec1", [0.1, 2].asSpec.default = 
 
 /// end
 )
+
+

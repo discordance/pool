@@ -46,3 +46,23 @@ SynthDef(\tanhDistortion,
 
     Out.ar(out, distortedOutput); // Output Signal (outBus)
 }).add;
+
+
+
+SynthDef("nun_nasty", {|in = 0, out = 0, drv = 0, amp = 1,jitf = 0.1, jit = 0.1,env = 0,
+			lag = 1, lpp = 120, res = 0.1, gate = 1, att = 0.001, rel = 0.1|
+			var sig, x3, jitter, input, envf;
+			input = In.ar(in, 2);
+			drv = Lag.kr(drv, lag).dbamp;
+			sig = drv * Clipper8.ar(input, -1.875,1.875);
+			envf = AmplitudeMod.ar(input,att, rel);
+			jitter =  (envf * jit)+1;
+			x3 = sig.pow(3);
+			sig = ((x3 *(-0.18963)) + sig) + (x3*sig.pow(2) * 0.0161817*jitter);
+			sig = SoftClipper8.ar(sig);
+			sig = XFade2.ar(sig, sig*envf, (env * 2)-1);
+			sig = LeakDC.ar(sig);
+			sig = BMoog.ar(sig, Lag.kr(lpp, lag).midicps, res, 0);
+			sig = sig * EnvGen.kr(Env.asr(lag, 1, lag), gate, doneAction:2);
+			Out.ar(out, sig * Lag.kr(amp, 1));
+}).add;
