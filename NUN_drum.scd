@@ -359,16 +359,20 @@ SynthDef("nun_clap", {
  * HIHATS A
  */
 SynthDef("nun_hat_a", {
-	arg out = 0, decay = 0.3, freq = 6000;
-	var hatosc, hatenv, hatnoise, hatoutput;
+	arg out = 0, decay = 0.3, freq = 6000, lf_rate, lf_depth;
+	var hatosc, hatenv, hatnoise, hatoutput, lfo;
+
 	// busses
 	decay = In.kr(122).lag(0.05);
 	freq = In.kr(123).lag(0.05);
+	lf_rate = In.kr(124).lag(0.05);
+	lf_depth = In.kr(125).lag(0.05);
 
-    hatnoise = {LPF.ar(WhiteNoise.ar(1), freq)};
+	lfo = LFNoise2.ar(lf_rate,lf_depth);
+	hatnoise = {LPF.ar(WhiteNoise.ar(1), freq + (lfo*2000))};
 
     hatosc = {HPF.ar(hatnoise,2000)};
-    hatenv = {Line.ar(1, 0, decay, doneAction: 2)};
+    hatenv = {Line.ar(1, 0, decay+(lfo*0.125), doneAction: 2)};
 
     hatoutput = (hatosc * hatenv) * 0.75;
     Out.ar(out,hatoutput ! 2);
@@ -378,24 +382,27 @@ SynthDef("nun_hat_a", {
  * HIHATS B
  */
 SynthDef("nun_hat_b", {
-	arg out=0, baseFreq = 300, time = 250, amp=0.2;
-	var freqs, signal, pulseEnv;
+	arg out = 0, baseFreq = 300, time = 250, amp=0.2, lf_rate, lf_depth;
+	var freqs, signal, pulseEnv, lfo;
 
 	// busses
 	time = In.kr(132).lag(0.05);
 	baseFreq = In.kr(133).lag(0.05);
+	lf_rate = In.kr(134).lag(0.05);
+	lf_depth = In.kr(135).lag(0.05);
 
-	freqs =	[baseFreq, baseFreq*1.3420, baseFreq*1.2312, baseFreq*1.6532, baseFreq*1.9523, baseFreq*2.1523];
+	lfo = LFNoise2.ar(lf_rate,lf_depth);
+	freqs =	[baseFreq, baseFreq*1.3420, baseFreq*1.2312, baseFreq*1.6532, baseFreq*1.9523, baseFreq*2.1523]*(1+(lfo*0.05));
 	pulseEnv = EnvGen.ar(Env.new([1.0, 0.6], [time], [-0.5]), timeScale:(1/1000));
 	signal = Mix.new(LFPulse.ar(freqs * 4.09));
 	signal = (BinaryOpUGen('==', signal, 6.0) * 0.6) + (BinaryOpUGen('==', signal, 2.0) * 0.2) + (BinaryOpUGen('==', signal, 1.0) * 0.9); // XOR
-	signal = (signal * pulseEnv) + (Mix.new(LFPulse.ar(freqs, width:0.55)) * 0.9);
-	signal = RLPF.ar(signal, 7000, 0.6);
- 	signal = RHPF.ar(signal, 6800, 1.5);
-	signal = RHPF.ar(signal, 6800, 1.5);
+		signal = (signal * pulseEnv) + (Mix.new(LFPulse.ar(freqs, width:0.55)) * (0.9+lfo));
+	signal = RLPF.ar(signal, 7000 + (1000*lfo), 0.6);
+ 	signal = RHPF.ar(signal, 6800 + (1000*lfo), 1.5);
+	signal = RHPF.ar(signal, 6800 + (1000*lfo), 1.5);
 	signal = RHPF.ar(signal, 1200, 1.5);
 	signal = signal + FreeVerb.ar(signal);
-	signal = signal * EnvGen.ar(Env.new([0, 1, 0.4, 0, 0], [2, time, 50, 500], [0, -0.5, 0, -50]), timeScale:(1/1000), doneAction:2);
+		signal = signal * EnvGen.ar(Env.new([0, 1, 0.4, 0, 0], [2, time, 50, 500], [0, -0.5, 0, -50]), timeScale:(1/1000), doneAction:2);
 	signal = [signal, DelayN.ar(signal, 0.005, 0.005)];
 	Out.ar(out, signal*4*amp);
 
@@ -909,6 +916,16 @@ ahat_controls.add(EZKnob(ahat_panel, 40@74, "freq", \freq.asSpec.default = 6000,
 	var bus = Bus.new('control',123,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
+// lfrate
+ahat_controls.add(EZKnob(ahat_panel, 40@74, "lfrat", [0.1,20].asSpec.default = 1, { |widget|
+	var bus = Bus.new('control',124,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// lfdepth
+ahat_controls.add(EZKnob(ahat_panel, 40@74, "lfdep", [0,1].asSpec.default = 0, { |widget|
+	var bus = Bus.new('control',125,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
 
 
 /******************************************
@@ -933,6 +950,16 @@ bhat_controls.add(EZKnob(bhat_panel, 40@74, "dec1", [10, 1000].asSpec.default = 
 // freq
 bhat_controls.add(EZKnob(bhat_panel, 40@74, "basef", [200,1000].asSpec.default = 300, { |widget|
 	var bus = Bus.new('control',133,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// lfrate
+bhat_controls.add(EZKnob(bhat_panel, 40@74, "lfrat", [0.1,20].asSpec.default = 1, { |widget|
+	var bus = Bus.new('control',134,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// lfdepth
+bhat_controls.add(EZKnob(bhat_panel, 40@74, "lfdep", [0,1].asSpec.default = 0, { |widget|
+	var bus = Bus.new('control',135,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 
