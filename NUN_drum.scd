@@ -356,6 +356,105 @@ SynthDef("nun_clap", {
 }).add;
 
 /******************************************
+ * HIHATS A
+ */
+SynthDef("nun_hat_a", {
+	arg out = 0, decay = 0.3, freq = 6000;
+	var hatosc, hatenv, hatnoise, hatoutput;
+	// busses
+	decay = In.kr(122).lag(0.05);
+	freq = In.kr(123).lag(0.05);
+
+    hatnoise = {LPF.ar(WhiteNoise.ar(1), freq)};
+
+    hatosc = {HPF.ar(hatnoise,2000)};
+    hatenv = {Line.ar(1, 0, decay, doneAction: 2)};
+
+    hatoutput = (hatosc * hatenv) * 0.75;
+    Out.ar(out,hatoutput ! 2);
+}).add;
+
+/******************************************
+ * HIHATS B
+ */
+SynthDef("nun_hat_b", {
+	arg out=0, baseFreq = 300, time = 250, amp=0.2;
+	var freqs, signal, pulseEnv;
+
+	// busses
+	time = In.kr(132).lag(0.05);
+	baseFreq = In.kr(133).lag(0.05);
+
+	freqs =	[baseFreq, baseFreq*1.3420, baseFreq*1.2312, baseFreq*1.6532, baseFreq*1.9523, baseFreq*2.1523];
+	pulseEnv = EnvGen.ar(Env.new([1.0, 0.6], [time], [-0.5]), timeScale:(1/1000));
+	signal = Mix.new(LFPulse.ar(freqs * 4.09));
+	signal = (BinaryOpUGen('==', signal, 6.0) * 0.6) + (BinaryOpUGen('==', signal, 2.0) * 0.2) + (BinaryOpUGen('==', signal, 1.0) * 0.9); // XOR
+	signal = (signal * pulseEnv) + (Mix.new(LFPulse.ar(freqs, width:0.55)) * 0.9);
+	signal = RLPF.ar(signal, 7000, 0.6);
+ 	signal = RHPF.ar(signal, 6800, 1.5);
+	signal = RHPF.ar(signal, 6800, 1.5);
+	signal = RHPF.ar(signal, 1200, 1.5);
+	signal = signal + FreeVerb.ar(signal);
+	signal = signal * EnvGen.ar(Env.new([0, 1, 0.4, 0, 0], [2, time, 50, 500], [0, -0.5, 0, -50]), timeScale:(1/1000), doneAction:2);
+	signal = [signal, DelayN.ar(signal, 0.005, 0.005)];
+	Out.ar(out, signal*4*amp);
+
+}).add;
+
+/******************************************
+ * CYMB A
+ */
+SynthDef("nun_cymb_a", {
+	arg out = 0, freq = 1200, sustain = 0.8, amp = 0.08;
+	var root_cymbal, root_cymbal_square, root_cymbal_pmosc;
+	var initial_bpf_contour, initial_bpf, initial_env;
+	var body_hpf, body_env;
+	var cymbal_mix;
+	// busses
+	sustain = In.kr(142).lag(0.05);
+	freq = In.kr(143).lag(0.05);
+
+	root_cymbal_square = Pulse.ar(freq, 0.9, mul: 1);
+	root_cymbal_pmosc = PMOsc.ar(root_cymbal_square,
+					[freq*1.34, freq*2.405, freq*4.09, freq*6.309],
+					[freq/1.3, 26/0.5, 11/3.4, 0.72772],
+					mul: 2,
+					add: 0);
+	root_cymbal = Mix.new([root_cymbal_pmosc,WhiteNoise.ar(1)]);
+	initial_bpf_contour = Line.kr(12000, 7000, 0.1);
+	initial_env = EnvGen.ar(Env.perc(0.005, 0.1), 1.0);
+	initial_bpf = BPF.ar(root_cymbal, initial_bpf_contour, mul:initial_env);
+	body_env = EnvGen.ar(Env.perc(0.005, sustain, 1, -2), 1.0, doneAction: 2);
+	body_hpf =  HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, sustain),mul: body_env, add: 0);
+	cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp;
+	Out.ar(out, [cymbal_mix, cymbal_mix]);
+}).add;
+
+/******************************************
+ * CYMB B
+ */
+SynthDef("nun_cymb_b",{
+	arg out = 0, decay = 2, amp = 0.025, pan = 0;
+	var lodriver, locutoffenv, hidriver, hicutoffenv, freqs, amps, res, thwack;
+	decay = In.kr(152).lag(0.05);
+	locutoffenv = EnvGen.ar(Env.perc(0.5, 1)) * 20000 + 10;
+	lodriver = LPF.ar(WhiteNoise.ar(0.1), locutoffenv);
+
+	hicutoffenv = 10001 - (EnvGen.ar(Env.perc(1, 0.5)) * 10000);
+	hidriver = HPF.ar(WhiteNoise.ar(0.1), hicutoffenv);
+	hidriver = hidriver * EnvGen.ar(Env.perc(1, 1, 0.25));
+
+	thwack = EnvGen.ar(Env.perc(0.001,0.001,1));
+
+	freqs  = {exprand(700, 12000)}.dup(80);
+	amps   = Array.fill(80, {rrand(0.1,0.9)});
+
+	res = Klank.ar(`[freqs,amps],lodriver + hidriver + thwack);
+	res = res * EnvGen.ar(Env.perc(0.05,decay), doneAction:2);
+	Out.ar(out, Pan2.ar(((res * 1)+ thwack) * amp, pan));
+}).add;
+
+/******************************************
  * SERVER SYNC
  */
 s.sync;
@@ -410,10 +509,26 @@ bsnare_controls,
 // clap
 clap_panel,
 clap_lbl,
-clap_controls
+clap_controls,
+// hats a
+ahat_panel,
+ahat_lbl,
+ahat_controls,
+// hats b
+bhat_panel,
+bhat_lbl,
+bhat_controls,
+// a cymb
+acymb_panel,
+acymb_lbl,
+acymb_controls,
+// b cymb
+bcymb_controls,
+bcymb_lbl,
+bcymb_panel
 ;
 
-main_window = Window.new("Drum Synth Controller", Rect(0,0,800,530));
+main_window = Window.new("Drum Synth Controller", Rect(200,200,1024,530));
 main_window.front;
 
 /******************************************
@@ -701,7 +816,7 @@ asnare_controls.add(EZKnob(asnare_panel, 40@74, "filt", \freq.asSpec.default = 7
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
 // dist
-asnare_controls.add(EZKnob(asnare_panel, 40@74, "dist", [0, 1].asSpec.default = 0, { |widget|
+asnare_controls.add(EZKnob(asnare_panel, 40@74, "dist", [0, 1].asSpec.default = 0.15, { |widget|
 	var bus = Bus.new('control',86,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
@@ -751,7 +866,7 @@ bsnare_controls.add(EZKnob(bsnare_panel, 40@74, "snare", [1,100].asSpec.default 
  * 112 113 114 115 116
  */
 clap_panel = HLayoutView(main_window, Rect(325, 330,305,75));
-clap_panel.background_(Color.fromHexString("#5599CC"));
+clap_panel.background_(Color.fromHexString("#4499EE"));
 
 clap_lbl = StaticText(main_window, Rect(325, 310, 150, 20));
 clap_lbl.string = "HAND CLAP";
@@ -769,5 +884,102 @@ clap_controls.add(EZKnob(clap_panel, 40@74, "filt", \freq.asSpec.default = 12000
 	var bus = Bus.new('control',113,1,s);
 	bus.set(widget.value);
 },layout:\vert2, initAction:true ));
+
+/******************************************
+ * HI HATS A
+ * 122 123 124 125 126
+ */
+ahat_panel = HLayoutView(main_window, Rect(640, 30,305,75));
+ahat_panel.background_(Color.fromHexString("#CC99CC"));
+
+ahat_lbl = StaticText(main_window, Rect(640, 10, 150, 20));
+ahat_lbl.string = "HH A";
+
+ahat_controls = [];
+
+ahat_controls.add(Button(ahat_panel,Rect(0,0,15,10)).action_({ Synth("nun_hat_a"); }));
+View(ahat_panel,Rect(0,0,5,10));// spacer
+// dec1
+ahat_controls.add(EZKnob(ahat_panel, 40@74, "dec1", [0.02, 1].asSpec.default = 0.2, { |widget|
+	var bus = Bus.new('control',122,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// freq
+ahat_controls.add(EZKnob(ahat_panel, 40@74, "freq", \freq.asSpec.default = 6000, { |widget|
+	var bus = Bus.new('control',123,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+
+
+/******************************************
+ * HI HATS B
+ * 132 133 134 135 136
+ */
+bhat_panel = HLayoutView(main_window, Rect(640, 130,305,75));
+bhat_panel.background_(Color.fromHexString("#FF88CC"));
+
+bhat_lbl = StaticText(main_window, Rect(640, 110, 150, 20));
+bhat_lbl.string = "HH B";
+
+bhat_controls = [];
+
+bhat_controls.add(Button(bhat_panel,Rect(0,0,15,10)).action_({ Synth("nun_hat_b"); }));
+View(bhat_panel,Rect(0,0,5,10));// spacer
+// dec1
+bhat_controls.add(EZKnob(bhat_panel, 40@74, "dec1", [10, 1000].asSpec.default = 250, { |widget|
+	var bus = Bus.new('control',132,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// freq
+bhat_controls.add(EZKnob(bhat_panel, 40@74, "basef", [200,1000].asSpec.default = 300, { |widget|
+	var bus = Bus.new('control',133,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+
+/******************************************
+ * CYMB A
+ * 142 143 144 145 146
+ */
+acymb_panel = HLayoutView(main_window, Rect(640, 230,305,75));
+acymb_panel.background_(Color.fromHexString("#FFAACC"));
+
+acymb_lbl = StaticText(main_window, Rect(640, 210, 150, 20));
+acymb_lbl.string = "CYMB A";
+
+acymb_controls = [];
+
+acymb_controls.add(Button(acymb_panel,Rect(0,0,15,10)).action_({ Synth("nun_cymb_a"); }));
+View(acymb_panel,Rect(0,0,5,10));// spacer
+// dec1
+acymb_controls.add(EZKnob(acymb_panel, 40@74, "dec1", [0.1, 2].asSpec.default = 0.6, { |widget|
+	var bus = Bus.new('control',142,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+// freq
+bhat_controls.add(EZKnob(acymb_panel, 40@74, "basef", [200,2000].asSpec.default = 800, { |widget|
+	var bus = Bus.new('control',143,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+/******************************************
+ * CYMB B
+ * 152
+ */
+bcymb_panel = HLayoutView(main_window, Rect(640, 330,305,75));
+bcymb_panel.background_(Color.fromHexString("#FFCC99"));
+
+bcymb_lbl = StaticText(main_window, Rect(640, 310, 150, 20));
+bcymb_lbl.string = "CYMB B";
+
+bcymb_controls = [];
+
+bcymb_controls.add(Button(bcymb_panel,Rect(0,0,15,10)).action_({ Synth("nun_cymb_b"); }));
+View(bcymb_panel,Rect(0,0,5,10));// spacer
+// dec1
+bcymb_controls.add(EZKnob(bcymb_panel, 40@74, "dec1", [0.1, 2].asSpec.default = 2, { |widget|
+	var bus = Bus.new('control',152,1,s);
+	bus.set(widget.value);
+},layout:\vert2, initAction:true ));
+
+
 /// end
 )

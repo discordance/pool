@@ -93,13 +93,10 @@ metadata: (
 
 Synth("kick_oto309",[\amp,0.5]);
 
-
+(
 SynthDef(\cymbal808_ryan, {
 	arg out=0, baseFreq = 300, time = 250, amp=0.1;
-	//var freqs = [baseFreq, baseFreq*1.3420, baseFreq*1.2312, baseFreq*1.6532, baseFreq*1.9523, baseFreq*2.1523];
-	//var freqs = [78.6, 140.44, 123.87, 219.4, 787.5, 531.3];
-	var freqs = [205.35, 254.29, 294.03, 304.41, 369.64, 522.71];
-	//var freqs = [205.35, 304.41, 369.64, 522.71, 540.54, 812.21];
+	var freqs = [baseFreq, baseFreq*1.3420, baseFreq*1.2312, baseFreq*1.6532, baseFreq*1.9523, baseFreq*2.1523];
 	var signal, pulseEnv;
 
 	pulseEnv = EnvGen.ar(Env.new([1.0, 0.6], [time], [-0.5]), timeScale:(1/1000));
@@ -113,13 +110,10 @@ SynthDef(\cymbal808_ryan, {
 	signal = signal + FreeVerb.ar(signal);
 	signal = signal * EnvGen.ar(Env.new([0, 1, 0.4, 0, 0], [2, time, 50, 500], [0, -0.5, 0, -50]), timeScale:(1/1000), doneAction:2);
 	signal = [signal, DelayN.ar(signal, 0.005, 0.005)];
-	OffsetOut.ar(out, signal*4*amp);
-},
-metadata: (
-	credit: "Published on sc-users 2007-08-25 by Ryan Brown",
-	tags: ['808', \hihat, \percussion, \cymbal]
-	)
+	Out.ar(out, signal*4*amp);
+}
 ).add;
+)
 
 Synth("cymbal808_ryan");
 
@@ -156,36 +150,15 @@ Synth("snare_oto309");
 
 // cymbalic
 Synth(\cymbalic_mcld);
-
+(
 SynthDef(\cymbalic_mcld, { |out=0, pan=0, amp=0.1|
-	var lodriver, locutoffenv, hidriver, hicutoffenv, freqs, res, thwack;
 
-	locutoffenv = EnvGen.ar(Env.perc(0.5, 5)) * 20000 + 10;
-	lodriver = LPF.ar(WhiteNoise.ar(0.1), locutoffenv);
-
-	hicutoffenv = 10001 - (EnvGen.ar(Env.perc(1, 3)) * 10000);
-	hidriver = HPF.ar(WhiteNoise.ar(0.1), hicutoffenv);
-	hidriver = hidriver * EnvGen.ar(Env.perc(1, 2, 0.25));
-
-	thwack = EnvGen.ar(Env.perc(0.001,0.001,1));
-
-	// This bit will regenerate new freqs every time you evaluate the SynthDef!
-	freqs  = {exprand(300, 20000)}.dup(100);
-
-	res    = Ringz.ar(lodriver + hidriver + thwack, freqs).mean;
-
-	Out.ar(out, Pan2.ar(((res * 1) + (lodriver * 2) + thwack) * amp, pan));
-},
-metadata: (
-	credit: "Based on the example at http://www.mcld.co.uk/cymbalsynthesis/ published 2008 by Dan Stowell",
-	tags: [\percussion, \cymbal, \gong, \inharmonic, \additive, \subtractive]
-	)
+}
 ).add;
+)
 
 
-
-
-
+Array.series(30, 300, {rrand(600,650)}.value).postln;
 
 (
     SynthDef('fullkickdrum', {
@@ -511,27 +484,27 @@ Synth(\SOSsnare)
 // http://www.soundonsound.com/sos/Jun02/articles/synthsecrets0602.asp
 
 (
-SynthDef(\SOShats,
-	{arg out = 0, freq = 800, sustain = 0.9, amp = 0.2;
+SynthDef(\SOShats,{
+	arg out = 0, freq = 1200, sustain = 0.8, amp = 0.2;
 	var root_cymbal, root_cymbal_square, root_cymbal_pmosc;
 	var initial_bpf_contour, initial_bpf, initial_env;
 	var body_hpf, body_env;
 	var cymbal_mix;
 
-	root_cymbal_square = Pulse.ar(freq, 0.5, mul: 1);
+	root_cymbal_square = Pulse.ar(freq, 0.9, mul: 1);
 	root_cymbal_pmosc = PMOsc.ar(root_cymbal_square,
-					[freq*1.34, freq*2.405, freq*3.09, freq*1.309],
-					[310/1.3, 26/0.5, 11/3.4, 0.72772],
-					mul: 1,
+					[freq*1.34, freq*2.405, freq*4.09, freq*6.309],
+					[freq/1.3, 26/0.5, 11/3.4, 0.72772],
+					mul: 2,
 					add: 0);
-	root_cymbal = Mix.new(root_cymbal_pmosc);
-	initial_bpf_contour = Line.kr(15000, 9000, 0.1);
+	root_cymbal = Mix.new([root_cymbal_pmosc,WhiteNoise.ar(1)]);
+	initial_bpf_contour = Line.kr(12000, 7000, 0.1);
 	initial_env = EnvGen.ar(Env.perc(0.005, 0.1), 1.0);
 	initial_bpf = BPF.ar(root_cymbal, initial_bpf_contour, mul:initial_env);
 	body_env = EnvGen.ar(Env.perc(0.005, sustain, 1, -2), 1.0, doneAction: 2);
-	body_hpf = HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, sustain),mul: body_env, add: 0);
-	cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp;
-	Out.ar(out, [cymbal_mix, cymbal_mix])
+	body_hpf =  HPF.ar(in: root_cymbal, freq: Line.kr(9000, 12000, sustain),mul: body_env, add: 0);
+		cymbal_mix = Mix.new([initial_bpf, body_hpf]) * amp;
+	Out.ar(out, [cymbal_mix, cymbal_mix]);
 	}).add
 )
 
