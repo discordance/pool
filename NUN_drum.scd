@@ -555,16 +555,14 @@ SynthDef("nun_nasty", {
  * Reverb
  */
 SynthDef("nun_reverb_a", {
-	arg in = 0, out = 0, t_trig = 1;
+	arg in = 0, out = 0;
 	var s, z, y, vol;
 	s = In.ar(in,2);
 	z = DelayN.ar(s, 0.048);
 	// 7 length modulated comb delays in parallel :
-	y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 15) }));
+	y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 4) }));
 	// two parallel chains of 4 allpass delays (8 total) :
 	4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
-	// add original sound to reverb and play it :
-	y = y;//*EnvGen.ar(Env.perc(0.01,15),t_trig);
 	s = s+y;
 	Out.ar(out,s);
 }).add;
