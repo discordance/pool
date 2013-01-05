@@ -1,5 +1,10 @@
 /******************************************
  * Nunja Drum Machine - Supercollider
+ *
+ * Internal Audio Allowed Bus Range
+ * 32 .. 62
+ * Internal Control Allowed Bus Range
+ * 32 .. 232
  */
 
 (
@@ -467,38 +472,67 @@ SynthDef("nun_cymb_b",{
 SynthDef("nun_triple_sum", {
 	arg in0 = 0, in1 = 1, in2 = 2,
 		pan0 = 0, pan1 = 0, pan2 = 0,
-		out = 0;
+		sbus0 = 3, sbus1 = 4, sbus2 = 5, sbus3 = 6,
+		lvlbus0 = 0, lvlbus1 = 0, lvlbus2 = 0, lvlbus3 = 0,
+		vol = 1, comp = 0, out = 0;
 
-	var mixed, mix0, mix1, mix2;
+	var mixed, mix0, mix1, mix2, compr;
 	// mix 0
 	mix0 = Pan2.ar(In.ar(in0,1), pan0);
     mix1 = Pan2.ar(In.ar(in1,1), pan1);
 	mix2 = Pan2.ar(In.ar(in2,1), pan2);
 
 	mixed = Mix.new([mix0,mix1,mix2]);
-	Out.ar(out, mixed);
+	//compr = CompanderD.ar(mixed, -25.dbamp, 1, 0.35, 0.08, 0.1);
+	//mixed = SelectX.ar(comp*2,[mixed,compr]);
+
+	Out.ar(out, mixed*vol);
+	// out to FX busses
+	Out.ar(sbus0, mixed*lvlbus0);
+	Out.ar(sbus1, mixed*lvlbus1);
+	Out.ar(sbus2, mixed*lvlbus2);
+	Out.ar(sbus3, mixed*lvlbus3);
 }).add;
 
 SynthDef("nun_double_sum", {
 	arg in0 = 0, in1 = 1,
 		pan0 = 0, pan1 = 0,
-		out = 0;
-	var mixed, mix0, mix1;
+		sbus0 = 3, sbus1 = 4, sbus2 = 5, sbus3 = 6,
+		lvlbus0 = 0, lvlbus1 = 0, lvlbus2 = 0, lvlbus3 = 0,
+		vol = 1, comp = 0, out = 0;
+
+	var mixed, mix0, mix1, compr;
 	mix0 = Pan2.ar(In.ar(in0,1), pan0);
     mix1 = Pan2.ar(In.ar(in1,1), pan1);
 	mixed = Mix.new([mix0,mix1]);
-	Out.ar(out, mixed);
-}).add;
-// main console
-SynthDef("nun_five_console", {
 
+	//compr = CompanderD.ar(mixed, -25.dbamp, 1, 0.35, 0.01, 0.5);
+	//mixed = SelectX.ar(comp*2,[mixed,compr]);
+
+	Out.ar(out, mixed*vol);
+	Out.ar(sbus0, mixed*lvlbus0);
+	Out.ar(sbus1, mixed*lvlbus1);
+	Out.ar(sbus2, mixed*lvlbus2);
+	Out.ar(sbus3, mixed*lvlbus3);
+}).add;
+
+// main console
+SynthDef("nun_main_console", {
+		arg sin0 = 0, sin1 = 2, sin2 = 4, sin3 = 6, sin4 = 8,
+		    sbus0 = 0, sbus1 = 2, sbus2 = 4, sbus3 = 6,
+		    out = 0;
+		var drymix, busmix, mainmix;
+		drymix = Mix.new([In.ar(sin0,2),In.ar(sin1,2),In.ar(sin2,2),In.ar(sin3,2),In.ar(sin4,2)]);
+		busmix = Mix.new([In.ar(sbus0,2),In.ar(sbus1,2),In.ar(sbus2,2),In.ar(sbus3,2)]);
+		mainmix = Mix.new([drymix,busmix]);
+		Out.ar(out, mainmix);
 }).add;
 
 /**
  * Nasty Distortion
  */
 SynthDef("nun_nasty", {
-	|in = 0, out = 0, drv = 40, amp = 0.2, jitf = 1, jit = 1,env = 0.1,
+	|in = 0, out = 0, drv = 40, amp = 0.15, jitf = 0.8, jit = 0.5,env = 0.1,
 	 lag = 1, lpp = 120, res = 0.2, gate = 1, att = 0.001, rel = 0.1|
 	var sig, x3, jitter, input, envf;
 	lag = lag*LFNoise2.kr(1).range(0.2,3);
@@ -517,6 +551,24 @@ SynthDef("nun_nasty", {
 	Out.ar(out, sig * Lag.kr(amp, 1));
 }).add;
 
+/**
+ * Reverb
+ */
+SynthDef("nun_reverb_a", {
+	arg in = 0, out = 0, t_trig = 1;
+	var s, z, y, vol;
+	s = In.ar(in,2);
+	z = DelayN.ar(s, 0.048);
+	// 7 length modulated comb delays in parallel :
+	y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 15) }));
+	// two parallel chains of 4 allpass delays (8 total) :
+	4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
+	// add original sound to reverb and play it :
+	y = y;//*EnvGen.ar(Env.perc(0.01,15),t_trig);
+	s = s+y;
+	Out.ar(out,s);
+}).add;
+
 /******************************************
  * SERVER SYNC
  */
@@ -532,36 +584,61 @@ s.sync;
 
 /*****
  * Premix
+ * -- Drum Mono Busses
+ * 32 33 34 35 36 37 38 39 40 41 42 43 44
+ * -- Drum Premix Stereo Busses
+ * 45:46 47:48 49:50 51:52 53:54
+ * -- FX Stereo Busses
+ *  fx0: 55:56
+ *  fx1: 57:58
+ *  fx2: 59:60
+ *  fx3: 61:62
  */
 ~drum_kick_premixer = Synth.head(~drum_premix, "nun_triple_sum");
 ~drum_kick_premixer.set(
 		\in0, 32, \in1, 33, \in2, 34,
 		\pan0, 0,\pan1, 0, \pan2, 0,
-		\out, 0);
+		\sbus0 , 55, \sbus1 , 57, \sbus2 , 59, \sbus3 , 61,
+		\out, 45);
 ~drum_drums_premixer = Synth.head(~drum_premix, "nun_triple_sum");
 ~drum_drums_premixer.set(
 		\in0, 35, \in1, 36, \in2, 37,
 		\pan0, -0.2,\pan1, 0.2, \pan2, 0,
-		\out, 0);
+		\sbus0 , 55, \sbus1 , 57, \sbus2 , 59, \sbus3 , 61,
+		\out, 47);
 ~drum_snare_premixer = Synth.head(~drum_premix, "nun_triple_sum");
 ~drum_snare_premixer.set(
 		\in0, 38, \in1, 39, \in2, 40,
 		\pan0, -0.1,\pan1, 0.1, \pan2, 0.3,
-		\out, 0);
+		\sbus0 , 55, \sbus1 , 57, \sbus2 , 59, \sbus3 , 61,
+		\out, 49);
 ~drum_hh_premixer = Synth.head(~drum_premix, "nun_double_sum");
 ~drum_hh_premixer.set(
 		\in0, 41, \in1, 42,
 		\pan0, -0.15,\pan1, 0.15,
-		\out, 0);
+		\sbus0 , 55, \sbus1 , 57, \sbus2 , 59, \sbus3 , 61,
+		\out, 51);
 ~drum_cym_premixer = Synth.head(~drum_premix, "nun_double_sum");
 ~drum_cym_premixer.set(
 		\in0, 43, \in1, 44,
 		\pan0, -0.3,\pan1, 0.3,
-		\out, 0);
+		\sbus0 , 55, \sbus1 , 57, \sbus2 , 59, \sbus3 , 61,
+		\out, 53);
 /*
  * EFFECTS STACK
  */
-//~nasty = Synth.head(~drum_fx, "nun_nasty");
+~fx_nasty = Synth.head(~drum_fx, "nun_nasty");
+~fx_nasty.set(\in, 55, \out, 55);
+~fx_reverb = Synth.head(~drum_fx, "nun_reverb_a");
+~fx_reverb.set(\in, 57, \out, 57);
+/**
+ * MAIN MIX
+ */
+~drum_main_mixer = Synth.head(~drum_mixdown, "nun_main_console");
+~drum_main_mixer.set(
+		\sin0 , 45, \sin1 , 47, \sin2 , 49, \sin3 , 51, \sin4 , 53,
+		\sbus0 , 55, \sbus1 , 57, \sbus2 , 59, \sbus3 , 61
+	);
 
 }.fork // asynchronous
 )
@@ -571,6 +648,8 @@ s.sync;
  * GUI
  */
 (
+
+// DRUM CONTROLLER VIEW
 var
 main_window,
 // hard a
@@ -626,9 +705,174 @@ bcymb_controls,
 bcymb_lbl,
 bcymb_panel
 ;
+// MIXER WINDOW VIEW
+var
+mixer_window,
 
-main_window = Window.new("Drum Synth Controller", Rect(200,200,1024,530));
+premix0_panel,
+premix0_lbl,
+premix0_controls,
+
+premix1_panel,
+premix1_lbl,
+premix1_controls,
+
+premix2_panel,
+premix2_lbl,
+premix2_controls,
+
+premix3_panel,
+premix3_lbl,
+premix3_controls,
+
+premix4_panel,
+premix4_lbl,
+premix4_controls;
+
+
+mixer_window = Window.new("Drum Synth Mixer", Rect(50,100,400,515));
+main_window = Window.new("Drum Synth Controller", Rect(300,100,957,515));
+mixer_window.front;
 main_window.front;
+mixer_window.alwaysOnTop = true;
+
+/******************************************************************************************************************************
+ * DRUM MIXER
+ ******************************************************************************************************************************/
+
+premix0_panel = HLayoutView(mixer_window, Rect(10,30,305,75));
+premix0_panel.background_(Color.fromHexString("#999999"));
+premix0_lbl = StaticText(mixer_window, Rect(10, 10, 150, 20));
+premix0_lbl.string = "KICK MIX";
+
+premix0_controls.add(EZKnob(premix0_panel, 40@74, "vol", [0, 1].asSpec.default = 1, { |widget|
+	~drum_kick_premixer.set(\vol,widget.value);
+},layout:\vert2, initAction:true ));
+/*
+premix0_controls.add(EZKnob(premix0_panel, 40@74, "comp", [0, 1].asSpec.default = 0, { |widget|
+	~drum_kick_premixer.set(\comp,widget.value);
+},layout:\vert2, initAction:true ));
+*/
+premix0_controls.add(EZKnob(premix0_panel, 40@74, "fx0", [0, 1].asSpec.default = 0, { |widget|
+	~drum_kick_premixer.set(\lvlbus0,widget.value);
+},layout:\vert2, initAction:true ));
+premix0_controls.add(EZKnob(premix0_panel, 40@74, "fx1", [0, 1].asSpec.default = 0, { |widget|
+	~drum_kick_premixer.set(\lvlbus1,widget.value);
+},layout:\vert2, initAction:true ));
+premix0_controls.add(EZKnob(premix0_panel, 40@74, "fx2", [0, 1].asSpec.default = 0, { |widget|
+	~drum_kick_premixer.set(\lvlbus2,widget.value);
+},layout:\vert2, initAction:true ));
+premix0_controls.add(EZKnob(premix0_panel, 40@74, "fx3", [0, 1].asSpec.default = 0, { |widget|
+	~drum_kick_premixer.set(\lvlbus3,widget.value);
+},layout:\vert2, initAction:true ));
+
+premix1_panel = HLayoutView(mixer_window, Rect(10,130,305,75));
+premix1_panel.background_(Color.fromHexString("#999999"));
+premix1_lbl = StaticText(mixer_window, Rect(10, 110, 150, 20));
+premix1_lbl.string = "DRUMS MIX";
+
+premix1_controls.add(EZKnob(premix1_panel, 40@74, "vol", [0, 1].asSpec.default = 1, { |widget|
+	~drum_drums_premixer.set(\vol,widget.value);
+},layout:\vert2, initAction:true ));
+/*
+premix1_controls.add(EZKnob(premix1_panel, 40@74, "comp", [0, 1].asSpec.default = 0, { |widget|
+	~drum_drums_premixer.set(\comp,widget.value);
+},layout:\vert2, initAction:true ));
+*/
+premix1_controls.add(EZKnob(premix1_panel, 40@74, "fx0", [0, 1].asSpec.default = 0, { |widget|
+	~drum_drums_premixer.set(\lvlbus0,widget.value);
+},layout:\vert2, initAction:true ));
+premix1_controls.add(EZKnob(premix1_panel, 40@74, "fx1", [0, 1].asSpec.default = 0, { |widget|
+	~drum_drums_premixer.set(\lvlbus1,widget.value);
+},layout:\vert2, initAction:true ));
+premix1_controls.add(EZKnob(premix1_panel, 40@74, "fx2", [0, 1].asSpec.default = 0, { |widget|
+	~drum_drums_premixer.set(\lvlbus2,widget.value);
+},layout:\vert2, initAction:true ));
+premix1_controls.add(EZKnob(premix1_panel, 40@74, "fx3", [0, 1].asSpec.default = 0, { |widget|
+	~drum_drums_premixer.set(\lvlbus3,widget.value);
+},layout:\vert2, initAction:true ));
+
+premix2_panel = HLayoutView(mixer_window, Rect(10,230,305,75));
+premix2_panel.background_(Color.fromHexString("#999999"));
+premix2_lbl = StaticText(mixer_window, Rect(10, 210, 150, 20));
+premix2_lbl.string = "SNARE MIX";
+
+premix2_controls.add(EZKnob(premix2_panel, 40@74, "vol", [0, 1].asSpec.default = 1, { |widget|
+	~drum_snare_premixer.set(\vol,widget.value);
+},layout:\vert2, initAction:true ));
+/*
+premix2_controls.add(EZKnob(premix2_panel, 40@74, "comp", [0, 1].asSpec.default = 0, { |widget|
+	~drum_snare_premixer.set(\comp,widget.value);
+},layout:\vert2, initAction:true ));
+*/
+premix2_controls.add(EZKnob(premix2_panel, 40@74, "fx0", [0, 1].asSpec.default = 0, { |widget|
+	~drum_snare_premixer.set(\lvlbus0,widget.value);
+},layout:\vert2, initAction:true ));
+premix2_controls.add(EZKnob(premix2_panel, 40@74, "fx1", [0, 1].asSpec.default = 0, { |widget|
+	~drum_snare_premixer.set(\lvlbus1,widget.value);
+},layout:\vert2, initAction:true ));
+premix2_controls.add(EZKnob(premix2_panel, 40@74, "fx2", [0, 1].asSpec.default = 0, { |widget|
+	~drum_snare_premixer.set(\lvlbus2,widget.value);
+},layout:\vert2, initAction:true ));
+premix2_controls.add(EZKnob(premix2_panel, 40@74, "fx3", [0, 1].asSpec.default = 0, { |widget|
+	~drum_snare_premixer.set(\lvlbus3,widget.value);
+},layout:\vert2, initAction:true ));
+
+premix3_panel = HLayoutView(mixer_window, Rect(10,330,305,75));
+premix3_panel.background_(Color.fromHexString("#999999"));
+premix3_lbl = StaticText(mixer_window, Rect(10, 310, 150, 20));
+premix3_lbl.string = "HH MIX";
+
+premix3_controls.add(EZKnob(premix3_panel, 40@74, "vol", [0, 1].asSpec.default = 1, { |widget|
+	~drum_hh_premixer.set(\vol,widget.value);
+},layout:\vert2, initAction:true ));
+/*
+premix3_controls.add(EZKnob(premix3_panel, 40@74, "comp", [0, 1].asSpec.default = 0, { |widget|
+	~drum_hh_premixer.set(\comp,widget.value);
+},layout:\vert2, initAction:true ));
+*/
+premix3_controls.add(EZKnob(premix3_panel, 40@74, "fx0", [0, 1].asSpec.default = 0, { |widget|
+	~drum_hh_premixer.set(\lvlbus0,widget.value);
+},layout:\vert2, initAction:true ));
+premix3_controls.add(EZKnob(premix3_panel, 40@74, "fx1", [0, 1].asSpec.default = 0, { |widget|
+	~drum_hh_premixer.set(\lvlbus1,widget.value);
+},layout:\vert2, initAction:true ));
+premix3_controls.add(EZKnob(premix3_panel, 40@74, "fx2", [0, 1].asSpec.default = 0, { |widget|
+	~drum_hh_premixer.set(\lvlbus2,widget.value);
+},layout:\vert2, initAction:true ));
+premix3_controls.add(EZKnob(premix3_panel, 40@74, "fx3", [0, 1].asSpec.default = 0, { |widget|
+	~drum_hh_premixer.set(\lvlbus3,widget.value);
+},layout:\vert2, initAction:true ));
+
+premix4_panel = HLayoutView(mixer_window, Rect(10,430,305,75));
+premix4_panel.background_(Color.fromHexString("#999999"));
+premix4_lbl = StaticText(mixer_window, Rect(10, 410, 150, 20));
+premix4_lbl.string = "CYMB MIX";
+
+premix4_controls.add(EZKnob(premix4_panel, 40@74, "vol", [0, 1].asSpec.default = 1, { |widget|
+	~drum_cym_premixer.set(\vol,widget.value);
+},layout:\vert2, initAction:true ));
+/*
+premix4_controls.add(EZKnob(premix4_panel, 40@74, "comp", [0, 1].asSpec.default = 0, { |widget|
+	~drum_cym_premixer.set(\comp,widget.value);
+},layout:\vert2, initAction:true ));
+*/
+premix4_controls.add(EZKnob(premix4_panel, 40@74, "fx0", [0, 1].asSpec.default = 0, { |widget|
+	~drum_cym_premixer.set(\lvlbus0,widget.value);
+},layout:\vert2, initAction:true ));
+premix4_controls.add(EZKnob(premix4_panel, 40@74, "fx1", [0, 1].asSpec.default = 0, { |widget|
+	~drum_cym_premixer.set(\lvlbus1,widget.value);
+},layout:\vert2, initAction:true ));
+premix4_controls.add(EZKnob(premix4_panel, 40@74, "fx2", [0, 1].asSpec.default = 0, { |widget|
+	~drum_cym_premixer.set(\lvlbus2,widget.value);
+},layout:\vert2, initAction:true ));
+premix4_controls.add(EZKnob(premix4_panel, 40@74, "fx3", [0, 1].asSpec.default = 0, { |widget|
+	~drum_cym_premixer.set(\lvlbus3,widget.value);
+},layout:\vert2, initAction:true ));
+
+/******************************************************************************************************************************
+ * DRUM CONTROLLER
+ ******************************************************************************************************************************/
 
 /******************************************
  * H KICK A
