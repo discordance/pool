@@ -16,7 +16,7 @@ fork{
 )
 
 SynthDef(\nun_blue_noise,{
-	var sig;
+	var sig;]]]]]]]]]]]]]]]]]]]
 	 sig = Splay.ar( {Klank.ar(`[12.rand+1*(55/4)*(1..8)],Crackle.ar(2,0.005))*LFGauss.ar(9,1/4,0,0,2)}!4 );
 	Out.ar(2,sig);
 }).add;

@@ -142,7 +142,7 @@ SynthDef(\ChMach, { arg
 
     var rates = Scale.prometheus.semitones.scramble;
 
-    var thisRatio = (rates - 12) ++ rates ++ (rates + 12) ;
+    var thisRatio = (rates - 12) ++ rates ;
 	var thisPitch;
 
 	var svf = Synth.tail(g, \Filters);
