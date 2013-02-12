@@ -17,7 +17,7 @@
 
 (
 Buffer.freeAll;
-~mainOut = 0;
+~mainOut = 4;
 
 ~load_drum_midi =
 {

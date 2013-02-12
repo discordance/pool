@@ -42,7 +42,7 @@ SynthDef(\nun_ossampler, {
 	arg out = 0, buf_bounds = #[0,0];
 	var sig, envs, decay,
 	master_env, rate = 1, freq = 1000, vol = 1,
-	a, b, c, d;
+	a, b;
 
 	//envs
 	envs = Array.fill(10, { EnvGen.ar(Env.new(Array.rand(10, 0.1, 1.0).add(0.0), Array.exprand(9, 0.001, 2),curve:\welch)) });
@@ -51,8 +51,6 @@ SynthDef(\nun_ossampler, {
 	// random buffers, a is the lead
 	a = IRand(buf_bounds[0],buf_bounds[1]);
 	b = IRand(buf_bounds[0],buf_bounds[1]);
-	c = IRand(buf_bounds[0],buf_bounds[1]);
-	d = IRand(buf_bounds[0],buf_bounds[1]);
 
 	decay = [0.06,5].asSpec.map(In.kr(2).lag(0.1));
 	rate = [0.05, 0.95].asSpec.map(In.kr(3).lag(0.1));
@@ -63,10 +61,6 @@ SynthDef(\nun_ossampler, {
 	sig = PlayBuf.ar(2, a, BufRateScale.kr(a),rate: rate) * Select.ar(IRand(0,9),envs);
 	sig = sig + Resonz.ar(
 		PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs),Select.ar(IRand(0,9),envs)*20000 + 80);
-	sig = sig + Resonz.ar(
-		PlayBuf.ar(2, c, BufRateScale.kr(c),rate: rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs), Select.ar(IRand(0,9),envs)*20000 + 80);
-	sig = sig + Resonz.ar(
-		PlayBuf.ar(2, d, BufRateScale.kr(d),rate: rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs), Select.ar(IRand(0,9),envs)*20000 + 80);
 
 	// master env
 	sig = sig * master_env;
@@ -100,6 +94,8 @@ MIDIIn.connectAll;
 MIDIIn.removeFuncFrom(\noteOn, ~sampler_noteOn);
 MIDIIn.removeFuncFrom(\control, ~sampler_control);
 
+// bus defaults
+
 ~sampler_control = { arg src, chan, num, val;
 	var bus = Bus.new('control',num,1,s);
 	"CC"+[chan,num,val].postln;
@@ -111,9 +107,9 @@ MIDIIn.removeFuncFrom(\control, ~sampler_control);
 
 	var idx = (num-36);
 	"NoteOn"+[chan,num,vel / 127].postln;
-		~sampleIndex = idx + (~samplePer*~sampleMult);
+	~sampleIndex = idx + (~samplePer*~sampleMult);
 	idx.postln;
-	Synth("nun_ossampler", [\buf_bounds, ~sampleIndexParse.value(~sampleIndex), \out, 0]);
+	Synth("nun_ossampler", [\buf_bounds, ~sampleIndexParse.value(~sampleIndex), \out, 4]);
 	//Synth("cs80lead_mh",[\freq,num.midicps*2,\amp,0.1]); // 320, 280, 420
 	});
 
