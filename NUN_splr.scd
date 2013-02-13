@@ -1,14 +1,15 @@
 /******************************************
- * Nunja Sampling Station - Supercollider
- */
-
+* Nunja Sampling Station - Supercollider
+*/
 ~init_buffers.value();
 ~init_midi.value();
 
-~sampleMult = 1;
+
 
 (
 // ---
+
+~sampleMult = 0;
 
 // count pads and keep memory on the two last hit
 ~pad_counter = ();
@@ -28,25 +29,40 @@
 ~splr_params.rate = 1;
 ~splr_params.freq = 20000;
 
-// sampler file management
+// os sampler file management
 ~sampleMult = 1;
 ~samplePer = 8;
 ~sampleIndex = 0;
+~sampleSetsTotal = 0;
 ~pathArr;
 ~buffers;
 ~osPath = "/Users/nunja/Documents/AudioLib/supercollider/os/*";
 
+// dr sampler file management
 ~kitCurrent = 0;
 ~kitBuffers;
 ~kitPathArr;
 ~kitPath = "/Users/nunja/Documents/AudioLib/supercollider/drumkit/*";
 
+// kit params
+~kit_params = ();
+~kit_params.density = 1;
+~kit_params.quant = [1,2,4,8,16,32,64];
+
 // utility for the sampler
 ~sampleIndexParse = { |index|
-		var arr = [0,0];
-		arr[0] = ~buffers[index][0].bufnum;
-		arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;
-		arr;
+	var arr = [0,0];
+	//"sample parse".postln;
+	arr[0] = ~buffers[index][0].bufnum;
+	arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;
+	arr;
+};
+
+~drumIndexParse = {|kit, perc|
+	var arr = [0,0];
+	(~kitBuffers[kit][perc] != nil).if({arr[0] = ~kitBuffers[kit][perc][0].bufnum;});//;
+	(~kitBuffers[kit][perc] != nil).if({arr[1] = ~kitBuffers[kit][perc][~kitBuffers[kit][perc].size - 1].bufnum;});
+	arr;
 };
 
 ~init_midi =
@@ -57,20 +73,47 @@
 	MIDIIn.connectAll;
 	//MIDIIn.sysrt = { arg src, chan, val; 				[chan,val].postln; };
 
-	lpd8 = MIDIIn.findPort("LPD8", "LPD8");
-	ancient = MIDIIn.findPort("Ancient2 NOTES OUT", "Ancient2 NOTES OUT");
-	a_sync_in = MIDIIn.findPort("Ancient2 SYNC OUT", "Ancient2 SYNC OUT");
+	lpd8 = MIDIIn.findPort("LPD8", "LPD8") ? (\uid:0);
+	ancient = MIDIIn.findPort("Ancient2 NOTES OUT", "Ancient2 NOTES OUT") ? (\uid:0);
+	a_sync_in = MIDIIn.findPort("Ancient2 SYNC OUT", "Ancient2 SYNC OUT") ? (\uid:0);
 
 	MIDIIn.removeFuncFrom(\noteOn, ~splr_noteOn);
-    MIDIIn.removeFuncFrom(\control, ~splr_control);
+	MIDIIn.removeFuncFrom(\control, ~splr_control);
 	MIDIIn.removeFuncFrom(\sysrt, ~splr_clock);
-
 
 	~splr_noteOn = { arg src, chan, num, val;
 		var idx;
 		// from ancient
 		if(src == ancient.uid,{
-			//"ancient".postln;
+
+			num.postln;
+			switch(num,
+				36,{
+					~dr_synths[0].set(\t_trig,1);
+				},
+				41,{
+					~dr_synths[1].set(\t_trig,1);
+				},
+				43,{
+					~dr_synths[2].set(\t_trig,1);
+				},
+				38,{
+					~dr_synths[3].set(\t_trig,1);
+				},
+				39,{
+					~dr_synths[4].set(\t_trig,1);
+				},
+				42,{
+					~dr_synths[5].set(\t_trig,1);
+				},
+				44,{
+					~dr_synths[6].set(\t_trig,1);
+				},
+				46,{
+					~dr_synths[7].set(\t_trig,1);
+				},
+			);
+
 		});
 		// from lpd8
 		if(src == lpd8.uid,{
@@ -78,34 +121,44 @@
 			idx = (num-36);
 			if(~pad_counter.ct % 2 == 0, {
 				~pad_counter.pad_a = idx + (~samplePer*~sampleMult);
-			},{
-				~pad_counter.pad_b = idx + (~samplePer*~sampleMult);
+				},{
+					~pad_counter.pad_b = idx + (~samplePer*~sampleMult);
 			});
 			~pad_counter.ct = ~pad_counter.ct + 1;
 
 			// trigg sound
 			~sampleIndex = idx + (~samplePer*~sampleMult);
-			Synth("nun_ossampler",
+			Synth.head(~splr_source,"nun_ossampler",
 				[\buf_bounds, ~sampleIndexParse.value(~sampleIndex),
-				 \out, 0,
-				 \rate, ~splr_params.rate,
-				\freq, ~splr_params.freq
+					\out, 0,
+					\rate, ~splr_params.rate,
+					\freq, ~splr_params.freq
 			]);
 		});
 	};
 	~splr_control = { arg src, chan, num, val;
 		// from lpd8
 		if(src == lpd8.uid,{
-			("chan " ++ chan ++ " num " ++ num ++ " val " ++ val).postln;
+			//("chan " ++ chan ++ " num " ++ num ++ " val " ++ val).postln;
 			switch(num,
 				1,{ ~splr_params.density = val/127; },
-				2,{ ~splr_params.rate = [0.5,1.5].asSpec.map(val/127); },
-				3,{ ~splr_params.freq = \freq.asSpec.map(val/127) },
+				// special case 128 steps
+				2,{ ~sampleMult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor; ~sampleMult.postln;
+				},
+				3,{ ~splr_params.rate = [0.1,1.9].asSpec.map(val/127); },
 				4,{
+					// bus 0 ->delay vol
 					var bus = Bus.new('control',0,1,s);
 					bus.set(val/127);
-				  },
-				);
+				},
+				5,{ },
+				6,{ },
+				7,{
+					// bus 1 ->delay speed
+					var bus = Bus.new('control',1,1,s);
+					bus.set(val/127);
+				},
+			);
 		});
 	};
 
@@ -129,11 +182,11 @@
 				//~timer.quav.postln;
 				if(~timer.quav % ~timer.ivals[idx] == 0,{
 					var idx = [~pad_counter.pad_a,~pad_counter.pad_b].choose;
-					Synth("nun_ossampler",
+					Synth.head(~splr_source,"nun_ossampler",
 						[\buf_bounds, ~sampleIndexParse.value(idx),
-						 \out, 0,
-						 \rate, ~splr_params.rate,
-						 \freq, ~splr_params.freq
+							\out, 0,
+							\rate, ~splr_params.rate,
+							\freq, ~splr_params.freq
 					]);
 				});
 			});
@@ -148,14 +201,15 @@
 
 
 /**
- * INIT buffers
- */
+* INIT buffers
+*/
 ~init_buffers =
 {
 	Buffer.freeAll; // free all buffers
 
 	// OS buffers
 	~pathArr = ~osPath.pathMatch.sort.collect{|file|
+		~sampleSetsTotal = ~sampleSetsTotal + 1;
 		file.insert(file.size,"*");
 	};
 	~buffers = Array.fill(~pathArr.size,0);
@@ -166,10 +220,6 @@
 	};
 
 	// Drum Kits
-	//~kitCurrent = 0;
-	//~kitBuffers;
-	//~kitPathArr;
-	//~kitPath = "/Users/nunja/Documents/AudioLib/supercollider/drumkit/*";
 	~kitPathArr = ~kitPath.pathMatch.sort.collect{|file|
 		file.insert(file.size,"*");
 	};
@@ -177,82 +227,129 @@
 	~kitPathArr.size.postln;
 	~kitBuffers = [];
 	~kitPathArr.do{ |file, i|
-		file.pathMatch.sort.collect{|kfile, i|
-			": ".post;
-			i.postln;
+		~kitBuffers = ~kitBuffers.add([]);
+		file.pathMatch.sort.collect{|kfile, j|
 			kfile = kfile ++ "*";
-			kfile.pathMatch.sort.collect{|sfile, i|
-				"--: ".post;
-				i.postln;
-				//sfile.postln;
+			~kitBuffers[i] = ~kitBuffers[i].add([]);
+			kfile.pathMatch.sort.collect{|sfile, k|
+				~kitBuffers[i][j] = ~kitBuffers[i][j].add(Buffer.read(s,sfile));
 			};
-			//Buffer.read(s,sfile);
 
 		};
 	};
 
+	// drumkits inited we can do the rest:
+	// create a stack of drum synths
+	~dr_synths = Array.fill(8,{|i|
+		Synth.head(~splr_drums,"nun_drsampler",
+						[\buf_bounds, ~drumIndexParse.value(~kitCurrent,i),
+						\out, 0]);
+	});
+
+	// defaut buses
+	{
+		var bus = Bus.new('control',0,1,s);
+		bus.set(0);
+		bus = Bus.new('control',1,1,s);
+		bus.set(0.5);
+	}
 };
 
 {
-/**
- * Delay Dub
- */
-SynthDef(\nun_dubecho,{|in, out, length = 1, fb = 0.8, sep = 0.012|
-	var vol = 1;
-	var input = In.ar(in, 2);
-	var feedback = LocalIn.ar(2);
-	var output = LeakDC.ar(feedback*fb + input);
-	output = HPF.ar(output, 400);
-	output = LPF.ar(output, 5000);
-	output = output.tanh;
-	vol = [0.0, 1.0].asSpec.map(In.kr(0).lag(0.1));
+	/**
+	* Delay Dub
+	*/
+	SynthDef(\nun_dubecho,{|in, out, length = 1, fb = 0.8, sep = 0.012|
+		var vol = 1;
+		var input = In.ar(in, 2);
+		var feedback = LocalIn.ar(2);
+		var output = LeakDC.ar(feedback*fb + input);
+		output = HPF.ar(output, 400);
+		output = LPF.ar(output, 5000);
+		output = output.tanh;
+		vol = [0.0, 1.0].asSpec.map(In.kr(0).lag(0.1));
+		length = [0.0, 1.0].asSpec.map(In.kr(1).lag(0.1));
 		LocalOut.ar(DelayC.ar(output*vol, 1, LFNoise2.ar(12).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])).reverse);
-	ReplaceOut.ar(out, output);
-}).add;
+		ReplaceOut.ar(out, output);
+	}).add;
 
-/**
- * Sampler
- */
-// SynthDef SAMPLER
-SynthDef(\nun_ossampler, {
-	arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000;
-	var sig, envs,
-	master_env, vol = 1,
-	a, b;
+	/**
+	* DRUM Sampler
+	*/
+	// SynthDef DRUMSAMPLER
+	SynthDef(\nun_drsampler, {
+		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0;
+		var sig, enva, envb,
+		master_env, vol = 1,
+		a, b;
 
-	//envs
-	envs = Array.fill(10, { EnvGen.ar(Env.new(Array.rand(10, 0.1, 1.0).add(0.0), Array.exprand(9, 0.001, 2),curve:\welch)) });
+		enva = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
+		envb = EnvGen.ar(Env.perc(LFNoise2.ar(10).range(0.01,0.2), decay, 1, -4),t_trig);
+		sig = 0;
+		// random buffers, a is the lead
+		a = buf_bounds[0];
+		b = IRand(buf_bounds[0],buf_bounds[1]);
 
-	sig = 0;
-	// random buffers, a is the lead
-	a = IRand(buf_bounds[0],buf_bounds[1]);
-	b = IRand(buf_bounds[0],buf_bounds[1]);
+		master_env = EnvGen.ar(Env.perc(0.01,decay*1.1),t_trig);
+		sig = PlayBuf.ar(2, a, BufRateScale.kr(a), rate: rate, trigger: t_trig) * enva;
+		sig = sig + Resonz.ar(
+			PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, trigger: t_trig, startPos: Rand(0,50)) * envb, envb*20000 + 80);
 
-	// random magic
-	master_env = EnvGen.ar(Env.perc(0.05,decay),doneAction:2);
+		// master env
+		sig = sig * master_env;
 
-	sig = PlayBuf.ar(2, a, BufRateScale.kr(a),rate: rate) * Select.ar(IRand(0,9),envs);
-	sig = sig + Resonz.ar(
-		PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs),Select.ar(IRand(0,9),envs)*20000 + 80);
+		// filter
+		//freq = \freq.asSpec.map(In.kr(1).lag(0.1));
+		sig = DFM1.ar(sig, freq, 0.5, 3);
+		Out.ar(out, sig*vol);
 
-	// master env
-	sig = sig * master_env;
+	}).add;
+	/**
+	* OS Sampler
+	*/
+	// SynthDef OS SAMPLER
+	SynthDef(\nun_ossampler, {
+		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000;
+		var sig, envs,
+		master_env, vol = 1,
+		a, b;
 
-	// filter
-	//freq = \freq.asSpec.map(In.kr(1).lag(0.1));
-	sig = DFM1.ar(sig, freq, 0.5, 3);
+		//envs
+		envs = Array.fill(10, { EnvGen.ar(Env.new(Array.rand(10, 0.1, 1.0).add(0.0), Array.exprand(9, 0.001, 2),curve:\welch)) });
 
-	Out.ar(out, sig*vol);
-}).add;
+		sig = 0;
+		// random buffers, a is the lead
+		a = IRand(buf_bounds[0],buf_bounds[1]);
+		b = IRand(buf_bounds[0],buf_bounds[1]);
 
-s.sync;
+		// random magic
+		master_env = EnvGen.ar(Env.perc(0.05,decay),doneAction:2);
 
-// ROUTE
-~splr_source = Group.head(s);
-~splr_fx = Group.tail(s);
+		sig = PlayBuf.ar(2, a, BufRateScale.kr(a),rate: rate) * Select.ar(IRand(0,9),envs);
+		sig = sig + Resonz.ar(
+			PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs),Select.ar(IRand(0,9),envs)*20000 + 80);
 
-~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
-~fx_echo.set(\in, 0, \out, 0);
+		// master env
+		sig = sig * master_env;
+
+		// filter
+		//freq = \freq.asSpec.map(In.kr(1).lag(0.1));
+		sig = DFM1.ar(sig, freq, 0.5, 3);
+
+		Out.ar(out, sig*vol);
+	}).add;
+
+	s.sync;
+
+	// clear clear !!
+	Server.all.do(_.freeAll);
+	// ROUTE
+	~splr_source = Group.head(s);
+	~splr_drums = Group.head(s);
+	~splr_fx = Group.tail(s);
+
+	~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
+	~fx_echo.set(\in, 0, \out, 0);
 
 }.fork
 
@@ -260,3 +357,8 @@ s.sync;
 
 // ---
 )
+
+
+
+
+//--- testing syndefs;
