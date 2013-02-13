@@ -53,8 +53,10 @@
 ~sampleIndexParse = { |index|
 	var arr = [0,0];
 	//"sample parse".postln;
-	arr[0] = ~buffers[index][0].bufnum;
-	arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;
+	//arr[0] = ~buffers[index][0].bufnum;
+	(~buffers[index] != nil).if({arr[0] = ~buffers[index][0].bufnum;});
+	//arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;
+	(~buffers[index] != nil).if({arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;});
 	arr;
 };
 
@@ -132,7 +134,7 @@
 				[\buf_bounds, ~sampleIndexParse.value(~sampleIndex),
 					\out, 0,
 					\rate, ~splr_params.rate,
-					\freq, ~splr_params.freq
+					\freq, \freq.asSpec.map(val/127)
 			]);
 		});
 	};
@@ -143,7 +145,7 @@
 			switch(num,
 				1,{ ~splr_params.density = val/127; },
 				// special case 128 steps
-				2,{ ~sampleMult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor; ~sampleMult.postln;
+				2,{ ~sampleMult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor;
 				},
 				3,{ ~splr_params.rate = [0.1,1.9].asSpec.map(val/127); },
 				4,{
