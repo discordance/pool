@@ -21,11 +21,11 @@
 ~timer = ();
 ~timer.ticks = 0;
 ~timer.quav = 0;
-~timer.ivals = [256,128,64,32,16,8];
+~timer.ivals = [256,128,64,32,16,8,4];
 
 // sampler params
 ~splr_params = ();
-~splr_params.density = 1;
+~splr_params.density = 0.25;
 ~splr_params.rate = 1;
 ~splr_params.freq = 20000;
 
@@ -47,11 +47,11 @@
 // kit params
 ~kit_params = ();
 ~kit_params.density = 1;
-~kit_params.quant = [1,2,4,8,16,32,64];
+~kit_params.quant = [64,32,24,16,8,6,4,3,2,1];
 
 // utility for the sampler
 ~sampleIndexParse = { |index|
-	var arr = [0,0];
+	var arr = [-1,-1];
 	//"sample parse".postln;
 	//arr[0] = ~buffers[index][0].bufnum;
 	(~buffers[index] != nil).if({arr[0] = ~buffers[index][0].bufnum;});
@@ -61,7 +61,7 @@
 };
 
 ~drumIndexParse = {|kit, perc|
-	var arr = [0,0];
+	var arr = [-1,-1];
 	(~kitBuffers[kit][perc] != nil).if({arr[0] = ~kitBuffers[kit][perc][0].bufnum;});//;
 	(~kitBuffers[kit][perc] != nil).if({arr[1] = ~kitBuffers[kit][perc][~kitBuffers[kit][perc].size - 1].bufnum;});
 	arr;
@@ -84,37 +84,49 @@
 	MIDIIn.removeFuncFrom(\sysrt, ~splr_clock);
 
 	~splr_noteOn = { arg src, chan, num, val;
-		var idx;
+		var idx, quant;
 		// from ancient
 		if(src == ancient.uid,{
 
-			num.postln;
-			switch(num,
-				36,{
-					~dr_synths[0].set(\t_trig,1);
-				},
-				41,{
-					~dr_synths[1].set(\t_trig,1);
-				},
-				43,{
-					~dr_synths[2].set(\t_trig,1);
-				},
-				38,{
-					~dr_synths[3].set(\t_trig,1);
-				},
-				39,{
-					~dr_synths[4].set(\t_trig,1);
-				},
-				42,{
-					~dr_synths[5].set(\t_trig,1);
-				},
-				44,{
-					~dr_synths[6].set(\t_trig,1);
-				},
-				46,{
-					~dr_synths[7].set(\t_trig,1);
-				},
-			);
+			if(~kit_params.density > 0, {
+				quant = ~kit_params.quant[[0,~kit_params.quant.size-1].asSpec.map(~kit_params.density)];
+				if((~timer.quav % quant).floor == 0, {
+					switch(num,
+						36,{
+							~dr_synths[0].set(\t_trig,1);
+							~dr_synths[0].set(\vol,val/127);
+						},
+						41,{
+							~dr_synths[1].set(\t_trig,1);
+							~dr_synths[1].set(\vol,val/127);
+						},
+						43,{
+							~dr_synths[2].set(\t_trig,1);
+							~dr_synths[2].set(\vol,val/127);
+						},
+						38,{
+							~dr_synths[3].set(\t_trig,1);
+							~dr_synths[3].set(\vol,val/127);
+						},
+						39,{
+							~dr_synths[4].set(\t_trig,1);
+							~dr_synths[4].set(\vol,val/127);
+						},
+						42,{
+							~dr_synths[5].set(\t_trig,1);
+							~dr_synths[5].set(\vol,val/127);
+						},
+						44,{
+							~dr_synths[6].set(\t_trig,1);
+							~dr_synths[6].set(\vol,val/127);
+						},
+						46,{
+							~dr_synths[7].set(\t_trig,1);
+							~dr_synths[7].set(\vol,val/127);
+						},
+					);
+				});
+			});
 
 		});
 		// from lpd8
@@ -153,13 +165,22 @@
 					var bus = Bus.new('control',0,1,s);
 					bus.set(val/127);
 				},
-				5,{ },
-				6,{ },
+				5,{ ~kit_params.density = val/127;},
+				6,{
+					// bus 3 -> kit decay
+					var bus = Bus.new('control',3,1,s);
+					bus.set(val/127);
+				},
 				7,{
+					// bus 2 -> kit rate
+					var bus = Bus.new('control',2,1,s);
+					bus.set(val/127);
+				},
+				8,{
 					// bus 1 ->delay speed
 					var bus = Bus.new('control',1,1,s);
 					bus.set(val/127);
-				},
+				}
 			);
 		});
 	};
@@ -180,8 +201,6 @@
 			// density
 			if(~splr_params.density > 0, {
 				var idx = [0,~timer.ivals.size-1].asSpec.map(~splr_params.density);
-				//~timer.ivals[idx].postln;
-				//~timer.quav.postln;
 				if(~timer.quav % ~timer.ivals[idx] == 0,{
 					var idx = [~pad_counter.pad_a,~pad_counter.pad_b].choose;
 					Synth.head(~splr_source,"nun_ossampler",
@@ -254,6 +273,10 @@
 		bus.set(0);
 		bus = Bus.new('control',1,1,s);
 		bus.set(0.5);
+		bus = Bus.new('control',2,1,s);
+		bus.set(1);
+		bus = Bus.new('control',3,1,s);
+		bus.set(1);
 	}
 };
 
@@ -280,10 +303,12 @@
 	*/
 	// SynthDef DRUMSAMPLER
 	SynthDef(\nun_drsampler, {
-		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0;
+		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
 		var sig, enva, envb,
-		master_env, vol = 1,
-		a, b;
+		master_env, a, b;
+
+		rate = [0.1, 1.9].asSpec.map(In.kr(2).lag(0.1));
+		decay = [0.05, 5, \exp].asSpec.map(In.kr(3).lag(0.1));
 
 		enva = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
 		envb = EnvGen.ar(Env.perc(LFNoise2.ar(10).range(0.01,0.2), decay, 1, -4),t_trig);
