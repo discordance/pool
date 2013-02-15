@@ -4,10 +4,12 @@
 ~init_buffers.value();
 ~init_midi.value();
 
+~set_dr_kit.value(0);
 
 
 (
 // ---
+~mainVol = 1;
 
 ~sampleMult = 0;
 
@@ -51,20 +53,36 @@
 
 // utility for the sampler
 ~sampleIndexParse = { |index|
-	var arr = [-1,-1];
+	var arr = [0,0];
 	//"sample parse".postln;
-	//arr[0] = ~buffers[index][0].bufnum;
 	(~buffers[index] != nil).if({arr[0] = ~buffers[index][0].bufnum;});
-	//arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;
 	(~buffers[index] != nil).if({arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;});
 	arr;
 };
 
 ~drumIndexParse = {|kit, perc|
-	var arr = [-1,-1];
-	(~kitBuffers[kit][perc] != nil).if({arr[0] = ~kitBuffers[kit][perc][0].bufnum;});//;
-	(~kitBuffers[kit][perc] != nil).if({arr[1] = ~kitBuffers[kit][perc][~kitBuffers[kit][perc].size - 1].bufnum;});
+	var arr = [0,0];
+	//~kitBuffers[kit][perc].size.postln;
+	(~kitBuffers[kit][perc] != nil).if({
+		if(~kitBuffers[kit][perc].size > 0,
+		{
+			arr[0] = ~kitBuffers[kit][perc][0].bufnum;
+		});
+	});
+	(~kitBuffers[kit][perc] != nil).if({
+		if(~kitBuffers[kit][perc].size > 0,{
+			arr[1] = ~kitBuffers[kit][perc][~kitBuffers[kit][perc].size - 1].bufnum;
+		});
+	});
 	arr;
+};
+
+~set_dr_kit = {|kit|
+	~kitCurrent = kit;
+	~dr_synths.do({|synth, i|
+		synth.set(\buf_bounds, ~drumIndexParse.value(~kitCurrent,i));
+	});
+
 };
 
 ~init_midi =
@@ -227,6 +245,8 @@
 ~init_buffers =
 {
 	Buffer.freeAll; // free all buffers
+	// create the emptybuffer zero, the void buffer
+	b = Buffer.alloc(s, 0.5 * s.sampleRate, 2);
 
 	// OS buffers
 	~pathArr = ~osPath.pathMatch.sort.collect{|file|
@@ -244,16 +264,18 @@
 	~kitPathArr = ~kitPath.pathMatch.sort.collect{|file|
 		file.insert(file.size,"*");
 	};
-	"size: ".post;
-	~kitPathArr.size.postln;
+	//"size: ".post;
+	//~kitPathArr.size.postln;
 	~kitBuffers = [];
 	~kitPathArr.do{ |file, i|
 		~kitBuffers = ~kitBuffers.add([]);
+		~kitBuffers[i] = Array.fill(8,[]);
 		file.pathMatch.sort.collect{|kfile, j|
 			kfile = kfile ++ "*";
-			~kitBuffers[i] = ~kitBuffers[i].add([]);
 			kfile.pathMatch.sort.collect{|sfile, k|
-				~kitBuffers[i][j] = ~kitBuffers[i][j].add(Buffer.read(s,sfile));
+				var buf, idx = sfile.dirname.basename;
+				buf = Buffer.read(s,sfile);
+				~kitBuffers[i][idx.asInt] = ~kitBuffers[i][idx.asInt] ++ buf;
 			};
 
 		};
@@ -284,6 +306,14 @@
 	/**
 	* Delay Dub
 	*/
+	SynthDef(\nun_leveler,{|in, out, thresh = -10, preamp = 0.01, amp = 0.05|
+		var output, input = In.ar(in,2)*preamp;
+		output = Compander.ar( input, input, thresh.dbamp, 1, 0.25, 0.01,0.1);
+		Out.ar(out,output*amp);
+	}).add;
+	/**
+	* Delay Dub
+	*/
 	SynthDef(\nun_dubecho,{|in, out, length = 1, fb = 0.8, sep = 0.012|
 		var vol = 1;
 		var input = In.ar(in, 2);
@@ -295,7 +325,7 @@
 		vol = [0.0, 1.0].asSpec.map(In.kr(0).lag(0.1));
 		length = [0.0, 1.0].asSpec.map(In.kr(1).lag(0.1));
 		LocalOut.ar(DelayC.ar(output*vol, 1, LFNoise2.ar(12).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])).reverse);
-		ReplaceOut.ar(out, output);
+		Out.ar(out, output);
 	}).add;
 
 	/**
@@ -304,29 +334,27 @@
 	// SynthDef DRUMSAMPLER
 	SynthDef(\nun_drsampler, {
 		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
-		var sig, enva, envb,
+		var sig, enva, rndsst,
 		master_env, a, b;
 
 		rate = [0.1, 1.9].asSpec.map(In.kr(2).lag(0.1));
 		decay = [0.05, 5, \exp].asSpec.map(In.kr(3).lag(0.1));
-
 		enva = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
-		envb = EnvGen.ar(Env.perc(LFNoise2.ar(10).range(0.01,0.2), decay, 1, -4),t_trig);
+
 		sig = 0;
 		// random buffers, a is the lead
 		a = buf_bounds[0];
-		b = IRand(buf_bounds[0],buf_bounds[1]);
+		b = TRand.kr(buf_bounds[1],buf_bounds[1]+1,t_trig).floor;
+		rndsst = TRand.kr(0,(BufFrames.kr(b) * 0.9).ceil, t_trig);
 
 		master_env = EnvGen.ar(Env.perc(0.01,decay*1.1),t_trig);
 		sig = PlayBuf.ar(2, a, BufRateScale.kr(a), rate: rate, trigger: t_trig) * enva;
-		sig = sig + Resonz.ar(
-			PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, trigger: t_trig, startPos: Rand(0,50)) * envb, envb*20000 + 80);
+		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, trigger: t_trig, startPos: rndsst ) * enva;
 
 		// master env
 		sig = sig * master_env;
 
 		// filter
-		//freq = \freq.asSpec.map(In.kr(1).lag(0.1));
 		sig = DFM1.ar(sig, freq, 0.5, 3);
 		Out.ar(out, sig*vol);
 
@@ -375,8 +403,10 @@
 	~splr_drums = Group.head(s);
 	~splr_fx = Group.tail(s);
 
-	~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
-	~fx_echo.set(\in, 0, \out, 0);
+	//~fx_comp = Synth.head(~splr_fx, "nun_leveler");
+	//~fx_comp.set(\in, 0, \out, 0);
+	//~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
+	//~fx_echo.set(\in, 0, \out, 0);
 
 }.fork
 
@@ -389,3 +419,6 @@
 
 
 //--- testing syndefs;
+//~kitBuffers[0][].size;
+~kitBuffers.postcs;
+nil;
