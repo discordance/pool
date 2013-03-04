@@ -49,8 +49,8 @@ buffer = Buffer.alloc(s, scale.size,1, {|b| b.setnMsg(0, scale) });
 	// two parallel chains of 4 allpass delays (8 total) :
 	4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
 	out = out+(y*0.1).tanh;
-	out = out*0.5 ! 2;
-	Out.ar(4,out);
+	out = out*0.2 ! 2;
+	Out.ar(0,out);
 }.play
 )
 

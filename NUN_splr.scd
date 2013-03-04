@@ -3,13 +3,18 @@
 */
 ~init_buffers.value();
 ~init_midi.value();
+~updateCorrections.value();
 
-~set_dr_kit.value(0);
+~set_dr_kit.value(6);
 
+//~kitCorrectionsBufs[288].get(0, {|msg| msg.postln});
 
 (
 // ---
-~mainVol = 1;
+~mainVol = 0.2;
+~mainOut = 0;
+~fxBus = 16;
+~compBus = 18;
 
 ~sampleMult = 0;
 
@@ -23,7 +28,7 @@
 ~timer = ();
 ~timer.ticks = 0;
 ~timer.quav = 0;
-~timer.ivals = [256,128,64,32,16,8,4];
+~timer.ivals = [256,192,128,96,64,48,32,25,16,12,8,4];
 
 // sampler params
 ~splr_params = ();
@@ -45,11 +50,17 @@
 ~kitBuffers;
 ~kitPathArr;
 ~kitPath = "/Users/nunja/Documents/AudioLib/supercollider/drumkit/*";
+~kitWantedPitch = 48;
+~kitCorrected = false;
+~kitCorrectionsArr = Dictionary.new;
+~kitCorrectionsBufs = Dictionary.new;
 
 // kit params
 ~kit_params = ();
 ~kit_params.density = 1;
-~kit_params.quant = [64,32,24,16,8,6,4,3,2,1];
+~kit_params.quant = [64,48,32,24,16,12,8,6,4,3,2,1];
+
+
 
 // utility for the sampler
 ~sampleIndexParse = { |index|
@@ -58,6 +69,43 @@
 	(~buffers[index] != nil).if({arr[0] = ~buffers[index][0].bufnum;});
 	(~buffers[index] != nil).if({arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;});
 	arr;
+};
+
+~updateCorrections = {
+	var num = ~kitCorrectionsBufs.size;
+	~kitCorrectionsBufs.keysValuesDo{| key, value |
+		value.get(0, {|msg|
+			if(msg != 440,{
+				~kitCorrectionsArr[key] = ~getCorrection.value(~kitWantedPitch,msg);
+			},{
+				~kitCorrectionsArr[key] = 1;
+			});
+			num = num - 1;
+			if(num == 0,{
+				~kitCorrected = true;
+				~set_dr_kit.value(0);
+			});
+		});
+	};
+};
+
+// algo to get the good playback rate for correction
+~getCorrection = { |midpitch, targetf|
+	var tones, base, adist, tone, diff;
+	adist = inf;
+	tone = 0;
+	base = midpitch - 36;
+	tones = [];
+	7.do({
+		tones = tones ++ base.midicps;
+		base = base + 12;
+	});
+	// get the close octave
+	tones.do({|el,i|
+		if((targetf - el).abs < adist, { adist = (targetf - el).abs; tone =  el; });
+	});
+	diff = (tone.cpsmidi - targetf.cpsmidi);
+	diff = 1/pow(2.0,(diff/12));
 };
 
 ~drumIndexParse = {|kit, perc|
@@ -80,7 +128,12 @@
 ~set_dr_kit = {|kit|
 	~kitCurrent = kit;
 	~dr_synths.do({|synth, i|
-		synth.set(\buf_bounds, ~drumIndexParse.value(~kitCurrent,i));
+		var rate = 1, bounds = ~drumIndexParse.value(~kitCurrent,i);
+		if(~kitCorrected == true, {
+			rate = ~kitCorrectionsArr[bounds[0]];
+		});
+		synth.set(\buf_bounds, bounds);
+		synth.set(\rate, rate);
 	});
 
 };
@@ -101,6 +154,54 @@
 	MIDIIn.removeFuncFrom(\control, ~splr_control);
 	MIDIIn.removeFuncFrom(\sysrt, ~splr_clock);
 
+	// trigger of drum
+	~trig_drum = { arg val, num;
+
+		//num.postln;
+		switch(num,
+			36,{
+				~dr_synths[0].set(\t_trig,1);
+				~dr_synths[0].set(\vol,val/127);
+				~dr_synths[0].set(\freq,\freq.asSpec.map(val/127));
+			},
+			41,{
+				~dr_synths[1].set(\t_trig,1);
+				~dr_synths[1].set(\vol,val/127);
+				~dr_synths[1].set(\freq,\freq.asSpec.map(val/127));
+			},
+			43,{
+				~dr_synths[2].set(\t_trig,1);
+				~dr_synths[2].set(\vol,val/127);
+				~dr_synths[2].set(\freq,\freq.asSpec.map(val/127));
+			},
+			38,{
+				~dr_synths[3].set(\t_trig,1);
+				~dr_synths[3].set(\vol,val/127);
+				~dr_synths[3].set(\freq,\freq.asSpec.map(val/127));
+			},
+			39,{
+				~dr_synths[4].set(\t_trig,1);
+				~dr_synths[4].set(\vol,val/127);
+				~dr_synths[4].set(\freq,\freq.asSpec.map(val/127));
+			},
+			42,{
+				~dr_synths[5].set(\t_trig,1);
+				~dr_synths[5].set(\vol,val/127);
+				~dr_synths[5].set(\freq,\freq.asSpec.map(val/127));
+			},
+			44,{
+				~dr_synths[6].set(\t_trig,1);
+				~dr_synths[6].set(\vol,val/127);
+				~dr_synths[6].set(\freq,\freq.asSpec.map(val/127));
+			},
+			46,{
+				~dr_synths[7].set(\t_trig,1);
+				~dr_synths[7].set(\vol,val/127);
+				~dr_synths[7].set(\freq,\freq.asSpec.map(val/127));
+			},
+		);
+	};
+
 	~splr_noteOn = { arg src, chan, num, val;
 		var idx, quant;
 		// from ancient
@@ -109,40 +210,12 @@
 			if(~kit_params.density > 0, {
 				quant = ~kit_params.quant[[0,~kit_params.quant.size-1].asSpec.map(~kit_params.density)];
 				if((~timer.quav % quant).floor == 0, {
-					switch(num,
-						36,{
-							~dr_synths[0].set(\t_trig,1);
-							~dr_synths[0].set(\vol,val/127);
-						},
-						41,{
-							~dr_synths[1].set(\t_trig,1);
-							~dr_synths[1].set(\vol,val/127);
-						},
-						43,{
-							~dr_synths[2].set(\t_trig,1);
-							~dr_synths[2].set(\vol,val/127);
-						},
-						38,{
-							~dr_synths[3].set(\t_trig,1);
-							~dr_synths[3].set(\vol,val/127);
-						},
-						39,{
-							~dr_synths[4].set(\t_trig,1);
-							~dr_synths[4].set(\vol,val/127);
-						},
-						42,{
-							~dr_synths[5].set(\t_trig,1);
-							~dr_synths[5].set(\vol,val/127);
-						},
-						44,{
-							~dr_synths[6].set(\t_trig,1);
-							~dr_synths[6].set(\vol,val/127);
-						},
-						46,{
-							~dr_synths[7].set(\t_trig,1);
-							~dr_synths[7].set(\vol,val/127);
-						},
-					);
+					~trig_drum.value(val, num);
+				},{
+						var thres = ~kit_params.density/2;
+						if(1.0.rand < thres,{
+							~trig_drum.value(val, num);
+						});
 				});
 			});
 
@@ -158,12 +231,14 @@
 			});
 			~pad_counter.ct = ~pad_counter.ct + 1;
 
-			// trigg sound
+			// trigg sound and random delay
+			~fx_echo.set(\length, 1.0.rand);
 			~sampleIndex = idx + (~samplePer*~sampleMult);
 			Synth.head(~splr_source,"nun_ossampler",
 				[\buf_bounds, ~sampleIndexParse.value(~sampleIndex),
-					\out, 0,
+					\out, ~fxBus,
 					\rate, ~splr_params.rate,
+					\decay, [8,0.5].asSpec.map(~splr_params.density),
 					\freq, \freq.asSpec.map(val/127)
 			]);
 		});
@@ -221,9 +296,10 @@
 				var idx = [0,~timer.ivals.size-1].asSpec.map(~splr_params.density);
 				if(~timer.quav % ~timer.ivals[idx] == 0,{
 					var idx = [~pad_counter.pad_a,~pad_counter.pad_b].choose;
+					~fx_echo.set(\length, 1.0.rand);
 					Synth.head(~splr_source,"nun_ossampler",
 						[\buf_bounds, ~sampleIndexParse.value(idx),
-							\out, 0,
+							\out, ~fxBus,
 							\rate, ~splr_params.rate,
 							\freq, ~splr_params.freq
 					]);
@@ -244,12 +320,13 @@
 */
 ~init_buffers =
 {
+	// BUFFER INIT --------------------------------
 	Buffer.freeAll; // free all buffers
 	// create the emptybuffer zero, the void buffer
-	b = Buffer.alloc(s, 0.5 * s.sampleRate, 2);
+	~voidBuffer = Buffer.alloc(s, 0.5 * s.sampleRate, 2);
 
 	// OS buffers
-	~pathArr = ~osPath.pathMatch.sort.collect{|file|
+	~pathArr = ~osPath.pathMatch.sort({ arg a, b; a.asInt > b.asInt }).collect{|file|
 		~sampleSetsTotal = ~sampleSetsTotal + 1;
 		file.insert(file.size,"*");
 	};
@@ -264,8 +341,7 @@
 	~kitPathArr = ~kitPath.pathMatch.sort.collect{|file|
 		file.insert(file.size,"*");
 	};
-	//"size: ".post;
-	//~kitPathArr.size.postln;
+
 	~kitBuffers = [];
 	~kitPathArr.do{ |file, i|
 		~kitBuffers = ~kitBuffers.add([]);
@@ -274,19 +350,35 @@
 			kfile = kfile ++ "*";
 			kfile.pathMatch.sort.collect{|sfile, k|
 				var buf, idx = sfile.dirname.basename;
-				buf = Buffer.read(s,sfile);
+				// analysis
+				buf = Buffer.read(s,sfile,action:{|inbuf|
+					if(k<1,{
+						var ana_buf;
+						ana_buf = Buffer.alloc(s, inbuf.numFrames / s.options.blockSize, 1, {|inanabuf|
+							//inbuf.post; " ".post; inanabuf.bufnum.postln;
+							~kitCorrectionsBufs.put(inbuf.bufnum, inanabuf);
+							~kitCorrectionsArr.put(inbuf.bufnum, 0); // init
+							{
+								var snd;
+								snd = PlayBuf.ar(1, inbuf, doneAction:2, loop:0);
+								RecordBuf.kr(Tartini.kr(snd,k:1512).at(0), inanabuf);
+							}.play;
+						});
+						//buf.postln;
+					});
+				});
 				~kitBuffers[i][idx.asInt] = ~kitBuffers[i][idx.asInt] ++ buf;
 			};
-
 		};
 	};
 
 	// drumkits inited we can do the rest:
 	// create a stack of drum synths
 	~dr_synths = Array.fill(8,{|i|
+		var bounds = ~drumIndexParse.value(~kitCurrent,i);
 		Synth.head(~splr_drums,"nun_drsampler",
-						[\buf_bounds, ~drumIndexParse.value(~kitCurrent,i),
-						\out, 0]);
+						[\buf_bounds, bounds,
+						\out, ~compBus]);
 	});
 
 	// defaut buses
@@ -306,9 +398,10 @@
 	/**
 	* Delay Dub
 	*/
-	SynthDef(\nun_leveler,{|in, out, thresh = -10, preamp = 0.01, amp = 0.05|
+	SynthDef(\nun_leveler,{|in, out, thresh = -10, preamp = 0.5, amp = 0.5|
 		var output, input = In.ar(in,2)*preamp;
-		output = Compander.ar( input, input, thresh.dbamp, 1, 0.25, 0.01,0.1);
+		//Pitch.kr(input).poll;
+		output = Compander.ar( input, input, thresh.dbamp, 1, 0.3, 0.01,0.1);
 		Out.ar(out,output*amp);
 	}).add;
 	/**
@@ -323,7 +416,7 @@
 		output = LPF.ar(output, 5000);
 		output = output.tanh;
 		vol = [0.0, 1.0].asSpec.map(In.kr(0).lag(0.1));
-		length = [0.0, 1.0].asSpec.map(In.kr(1).lag(0.1));
+		//length = SinOsc.kr(LFNoise2.kr(0.1).range(0,1)).range(0,1);
 		LocalOut.ar(DelayC.ar(output*vol, 1, LFNoise2.ar(12).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])).reverse);
 		Out.ar(out, output);
 	}).add;
@@ -334,10 +427,11 @@
 	// SynthDef DRUMSAMPLER
 	SynthDef(\nun_drsampler, {
 		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
-		var sig, enva, rndsst,
+		var sig, enva, rndsst, rate_mod,
 		master_env, a, b;
 
-		rate = [0.1, 1.9].asSpec.map(In.kr(2).lag(0.1));
+		rate_mod = [0.1, 1.9].asSpec.map(In.kr(2).lag(0.1));
+		rate = rate_mod * rate;
 		decay = [0.05, 5, \exp].asSpec.map(In.kr(3).lag(0.1));
 		enva = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
 
@@ -346,10 +440,10 @@
 		a = buf_bounds[0];
 		b = TRand.kr(buf_bounds[1],buf_bounds[1]+1,t_trig).floor;
 		rndsst = TRand.kr(0,(BufFrames.kr(b) * 0.9).ceil, t_trig);
-
 		master_env = EnvGen.ar(Env.perc(0.01,decay*1.1),t_trig);
-		sig = PlayBuf.ar(2, a, BufRateScale.kr(a), rate: rate, trigger: t_trig) * enva;
-		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, trigger: t_trig, startPos: rndsst ) * enva;
+		sig = PlayBuf.ar(2, a, BufRateScale.kr(a)*rate, trigger: t_trig) * enva;
+		//Pitch.kr(sig).poll;
+		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * enva;
 
 		// master env
 		sig = sig * master_env;
@@ -380,9 +474,9 @@
 		// random magic
 		master_env = EnvGen.ar(Env.perc(0.05,decay),doneAction:2);
 
-		sig = PlayBuf.ar(2, a, BufRateScale.kr(a),rate: rate) * Select.ar(IRand(0,9),envs);
+		sig = PlayBuf.ar(2, a, BufRateScale.kr(a)*rate) * Select.ar(IRand(0,9),envs);
 		sig = sig + Resonz.ar(
-			PlayBuf.ar(2, b, BufRateScale.kr(b), rate: rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs),Select.ar(IRand(0,9),envs)*20000 + 80);
+			PlayBuf.ar(2, b, BufRateScale.kr(b)*rate, startPos: Rand(0,50)) * Select.ar(IRand(0,9),envs),Select.ar(IRand(0,9),envs)*20000 + 80);
 
 		// master env
 		sig = sig * master_env;
@@ -403,10 +497,10 @@
 	~splr_drums = Group.head(s);
 	~splr_fx = Group.tail(s);
 
-	//~fx_comp = Synth.head(~splr_fx, "nun_leveler");
-	//~fx_comp.set(\in, 0, \out, 0);
-	//~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
-	//~fx_echo.set(\in, 0, \out, 0);
+	~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
+	~fx_echo.set(\in, ~fxBus, \out, ~compBus);
+	~fx_comp = Synth.tail(~splr_fx, "nun_leveler");
+	~fx_comp.set(\in, ~compBus, \out, ~mainOut, \amp, ~mainVol);
 
 }.fork
 

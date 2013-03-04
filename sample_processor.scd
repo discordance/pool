@@ -5,7 +5,7 @@
 s = Server.local;
 s.options.memSize = 655536;
 ~rawPath = '/Users/nunja/Documents/AudioLib/supercollider/raw';
-~testFile = '/Users/nunja/Documents/AudioLib/supercollider/raw/waka.wav';
+~testFile = '/Users/nunja/Documents/AudioLib/supercollider/raw/bounce_nappe_kitsh.wav';
 
 b = Buffer.read(s,~testFile, action: {
 	b.postln;
