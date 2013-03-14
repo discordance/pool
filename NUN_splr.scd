@@ -5,13 +5,19 @@
 ~init_midi.value();
 ~updateCorrections.value();
 
+/**
+ * 1 - housy
+ * 2 - indous
+ * 3 - pire house
+ * 4 - chicago
+ * 5 - indous
+ * 6 - naz indis
+ */
 ~set_dr_kit.value(6);
-
-//~kitCorrectionsBufs[288].get(0, {|msg| msg.postln});
 
 (
 // ---
-~mainVol = 0.2;
+~mainVol = 0.5;
 ~mainOut = 0;
 ~fxBus = 16;
 ~compBus = 18;
@@ -60,8 +66,6 @@
 ~kit_params.density = 1;
 ~kit_params.quant = [64,48,32,24,16,12,8,6,4,3,2,1];
 
-
-
 // utility for the sampler
 ~sampleIndexParse = { |index|
 	var arr = [0,0];
@@ -71,6 +75,7 @@
 	arr;
 };
 
+// updates kit corrections
 ~updateCorrections = {
 	var num = ~kitCorrectionsBufs.size;
 	~kitCorrectionsBufs.keysValuesDo{| key, value |
@@ -231,7 +236,8 @@
 			});
 			~pad_counter.ct = ~pad_counter.ct + 1;
 
-			// trigg sound and random delay
+			// trigg sound and random delay and shape form
+			~chebBuffer.sendCollection(Signal.sineFill(1000, [1, 1.0.rand, 1.0.rand, 1.0.rand]), 0);
 			~fx_echo.set(\length, 1.0.rand);
 			~sampleIndex = idx + (~samplePer*~sampleMult);
 			Synth.head(~splr_source,"nun_ossampler",
@@ -325,6 +331,10 @@
 	// create the emptybuffer zero, the void buffer
 	~voidBuffer = Buffer.alloc(s, 0.5 * s.sampleRate, 2);
 
+	// buffers for waveshaping
+	~chebBuffer = Buffer.alloc(s,1000,1,0);
+	~chebBuffer.sendCollection(Signal.sineFill(1000, [1, 0.2, 0.7]), 0);
+
 	// OS buffers
 	~pathArr = ~osPath.pathMatch.sort({ arg a, b; a.asInt > b.asInt }).collect{|file|
 		~sampleSetsTotal = ~sampleSetsTotal + 1;
@@ -396,17 +406,17 @@
 
 {
 	/**
-	* Delay Dub
-	*/
+	 * Leveller
+	 */
 	SynthDef(\nun_leveler,{|in, out, thresh = -10, preamp = 0.5, amp = 0.5|
 		var output, input = In.ar(in,2)*preamp;
-		//Pitch.kr(input).poll;
 		output = Compander.ar( input, input, thresh.dbamp, 1, 0.3, 0.01,0.1);
 		Out.ar(out,output*amp);
 	}).add;
+
 	/**
-	* Delay Dub
-	*/
+	 * Delay Dub
+	 */
 	SynthDef(\nun_dubecho,{|in, out, length = 1, fb = 0.8, sep = 0.012|
 		var vol = 1;
 		var input = In.ar(in, 2);
@@ -416,15 +426,13 @@
 		output = LPF.ar(output, 5000);
 		output = output.tanh;
 		vol = [0.0, 1.0].asSpec.map(In.kr(0).lag(0.1));
-		//length = SinOsc.kr(LFNoise2.kr(0.1).range(0,1)).range(0,1);
-		LocalOut.ar(DelayC.ar(output*vol, 1, LFNoise2.ar(12).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])).reverse);
+		LocalOut.ar(DelayC.ar(output*vol, 1, LFNoise2.ar(0.2).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])).reverse);
 		Out.ar(out, output);
 	}).add;
 
 	/**
-	* DRUM Sampler
-	*/
-	// SynthDef DRUMSAMPLER
+	 * DRUM Sampler
+	 */
 	SynthDef(\nun_drsampler, {
 		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
 		var sig, enva, rndsst, rate_mod,
@@ -448,20 +456,24 @@
 		// master env
 		sig = sig * master_env;
 
+		sig = LeakDC.ar(sig);
 		// filter
 		sig = DFM1.ar(sig, freq, 0.5, 3);
 		Out.ar(out, sig*vol);
 
 	}).add;
+
 	/**
-	* OS Sampler
-	*/
-	// SynthDef OS SAMPLER
+	 * OS Sampler
+	 */
 	SynthDef(\nun_ossampler, {
-		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000;
+		arg out = 0, buf_bounds = #[0,0], buf_shape = 1, decay = 5, rate = 1, freq = 20000;
 		var sig, envs,
 		master_env, vol = 1,
-		a, b;
+		a, b,
+		// wave shape test
+		ws_index
+		;
 
 		//envs
 		envs = Array.fill(10, { EnvGen.ar(Env.new(Array.rand(10, 0.1, 1.0).add(0.0), Array.exprand(9, 0.001, 2),curve:\welch)) });
@@ -481,8 +493,12 @@
 		// master env
 		sig = sig * master_env;
 
-		// filter
-		//freq = \freq.asSpec.map(In.kr(1).lag(0.1));
+		// waveshape
+		ws_index = LinLin.ar(sig, -1.0, 1.0, 0.0, BufFrames.kr(buf_shape));
+		sig = BufRd.ar(1, buf_shape, ws_index, 0, 4);
+
+		// filter and DC
+		sig = LeakDC.ar(sig);
 		sig = DFM1.ar(sig, freq, 0.5, 3);
 
 		Out.ar(out, sig*vol);
@@ -509,10 +525,5 @@
 // ---
 )
 
-
-
-
-//--- testing syndefs;
-//~kitBuffers[0][].size;
-~kitBuffers.postcs;
-nil;
+~mainVol = 0.27;
+~fx_comp.set(\amp,~mainVol);

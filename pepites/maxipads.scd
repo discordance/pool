@@ -127,7 +127,7 @@ SynthDef(\ChMach, { arg
 
      var monoBuffer1 = Buffer.alloc(s, s.sampleRate*2, 1);
 
-	var rootPitch=34+36;										// Start on a C
+	var rootPitch=78;										// Start on a C
 
 	var stopTranspose = 0;
 	var transposeCount = 10;									//Wait a while after transposing to minimise semitone clashes
@@ -143,10 +143,11 @@ SynthDef(\ChMach, { arg
     var rates = Scale.prometheus.semitones.scramble;
 
     var thisRatio = (rates - 12) ++ rates ;
+    //var thisRatio = [0.25, 0.5, 0.75, 1, 1.125, 1.333333, 1.5, 1.6875, 2, 2.25, 2.6666666, 3, 3.375, 4, 5];
 	var thisPitch;
 
 	var svf = Synth.tail(g, \Filters);
-	var d = Synth.tail(g, \StereoModDelay);
+	//var d = Synth.tail(g, \StereoModDelay);
 
 	stereoBuffer1L.zero;
 	stereoBuffer1R.zero;
@@ -198,3 +199,4 @@ SynthDef(\ChMach, { arg
 )
 
 Scale.directory;
+

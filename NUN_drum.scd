@@ -16,15 +16,14 @@
 ~load_drum_midi.value();
 
 (
-Buffer.freeAll;
-~mainOut = 4;
+~mainOut = 0;
 
 ~load_drum_midi =
 {
 	// midi connect all
 	MIDIClient.init;
 	//MIDIClient.sources;
-	MIDIIn.connect(0,MIDIClient.sources.at(3));
+	MIDIIn.connect(0,MIDIClient.sources.at(4));
 
 	MIDIIn.removeFuncFrom(\noteOn, ~drum_noteOn);
     MIDIIn.removeFuncFrom(\control, ~drum_control);

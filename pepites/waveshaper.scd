@@ -101,7 +101,7 @@ var bufInput, bufInputFreq;
 
 var modPoints, env, envgen;
 
-sinFreq = MouseX.kr(20, 1000, \exponential).poll;
+sinFreq = MouseX.kr(20, 1000, \exponential);
 
 soundIn = Mix.ar([SinOsc.ar(sinFreq, 0, 0.8),SinOsc.ar(sinFreq*1.25, 0, 0.8),SinOsc.ar(sinFreq*1.75, 0, 0.6)]) * 0.05;
 
