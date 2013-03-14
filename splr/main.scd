@@ -49,7 +49,7 @@
 	~ascii.postln;
 
 	"setting ctrl bus defaults .".post;
-	5.do({
+	3.do({
 		".".post;
 		1.wait;
 	});
@@ -64,6 +64,14 @@
 		b.setSynchronous(0);
 		b = Bus.new('control',3,1,s);
 		b.setSynchronous(0);
+		b = Bus.new('control',4,1,s);
+		b.setSynchronous(0);
+
+		8.do({|i|
+			b = Bus.new('control',~dr_bus_pitch_base+i,1,s);
+			b.setSynchronous(0.5);
+		})
+
 	}.value();
 	" done.".postln;
 

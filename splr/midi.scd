@@ -15,7 +15,7 @@
  */
 ~init_midi =
 {
-	var lpd8, ancient, a_sync_in;
+	var lpd8, ancient, a_sync_in, motu;
 
 	MIDIClient.init;
 	MIDIIn.connectAll;
@@ -24,6 +24,7 @@
 	lpd8 = MIDIIn.findPort("LPD8", "LPD8") ? (\uid:0);
 	ancient = MIDIIn.findPort("Ancient2 NOTES OUT", "Ancient2 NOTES OUT") ? (\uid:0);
 	a_sync_in = MIDIIn.findPort("Ancient2 SYNC OUT", "Ancient2 SYNC OUT") ? (\uid:0);
+	motu = MIDIIn.findPort("UltraLite mk3", "MIDI Port") ? (\uid:0);
 
 	MIDIIn.removeFuncFrom(\noteOn, ~splr_noteOn);
 	MIDIIn.removeFuncFrom(\control, ~splr_control);
@@ -120,6 +121,29 @@
 		});
 	};
 	~splr_control = { arg src, chan, num, val;
+
+		// from MOTU IN
+		if(src == motu.uid,{
+			switch(chan,
+				3,{
+					var bus = Bus.new('control',~dr_bus_base+num,1,s);
+					if(num < ~max_knob_bus,{
+						bus.set(val/127);
+
+						// special cases
+						if((~dr_bus_base+num) == 5,{
+							~kit_params.density = val/127;
+						});
+						"bus : ".post; (~dr_bus_base+num).postln;
+					});
+				},
+				4,
+				{
+
+				}
+			);
+		});
+
 		// from lpd8
 		if(src == lpd8.uid,{
 			//("chan " ++ chan ++ " num " ++ num ++ " val " ++ val).postln;

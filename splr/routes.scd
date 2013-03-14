@@ -36,8 +36,11 @@
 	~splr_fx = Group.tail(s);
 
 
-	~os_mixer = Synth.head(~splr_premix, "nun_os_mixer");
-	~os_mixer.set(\in, ~osBus, \out, ~compBus, \fx, ~fxBusses);
+	~os_mixer = Synth.head(~splr_premix, "nun_pre_mixer");
+	~os_mixer.set(\in, ~osBus, \out, ~compBus, \fx, ~fxBusses, \ctbase, 2);
+
+	~drum_mixer = Synth.head(~splr_premix, "nun_pre_mixer");
+	~drum_mixer.set(\in, ~drumBus, \out, ~compBus, \fx, ~fxBusses, \ctbase, 9);
 
 	~fx_echo = Synth.head(~splr_fx, "nun_dubecho");
 	~fx_echo.set(\in, ~fxBusses, \out, ~compBus);

@@ -19,10 +19,16 @@
 ~mainVol = 0.5;
 ~mainOut = 0;
 
+// audio busses
 ~compBus = 16;
 ~osBus = 18;
 ~drumBus = 20;
 ~fxBusses = 22;
+
+// control busses
+~dr_bus_base = 5;
+~max_knob_bus = 48;
+~dr_bus_pitch_base = ~dr_bus_base + 8;
 
 ~sampleMult = 0;
 

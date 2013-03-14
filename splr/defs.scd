@@ -20,13 +20,13 @@
 	/**
 	* Os Mixer
 	*/
-	SynthDef(\nun_os_mixer,{|in, out, fx|
+	SynthDef(\nun_pre_mixer,{|in, out, ctbase = 2, fx|
 		var output, input = In.ar(in,2);
 		var dly_vol = 0, rev_vol = 0, shape_vol = 0;
 		// delay
-		dly_vol = [0.0, 1.0].asSpec.map(In.kr(2).lag(0.1));
-		rev_vol = [0.0, 1.0].asSpec.map(In.kr(3).lag(0.1));
-		shape_vol = [0.0, 1.0].asSpec.map(In.kr(4).lag(0.1));
+		dly_vol = [0.0, 1.0].asSpec.map(In.kr(ctbase).lag(0.1));
+		rev_vol = [0.0, 1.0].asSpec.map(In.kr(ctbase+1).lag(0.1));
+		shape_vol = [0.0, 1.0].asSpec.map(In.kr(ctbase+2).lag(0.1));
 		Out.ar(fx,input*dly_vol);
 		Out.ar(fx+2,input*rev_vol);
 		Out.ar(fx+4,input*shape_vol);
@@ -78,13 +78,14 @@
 	* DRUM Sampler
 	*/
 	SynthDef(\nun_drsampler, {
-		arg out = 0, buf_bounds = #[0,0], decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
+		arg out = 0, buf_bounds = #[0,0], pitch_busses = 5,
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
 		var sig, enva, rndsst, rate_mod,
 		master_env, a, b;
 
-		//rate_mod = [0.1, 1.9].asSpec.map(In.kr(2).lag(0.1));
-		//rate = rate_mod * rate;
-		//decay = [0.05, 5, \exp].asSpec.map(In.kr(3).lag(0.1));
+		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_busses).lag(0.1));
+		rate = rate_mod * rate;
+		decay = [0.05, 5, \exp].asSpec.map(In.kr(6).lag(0.1));
 		enva = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
 
 		sig = 0;
@@ -92,7 +93,7 @@
 		a = buf_bounds[0];
 		b = TRand.kr(buf_bounds[1],buf_bounds[1]+1,t_trig).floor;
 		rndsst = TRand.kr(0,(BufFrames.kr(b) * 0.9).ceil, t_trig);
-		master_env = EnvGen.ar(Env.perc(0.01,decay*1.1),t_trig);
+		master_env = EnvGen.ar(Env.perc(atk,decay*1.1),t_trig);
 		sig = PlayBuf.ar(2, a, BufRateScale.kr(a)*rate, trigger: t_trig) * enva;
 		//Pitch.kr(sig).poll;
 		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * enva;
@@ -160,8 +161,8 @@
 		arg in, out, buff;
 		var soundIn, playHead, output, thisIndex;
 		soundIn = In.ar(in,2)*2;
-		thisIndex = LinLin.ar(soundIn, -1.0, 1.0, 0.0, BufFrames.kr(buff) * LFNoise2.kr(0.6).range(0.0,1.0));
-		playHead = BufRd.ar(1, buff, thisIndex, 0, 4) * 3;
+		thisIndex = LinLin.ar(soundIn*5, -1.0, 1.0, 0.0, BufFrames.kr(buff) * LFNoise2.kr(0.6).range(0.0,1.0));
+		playHead = BufRd.ar(1, buff, thisIndex, 0, 4) * 6;
 		output = LeakDC.ar(playHead)*Amplitude.kr(soundIn);
 		output = DFM1.ar(output,14000,0.2,10,0.0008)*0.1;
 		Out.ar(out, output!2);

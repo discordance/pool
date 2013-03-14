@@ -71,7 +71,8 @@
 	~dr_synths = Array.fill(8,{|i|
 		var bounds = ~drumIndexParse.value(~kitCurrent,i);
 		Synth.head(~splr_drums,"nun_drsampler",
-						[\buf_bounds, bounds,
-						\out, ~drumBus]);
+			[\buf_bounds, bounds,
+			 \pitch_busses,~dr_bus_pitch_base+i,
+			\out, ~drumBus]);
 	});
 };
