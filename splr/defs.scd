@@ -79,7 +79,7 @@
 	*/
 	SynthDef(\nun_drsampler, {
 		arg out = 0, buf_bounds = #[0,0], pitch_busses = 5,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1;
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
 		var sig, enva, rndsst, rate_mod,
 		master_env, a, b;
 
@@ -104,7 +104,7 @@
 		sig = LeakDC.ar(sig);
 		// filter
 		sig = DFM1.ar(sig, freq, 0.5, 3);
-		Out.ar(out, sig*vol);
+		Out.ar(out, sig*vol*on);
 
 	}).add;
 
@@ -117,9 +117,7 @@
 		atk = 0.05, decay = 5, drate = 1, rate = 1, freq = 20000;
 		var sig, envs,
 		master_env, vol = 1,
-		a, b,
-		// wave shape test
-		ws_index
+		a, b
 		;
 
 		//envs
@@ -145,10 +143,6 @@
 			* Select.ar(IRand(0,9),envs),Select.ar(IRand(0,9),envs)*20000 + 80);
 		// master env
 		sig = sig * master_env;
-
-		// waveshape
-		//ws_index = LinLin.ar(sig, -1.0, 1.0, 0.0, BufFrames.kr(buf_shape));
-		//sig = BufRd.ar(1, buf_shape, ws_index, 0, 4);
 
 		// filter and DC
 		sig = LeakDC.ar(sig);

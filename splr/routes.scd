@@ -27,7 +27,7 @@
 
 	// buffers for waveshaping
 	~chebBuffer = Buffer.alloc(s,1000,1,0);
-	~chebBuffer.sendCollection(Signal.sineFill(1000, [1, 0.2, 0.7]), 0);
+	~chebBuffer.sendCollection(Signal.sineFill(1000, [1, 1.0.rand, 1.0.rand, 1.0.rand]), 0);
 
 	// ROUTE
 	~splr_source = Group.head(s);

@@ -134,7 +134,16 @@
 						if((~dr_bus_base+num) == 5,{
 							~kit_params.density = val/127;
 						});
+						if((~dr_bus_base+num) == 7,{
+							~set_dr_kit.value([0,~kitBuffers.size-1].asSpec.map(val/127));
+						});
 						"bus : ".post; (~dr_bus_base+num).postln;
+					},{
+							if( (num >= 56).and(num <= 63),{
+								var index = (num - 56), on = val/127;
+								~dr_synths[index].set(\on,on);
+							});
+
 					});
 				},
 				4,
