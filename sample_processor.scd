@@ -5,7 +5,7 @@
 s = Server.local;
 s.options.memSize = 655536;
 ~rawPath = '/Users/nunja/Documents/AudioLib/supercollider/raw';
-~testFile = '/Users/nunja/Documents/AudioLib/supercollider/raw/bounce_nappe_kitsh.wav';
+~testFile = '/Users/nunja/Documents/AudioLib/supercollider/raw/kb.wav';
 
 b = Buffer.read(s,~testFile, action: {
 	b.postln;
@@ -34,7 +34,7 @@ SynthDef(\help_Buffer, { arg out = 0, bufnum;
 
 	// uncomment (3 sines (octave lower, pitch and octave higher mixed into one signal (out))
 	//sig = sig + Mix.new(SinOsc.ar(freq * [0.5,1], 0, 0.2 * amp*hasFreq*gate));
-	sig = HPF.ar(sig, 1200);
+	sig = HPF.ar(sig, 300);
 	7.do({
 		sig = AllpassC.ar(sig, 0.02, [0.02.rand,0.02.rand], 2);
 	});

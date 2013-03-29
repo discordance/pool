@@ -33,7 +33,7 @@ SynthDef(\StereoModDelay, { arg
 	tapR = BBandPass.ar(tapR, eqFc+eqMod, eqQ);
 
 	//Restore the output level
-	Out.ar(0,[1.4*tapL, 1.4*tapR]);
+	Out.ar(2,[1.4*tapL, 1.4*tapR]);
 	LocalOut.ar(fb*[tapR, tapL]);
 }).add;
 
@@ -59,7 +59,7 @@ SynthDef(\Filters, { arg
 	var output = SVF.ar(signal, cutoffBase + (modSig*cutoffMod), resBase, lpVol, bpVol, hpVol, notchVol, peakVol);
 	output = 4*SVF.ar(output, cutoffBase + (modSig*cutoffMod), resBase, lpVol, bpVol, hpVol, notchVol, peakVol);
 
-	Out.ar([0,1], output);
+	Out.ar([2,3], output);
 	Out.ar([18, 19], output);
 }).add;
 
@@ -112,7 +112,7 @@ SynthDef(\ChMach, { arg
 	output = MoogFF.ar(output*4, f*LFNoise2.kr(0.2, 6, 4), 0.5);
 
 	output = 2*env*output.tanh * 0.1;
-	Out.ar(0, Pan2.ar(output, pan));
+	Out.ar(2, Pan2.ar(output, pan));
 	Out.ar(16, Pan2.ar(output, pan));
 	Out.ar(18, Pan2.ar(output, pan));
 

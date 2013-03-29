@@ -16,7 +16,7 @@
 
 (
 // ---
-~mainVol = 0.5;
+~mainVol = 0.6;
 ~mainOut = 0;
 
 // audio busses
@@ -64,10 +64,21 @@
 ~kitBuffers;
 ~kitPathArr;
 ~kitPath = "/Users/nunja/Documents/AudioLib/supercollider/drumkit/*";
+~kitCurrentPitchSet = "default";
+~kitPitchPath = "/Users/nunja/Documents/SuperCollider/presets/kitpitches/";
+~kitPitches = Object.readArchive(~kitPitchPath++~kitCurrentPitchSet);
+if(~kitPitches == nil,{
+	~kitPitches = Dictionary.new;
+	~kitPitches.put(~kitCurrentPitchSet, [0,0,0,0,0,0,0,0] );
+});
+~kitPitches.postln;
+
+// deprecated
 ~kitWantedPitch = 48;
 ~kitCorrected = false;
 ~kitCorrectionsArr = Dictionary.new;
 ~kitCorrectionsBufs = Dictionary.new;
+
 
 // kit params
 ~kit_params = ();

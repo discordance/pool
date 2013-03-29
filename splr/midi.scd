@@ -13,6 +13,7 @@
     <_________>
 
  */
+//~test = 0;
 ~init_midi =
 {
 	var lpd8, ancient, a_sync_in, motu;
@@ -33,7 +34,8 @@
 	// trigger of drum
 	~trig_drum = { arg val, num;
 
-		//num.postln;
+		//(Main.elapsedTime - ~test).postln;
+		//~test = Main.elapsedTime;
 		switch(num,
 			36,{
 				~dr_synths[0].set(\t_trig,1);
@@ -126,18 +128,28 @@
 		if(src == motu.uid,{
 			switch(chan,
 				3,{
-					var bus = Bus.new('control',~dr_bus_base+num,1,s);
+					var busnum = ~dr_bus_base+num;
+					var bus = Bus.new('control', busnum,1,s);
 					if(num < ~max_knob_bus,{
+
 						bus.set(val/127);
 
 						// special cases
-						if((~dr_bus_base+num) == 5,{
+						// store pitchs
+						if( (busnum > 12).and(busnum < 21),{
+							var idx = busnum - 13;
+							~kitPitches[~kitCurrentPitchSet][idx] = val/127;
+							~kitPitches.writeArchive(~kitPitchPath++~kitCurrentPitchSet);
+						});
+						// kit density
+						if((busnum) == 5,{
 							~kit_params.density = val/127;
 						});
-						if((~dr_bus_base+num) == 7,{
+						// kit selecta
+						if((busnum) == 7,{
 							~set_dr_kit.value([0,~kitBuffers.size-1].asSpec.map(val/127));
 						});
-						"bus : ".post; (~dr_bus_base+num).postln;
+
 					},{
 							if( (num >= 56).and(num <= 63),{
 								var index = (num - 56), on = val/127;
@@ -161,7 +173,10 @@
 				1,{ ~splr_params.density = val/127; }, // special case 128 steps
 
 				// OS KIT
-				2,{ ~sampleMult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor;
+				2,{
+					~sampleMult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor;
+					"os kit: ".post;
+					~sampleMult.postln;
 				},
 				// OS RATE
 				3,{ ~splr_params.rate = [0.1,1.9].asSpec.map(val/127); },

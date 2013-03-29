@@ -14,6 +14,10 @@
 
  */
 
+
+// UTILS LIVE
+~set_dr_kit.value(5);
+
 // INCLUDES
 (
 // GLOBAL VARS
@@ -41,8 +45,6 @@
 	"BUFFERS".postln;
 	~init_buffers.value();
 	1.wait;
-	"CORRECTIONS".postln;
-	~updateCorrections.value();
 	"MIDI".postln;
 	~init_midi.value();
 
@@ -57,19 +59,19 @@
 	// defaults
 	{
 		b = Bus.new('control',0,1,s);
-		b.setSynchronous(1);
+		b.set(1);
 		b = Bus.new('control',1,1,s);
-		b.setSynchronous(0);
+		b.set(0);
 		b = Bus.new('control',2,1,s);
-		b.setSynchronous(0);
+		b.set(0);
 		b = Bus.new('control',3,1,s);
-		b.setSynchronous(0);
+		b.set(0);
 		b = Bus.new('control',4,1,s);
-		b.setSynchronous(0);
+		b.set(0);
 
 		8.do({|i|
 			b = Bus.new('control',~dr_bus_pitch_base+i,1,s);
-			b.setSynchronous(0.5);
+			b.set(~kitPitches[~kitCurrentPitchSet][i]);
 		})
 
 	}.value();
@@ -78,6 +80,5 @@
 }.fork;
 
 )
-
 
 

@@ -80,13 +80,14 @@
 	SynthDef(\nun_drsampler, {
 		arg out = 0, buf_bounds = #[0,0], pitch_busses = 5,
 		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
-		var sig, enva, rndsst, rate_mod,
+		var sig, env, atkenv, rndsst, rate_mod, atksnd,
 		master_env, a, b;
 
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_busses).lag(0.1));
 		rate = rate_mod * rate;
 		decay = [0.05, 5, \exp].asSpec.map(In.kr(6).lag(0.1));
-		enva = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
+		env = EnvGen.ar(Env.perc(0.1, decay, 1, -4),t_trig);
+		atkenv = EnvGen.ar(Env.perc(0.01, 0.1, 1, -4),t_trig);
 
 		sig = 0;
 		// random buffers, a is the lead
@@ -94,9 +95,9 @@
 		b = TRand.kr(buf_bounds[1],buf_bounds[1]+1,t_trig).floor;
 		rndsst = TRand.kr(0,(BufFrames.kr(b) * 0.9).ceil, t_trig);
 		master_env = EnvGen.ar(Env.perc(atk,decay*1.1),t_trig);
-		sig = PlayBuf.ar(2, a, BufRateScale.kr(a)*rate, trigger: t_trig) * enva;
-		//Pitch.kr(sig).poll;
-		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * enva;
+		atksnd = PlayBuf.ar(2, a, BufRateScale.kr(a), trigger: t_trig) * atkenv;
+		sig = atksnd + PlayBuf.ar(2, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
+		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * env;
 
 		// master env
 		sig = sig * master_env;
@@ -116,7 +117,7 @@
 		buf_shape = 1,
 		atk = 0.05, decay = 5, drate = 1, rate = 1, freq = 20000;
 		var sig, envs,
-		master_env, vol = 1,
+		master_env, vol = 0.82,
 		a, b
 		;
 

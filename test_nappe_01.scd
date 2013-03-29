@@ -2,6 +2,7 @@
 (
 var scale, buffer;
 scale = [0,5,1,-2,-7];//Scale.dorian.degrees; //sikah
+scale = Scale.dorian.degrees;
 buffer = Buffer.alloc(s, scale.size,1, {|b| b.setnMsg(0, scale) });
 
 {
@@ -14,25 +15,25 @@ buffer = Buffer.alloc(s, scale.size,1, {|b| b.setnMsg(0, scale) });
 	key1 = DegreeToKey.kr(
 				buffer.bufnum,
 				LFNoise2.kr(0.008*rate).range(0,15),		// mouse indexes into scale
-				3,					// 12 notes per octave
+				4,					// 12 notes per octave
 				2,					// mul = 1
-				56					// offset by 72 notes
+				48					// offset by 72 notes
 			);
 
 	key2 = DegreeToKey.kr(
 				buffer.bufnum,
-				LFNoise2.kr(0.02*rate).range(0,15),		// mouse indexes into scale
+				LFNoise2.kr(0.002*rate).range(0,15),		// mouse indexes into scale
 				2,					// 12 notes per octave
 				2,					// mul = 1
-				68					// offset by 72 notes
+				48 					// offset by 72 notes
 			);
 
 	key3 = DegreeToKey.kr(
 				buffer.bufnum,
-				LFNoise2.kr(0.02*rate).range(0,15),		// mouse indexes into scale
-				3,					// 12 notes per octave
+				LFNoise2.kr(0.002*rate).range(0,15),		// mouse indexes into scale
+				4,					// 12 notes per octave
 				2,					// mul = 1
-				56					// offset by 72 notes
+				36					// offset by 72 notes
 			);
 
 	arr = ([key1.midicps, key2.midicps, key3.midicps]*0.33*LFNoise2.kr(0.02*rate).range(0.99,1.01)) ++ ([key1.midicps, key2.midicps, key3.midicps]*LFNoise2.kr(0.02*rate).range(0.999,1.01)) ++ ([key1.midicps, key2.midicps, key3.midicps] *1.33*LFNoise2.kr(0.02*rate).range(0.98,1.03));
@@ -50,7 +51,7 @@ buffer = Buffer.alloc(s, scale.size,1, {|b| b.setnMsg(0, scale) });
 	4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
 	out = out+(y*0.1).tanh;
 	out = out*0.2 ! 2;
-	Out.ar(0,out);
+	Out.ar(2,out);
 }.play
 )
 

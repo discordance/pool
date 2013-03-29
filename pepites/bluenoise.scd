@@ -10,6 +10,7 @@ buffer = Buffer.alloc(s, scale.size,1, {|b| b.setnMsg(0, scale) });
 fork{
   loop{
     play{
+	Out.ar(2,
      Splay.ar(
        {
 		  var key;
@@ -26,8 +27,9 @@ fork{
           key.midicps,
           0.0005)
 
-		*EnvGen.kr(Env.perc(LFNoise2.kr(0.3).range(0.01,0.08),LFNoise2.kr(0.9).range(1,8),1,-8),1,1,0,9,2)
-       }!5)
+		*EnvGen.ar(Env.perc(LFNoise2.kr(0.3).range(0.01,0.08),LFNoise2.kr(0.9).range(1,20),1,-8),1,1,0,9,2)
+			}!5));
+
     };
 		[16,32].choose.wait;
    }

@@ -46,6 +46,7 @@
 				var buf, idx = sfile.dirname.basename;
 				// analysis
 				buf = Buffer.read(s,sfile,action:{|inbuf|
+					/*
 					if(k<1,{
 						var ana_buf;
 						ana_buf = Buffer.alloc(s, inbuf.numFrames / s.options.blockSize, 1, {|inanabuf|
@@ -60,6 +61,7 @@
 						});
 						//buf.postln;
 					});
+					*/
 				});
 				~kitBuffers[i][idx.asInt] = ~kitBuffers[i][idx.asInt] ++ buf;
 			};
