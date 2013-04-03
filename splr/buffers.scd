@@ -72,8 +72,12 @@
 	// create a stack of drum synths
 	~dr_synths = Array.fill(8,{|i|
 		var bounds = ~drumIndexParse.value(~kitCurrent,i);
+		var decay_bus = 6;
+		if(i > 3, { decay_bus = 7; });
+
 		Synth.head(~splr_drums,"nun_drsampler",
 			[\buf_bounds, bounds,
+			 \decay_bus, decay_bus,
 			 \pitch_busses,~dr_bus_pitch_base+i,
 			\out, ~drumBus]);
 	});

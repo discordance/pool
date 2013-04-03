@@ -71,7 +71,7 @@
 
 		8.do({|i|
 			b = Bus.new('control',~dr_bus_pitch_base+i,1,s);
-			b.set(~kitPitches[~kitCurrentPitchSet][i]);
+			b.set(~kitPitches[~kitCurrent.floor][i]);
 		})
 
 	}.value();

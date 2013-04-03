@@ -133,21 +133,26 @@
 					if(num < ~max_knob_bus,{
 
 						bus.set(val/127);
-
+						//busnum.postln;
 						// special cases
 						// store pitchs
 						if( (busnum > 12).and(busnum < 21),{
 							var idx = busnum - 13;
-							~kitPitches[~kitCurrentPitchSet][idx] = val/127;
-							~kitPitches.writeArchive(~kitPitchPath++~kitCurrentPitchSet);
+							~kitPitches[~kitCurrent.floor][idx] = val/127;
+							~kitPitches.writeArchive(~kitPitchPath++~kitCurrent.floor);
 						});
 						// kit density
 						if((busnum) == 5,{
 							~kit_params.density = val/127;
 						});
 						// kit selecta
-						if((busnum) == 7,{
-							~set_dr_kit.value([0,~kitBuffers.size-1].asSpec.map(val/127));
+						if((busnum) == 8,{
+							var kit_id = [0,~kitBuffers.size-1].asSpec.map(val/127);
+
+							if(kit_id.floor != ~kitCurrent.floor, {
+								~set_dr_kit.value(kit_id);
+								("DR KIT : " ++ kit_id.floor).postln;
+							});
 						});
 
 					},{
@@ -174,9 +179,13 @@
 
 				// OS KIT
 				2,{
-					~sampleMult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor;
-					"os kit: ".post;
-					~sampleMult.postln;
+					var mult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor;
+					if(mult != ~sampleMult,{
+						~sampleMult = mult;
+						"OS KIT : ".post;
+						~sampleMult.postln;
+					});
+
 				},
 				// OS RATE
 				3,{ ~splr_params.rate = [0.1,1.9].asSpec.map(val/127); },

@@ -78,16 +78,16 @@
 	* DRUM Sampler
 	*/
 	SynthDef(\nun_drsampler, {
-		arg out = 0, buf_bounds = #[0,0], pitch_busses = 5,
+		arg out = 0, buf_bounds = #[0,0], decay_bus = 6, pitch_busses = 5,
 		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
 		var sig, env, atkenv, rndsst, rate_mod, atksnd,
 		master_env, a, b;
 
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_busses).lag(0.1));
 		rate = rate_mod * rate;
-		decay = [0.05, 5, \exp].asSpec.map(In.kr(6).lag(0.1));
+		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
 		env = EnvGen.ar(Env.perc(0.1, decay, 1, -4),t_trig);
-		atkenv = EnvGen.ar(Env.perc(0.01, 0.1, 1, -4),t_trig);
+		atkenv = EnvGen.ar(Env.perc(0.01, 0.02, 1, -4),t_trig);
 
 		sig = 0;
 		// random buffers, a is the lead

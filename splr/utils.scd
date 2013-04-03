@@ -80,6 +80,11 @@
 
 ~set_dr_kit = {|kit|
 	~kitCurrent = kit;
+	~kitPitches = Object.readArchive(~kitPitchPath++~kitCurrent.floor);
+	if(~kitPitches == nil,{
+		~kitPitches = Dictionary.new;
+		~kitPitches.put(~kitCurrent.floor, [0,0,0,0,0,0,0,0] );
+	});
 	~dr_synths.do({|synth, i|
 		var rate = 1, bounds = ~drumIndexParse.value(~kitCurrent,i);
 		if(~kitCorrected == true, {
