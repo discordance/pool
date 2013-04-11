@@ -16,14 +16,22 @@
 
 // utility for the sampler
 ~sampleIndexParse = { |index|
-	var arr = [0,0];
-	//"sample parse".postln;
-	(~buffers[index] != nil).if({arr[0] = ~buffers[index][0].bufnum;});
-	(~buffers[index] != nil).if({arr[1] = ~buffers[index][~buffers[index].size - 1].bufnum;});
+	var arr = [0,0], pre, suff;
+	pre = (index/4).floor;
+	suff = index % 4;
+	if(~osBuffers[pre][suff] != nil, {
+		var preset_name = ~osBuffers[pre][suff][0].path.dirname.basename.toUpper;
+		arr[0] = ~osBuffers[pre][suff][0].bufnum;
+		arr[1] = ~osBuffers[pre][suff][~osBuffers[pre][suff].size-1].bufnum;
+		"PAD : ".post; preset_name.postln;
+	},{
+		"PAD : EMPTY !".postln;
+	});
 	arr;
 };
 
 // updates kit corrections
+/*
 ~updateCorrections = {
 	var num = ~kitCorrectionsBufs.size;
 	~kitCorrectionsBufs.keysValuesDo{| key, value |
@@ -41,8 +49,9 @@
 		});
 	};
 };
-
+*/
 // algo to get the good playback rate for correction
+/*
 ~getCorrection = { |midpitch, targetf|
 	var tones, base, adist, tone, diff;
 	adist = inf;
@@ -60,7 +69,7 @@
 	diff = (tone.cpsmidi - targetf.cpsmidi);
 	diff = 1/pow(2.0,(diff/12));
 };
-
+*/
 ~drumIndexParse = {|kit, perc|
 	var arr = [0,0];
 	//~kitBuffers[kit][perc].size.postln;
@@ -76,6 +85,40 @@
 		});
 	});
 	arr;
+};
+
+~get_os_buffers = {|midival|
+	var b = 0, tabz = [], bank_a, bank_b;
+	~sampleIndex = [0,~sampleSetsTotal-1, \lin, 2].asSpec.map(midival/128).floor;
+	b = ~sampleIndex+1;
+	if((~sampleSetsTotal/2) % (~sampleSetsTotal/2).floor != 0,{
+		b = ~sampleIndex;
+	});
+
+
+	~buffers.do({|el,i|
+		if(i == ~sampleIndex,{
+			bank_a = ~buffers.findKeyForValue(el).toUpper;
+			tabz = tabz.add([]);
+
+			el.do({|ell,ii|
+				tabz[0] = tabz[0].add(ell);
+				//ii.postln;
+			});
+		});
+		if(i == b,{
+			bank_b = ~buffers.findKeyForValue(el).toUpper;
+			tabz = tabz.add([]);
+			el.do({|ell,ii|
+				tabz[1] = tabz[1].add(ell);
+			});
+		});
+	});
+	~osBuffers = tabz;
+	"Loaded OS Banks: ".postln;
+	bank_b.postln;
+	bank_a.postln;
+	"";
 };
 
 ~set_dr_kit = {|kit|

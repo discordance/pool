@@ -24,13 +24,23 @@
 		~sampleSetsTotal = ~sampleSetsTotal + 1;
 		file.insert(file.size,"*");
 	};
-	~buffers = Array.fill(~pathArr.size,0);
+
+	//~buffers = Array.fill(~pathArr.size,0);
 	~pathArr.do{ |file, i|
-		~buffers[i] = file.pathMatch.sort.collect{|sfile|
-			Buffer.read(s,sfile);
+
+		~buffers.put(file.dirname.basename, Dictionary.new);
+		file.pathMatch.sort.collect{|sfile|
+			var basenamee = sfile.basename;
+			~buffers[file.dirname.basename].put(sfile.basename, []);
+
+			sfile = sfile ++ "*";
+			sfile.pathMatch.sort.collect{|kfile|
+				~buffers[file.dirname.basename][basenamee] =
+				~buffers[file.dirname.basename][basenamee].add(Buffer.read(s,kfile));
+			};
 		};
 	};
-
+	~get_os_buffers.value(0);
 	// Drum Kits
 	~kitPathArr = ~kitPath.pathMatch.sort.collect{|file|
 		file.insert(file.size,"*");
@@ -44,25 +54,6 @@
 			kfile = kfile ++ "*";
 			kfile.pathMatch.sort.collect{|sfile, k|
 				var buf, idx = sfile.dirname.basename;
-				// analysis
-				buf = Buffer.read(s,sfile,action:{|inbuf|
-					/*
-					if(k<1,{
-						var ana_buf;
-						ana_buf = Buffer.alloc(s, inbuf.numFrames / s.options.blockSize, 1, {|inanabuf|
-							//inbuf.post; " ".post; inanabuf.bufnum.postln;
-							~kitCorrectionsBufs.put(inbuf.bufnum, inanabuf);
-							~kitCorrectionsArr.put(inbuf.bufnum, 0); // init
-							{
-								var snd;
-								snd = PlayBuf.ar(1, inbuf, doneAction:2, loop:0);
-								RecordBuf.kr(Tartini.kr(snd,k:1512).at(0), inanabuf);
-							}.play;
-						});
-						//buf.postln;
-					});
-					*/
-				});
 				~kitBuffers[i][idx.asInt] = ~kitBuffers[i][idx.asInt] ++ buf;
 			};
 		};
@@ -81,4 +72,5 @@
 			 \pitch_busses,~dr_bus_pitch_base+i,
 			\out, ~drumBus]);
 	});
+	"";
 };

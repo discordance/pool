@@ -42,7 +42,7 @@
 ~timer = ();
 ~timer.ticks = 0;
 ~timer.quav = 0;
-~timer.ivals = [256,192,128,96,64,48,32,25,16,12,8,4];
+~timer.ivals = [256,192,128,96,64,48,32,25,16,12,8,4,2];
 
 // sampler params
 ~splr_params = ();
@@ -51,13 +51,13 @@
 ~splr_params.freq = 20000;
 
 // os sampler file management
-~sampleMult = 1;
-~samplePer = 8;
+//~sampleMult = 1;
 ~sampleIndex = 0;
 ~sampleSetsTotal = 0;
 ~pathArr;
-~buffers;
+~buffers = Dictionary.new;
 ~osPath = "/Users/nunja/Documents/AudioLib/supercollider/os/*";
+~osBuffers = []; // <--- to retrieve Buffers
 
 // dr sampler file management
 ~kitCurrent = 0;

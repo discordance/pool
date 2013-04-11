@@ -52,6 +52,6 @@
 	~fx_nasty.set(\in, ~fxBusses+4,\out, ~compBus, \buff, ~chebBuffer);
 
 	~fx_comp = Synth.tail(~splr_fx, "nun_leveler");
-	~fx_comp.set(\in, ~compBus, \thresh, -20, \out, ~mainOut, \amp, ~mainVol);
+	~fx_comp.set(\in, ~compBus, \thresh, -12, \out, ~mainOut, \amp, ~mainVol);
 
 }

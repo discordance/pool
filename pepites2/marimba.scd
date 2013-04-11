@@ -8,7 +8,7 @@ s = Server.local.waitForBoot({
 		//no wacky values please
 		mix = mix.clip(0,1);
 
-		sig = In.ar(in, 2);
+		sig = In.ar(in, 4);
 
 		//pre-delay
 		verbSig = DelayN.ar(sig, preDel, preDel);
@@ -44,8 +44,8 @@ s = Server.local.waitForBoot({
 			LFNoise1.kr({LFNoise1.kr(0.08).exprange(0.08,0.35)}!8).range(minRq, maxRq)
 		);
 		sig = BLowShelf.ar(sig, lowShelf, rs, db);
-		sig = SplayAz.ar(4, sig, spread);
 		sig = sig * env * 2;
+		sig = Pan4.ar(sig, LFNoise2.kr(0.8), LFNoise2.kr(0.3),1);
 		Out.ar(out, sig);
 	}).add;
 
@@ -75,7 +75,7 @@ s = Server.local.waitForBoot({
 							\rel, 5,
 							\sus, rrand(6,10.0),
 							\spread, exprand(1.5,8.0),
-							\out, ~bus,
+						    \out, 0,
 						],
 					)
 				},
@@ -99,7 +99,7 @@ s = Server.local.waitForBoot({
 (
 t = Task {
 	//instantiate reverb synth
-	Synth(\reverb_ef, [\in, ~bus, \out, 0]);
+	//Synth(\reverb_ef, [\in, 0, \out, 0]);
 
 	{
 		~cluster.value;

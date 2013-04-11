@@ -103,18 +103,18 @@
 			//"lpd8".postln;
 			idx = (num-36);
 			if(~pad_counter.ct % 2 == 0, {
-				~pad_counter.pad_a = idx + (~samplePer*~sampleMult);
+				~pad_counter.pad_a = idx;
 				},{
-					~pad_counter.pad_b = idx + (~samplePer*~sampleMult);
+					~pad_counter.pad_b = idx;
 			});
 			~pad_counter.ct = ~pad_counter.ct + 1;
 
 			// trigg sound and random delay and shape form
 			~chebBuffer.sendCollection(Signal.sineFill(1000, [1, 1.0.rand, 1.0.rand, 1.0.rand]), 0);
 			~fx_echo.set(\length, 1.0.rand);
-			~sampleIndex = idx + (~samplePer*~sampleMult);
+
 			Synth.head(~splr_source,"nun_ossampler",
-				[\buf_bounds, ~sampleIndexParse.value(~sampleIndex),
+				[\buf_bounds, ~sampleIndexParse.value(idx),
 					\out, ~osBus,
 					\rate, ~splr_params.rate,
 					\decay, [8,0.5].asSpec.map(~splr_params.density),
@@ -179,13 +179,7 @@
 
 				// OS KIT
 				2,{
-					var mult = [0,floor(~sampleSetsTotal/8)+1].asSpec.map(val/128).floor;
-					if(mult != ~sampleMult,{
-						~sampleMult = mult;
-						"OS KIT : ".post;
-						~sampleMult.postln;
-					});
-
+					~get_os_buffers.value(val);
 				},
 				// OS RATE
 				3,{ ~splr_params.rate = [0.1,1.9].asSpec.map(val/127); },

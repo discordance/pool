@@ -4,14 +4,14 @@
 var scale, buffer, freq;
 
 //scale = FloatArray[0, 2, 3.2, 5, 7, 9, 10]; // dorian scale
-scale = Scale.prometheus.degrees; //sikah
+scale = Scale.phrygian.degrees; //sikah
 buffer = Buffer.alloc(s, scale.size,1, {|b| b.setnMsg(0, scale) });
 
 fork{
   loop{
     play{
-	Out.ar(2,
-     Splay.ar(
+	Out.ar(0,
+     Pan4.ar(
        {
 		  var key;
 		  key = DegreeToKey.kr(
@@ -19,7 +19,7 @@ fork{
 				LFNoise2.kr(0.003).range(0,15),		// mouse indexes into scale
 				12,					// 12 notes per octave
 				1,					// mul = 1
-				60					// offset by 72 notes
+				48					// offset by 72 notes
 			);
 
 		  Formlet.ar(
@@ -27,11 +27,12 @@ fork{
           key.midicps,
           0.0005)
 
-		*EnvGen.ar(Env.perc(LFNoise2.kr(0.3).range(0.01,0.08),LFNoise2.kr(0.9).range(1,20),1,-8),1,1,0,9,2)
-			}!5));
+		*EnvGen.ar(Env.perc(LFNoise2.kr(0.3).range(0.01,0.9),LFNoise2.kr(0.9).range(1,20),1,-8),1,1,0,9,2)
+			}
+					,LFNoise2.kr(0.5),LFNoise2.kr(0.8),0.6));
 
     };
-		[16,32].choose.wait;
+		[2,8].choose.wait;
    }
 };
 
