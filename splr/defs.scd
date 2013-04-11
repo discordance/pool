@@ -163,4 +163,16 @@
 		Out.ar(out, output!2);
 	}).add;
 
+	SynthDef(\nun_cv_Eq, {
+		arg in, out, buff_n, buff_l, buff_h, mix = 1, lo = 0.5, hi = 0.5, fftsize = 4096;
+		var input = In.ar(in,2);
+		var neutral, low, high, sum;
+		neutral = PartConv.ar(input, fftsize, buff_n, 0.5);
+		low = PartConv.ar(input, fftsize, buff_l, lo);
+		high = PartConv.ar(input, fftsize, buff_h, hi);
+		sum = low + neutral + high;
+		Out.ar(out, SelectX.ar(mix*2,[input,sum]));
+
+	}).add;
+
 };

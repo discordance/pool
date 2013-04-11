@@ -16,6 +16,7 @@
 
 (
 // ---
+~userPath = "/Users/nunja/Documents/";
 ~mainVol = 0.6;
 ~mainOut = 0;
 
@@ -46,8 +47,8 @@
 
 // sampler params
 ~splr_params = ();
-~splr_params.density = 0.25;
-~splr_params.rate = 1;
+~splr_params.density = 0.65;
+~splr_params.rate = 0.5;
 ~splr_params.freq = 20000;
 
 // os sampler file management
@@ -56,15 +57,15 @@
 ~sampleSetsTotal = 0;
 ~pathArr;
 ~buffers = Dictionary.new;
-~osPath = "/Users/nunja/Documents/AudioLib/supercollider/os/*";
+~osPath = ~userPath++"AudioLib/supercollider/os/*";
 ~osBuffers = []; // <--- to retrieve Buffers
 
 // dr sampler file management
 ~kitCurrent = 0;
 ~kitBuffers;
 ~kitPathArr;
-~kitPath = "/Users/nunja/Documents/AudioLib/supercollider/drumkit/*";
-~kitPitchPath = "/Users/nunja/Documents/SuperCollider/presets/kitpitches/";
+~kitPath = ~userPath++"AudioLib/supercollider/drumkit/*";
+~kitPitchPath = ~userPath++"SuperCollider/presets/kitpitches/";
 ~kitPitches = Object.readArchive(~kitPitchPath++~kitCurrent);
 if(~kitPitches == nil,{
 	~kitPitches = Dictionary.new;

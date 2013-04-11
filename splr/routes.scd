@@ -16,6 +16,7 @@
 
 ~init_routing_and_clear =
 {
+
 	// clear clear !!
 	Server.all.do(_.freeAll);
 
@@ -23,11 +24,19 @@
 	// BUFFER INIT --------------------------------
 	Buffer.freeAll; // free all buffers
 	// create the emptybuffer zero, the void buffer
-	~voidBuffer = Buffer.alloc(s, 0.5 * s.sampleRate, 2);
+	~voidBuffer = Buffer.alloc(s, s.sampleRate, 2);
 
 	// buffers for waveshaping
 	~chebBuffer = Buffer.alloc(s,1000,1,0);
 	~chebBuffer.sendCollection(Signal.sineFill(1000, [1, 1.0.rand, 1.0.rand, 1.0.rand]), 0);
+
+	// buffers for EQ convolution
+	~eqBuffers = ();
+	~prepareEQ.value(~eqBuffers);
+
+
+	//~manleyBuffers.neutral =
+
 
 	// ROUTE
 	~splr_source = Group.head(s);
@@ -50,6 +59,12 @@
 
 	~fx_nasty = Synth.head(~splr_fx, "nun_nasty");
 	~fx_nasty.set(\in, ~fxBusses+4,\out, ~compBus, \buff, ~chebBuffer);
+
+	~fxEq = Synth.tail(~splr_fx, "nun_cv_Eq");
+	~fxEq.set(\in, ~compBus, \out, ~compBus,
+		\buff_n, ~eqBuffers.nb,
+		\buff_l, ~eqBuffers.lb,
+		\buff_h, ~eqBuffers.hb);
 
 	~fx_comp = Synth.tail(~splr_fx, "nun_leveler");
 	~fx_comp.set(\in, ~compBus, \thresh, -12, \out, ~mainOut, \amp, ~mainVol);

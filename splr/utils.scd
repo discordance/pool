@@ -139,6 +139,32 @@
 
 };
 
+~prepareEQ =
+{   arg storage;
+	var path, convFFTsize, nb, lb, hb;
+
+	convFFTsize = 4096;
+	path = ~userPath ++ "AudioLib/supercollider/impulses/manley/";
+	nb = Buffer.read(s, path ++ "neutral.wav");
+	lb = Buffer.read(s, path ++ "lo.wav");
+	hb = Buffer.read(s, path ++ "hi.wav");
+
+	s.sync;
+
+	~eqBuffers.nb = Buffer.alloc(s, PartConv.calcBufSize(convFFTsize, nb), 1);
+	~eqBuffers.lb = Buffer.alloc(s, PartConv.calcBufSize(convFFTsize, lb), 1);
+	~eqBuffers.hb = Buffer.alloc(s, PartConv.calcBufSize(convFFTsize, hb), 1);
+
+	~eqBuffers.nb.preparePartConv(nb, convFFTsize);
+	~eqBuffers.lb.preparePartConv(lb, convFFTsize);
+	~eqBuffers.hb.preparePartConv(hb, convFFTsize);
+
+    s.sync;
+
+    nb.free;
+	lb.free;
+	hb.free;
+};
 
 
 
