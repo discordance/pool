@@ -43,13 +43,14 @@
 ~timer = ();
 ~timer.ticks = 0;
 ~timer.quav = 0;
-~timer.ivals = [256,192,128,96,64,48,32,25,16,12,8,4,2];
+~timer.ivals = [256,192,128,96,64,48,32,24,16,12,8,6,4,3,2];
 
 // sampler params
 ~splr_params = ();
-~splr_params.density = 0.65;
-~splr_params.rate = 0.5;
+~splr_params.density = 0.25;
+~splr_params.rate = 1;
 ~splr_params.freq = 20000;
+~splr_params.bias = 0;
 
 // os sampler file management
 //~sampleMult = 1;
@@ -84,5 +85,19 @@ if(~kitPitches == nil,{
 ~kit_params = ();
 ~kit_params.density = 1;
 ~kit_params.quant = [64,48,32,24,16,12,8,6,4,3,2,1];
+
+// melodic stuff
+
+~create_octave_down_ratios = {|scale|
+	var arr = [];
+	scale.do({|elem, i|
+		arr = arr.add([0.5,1].asSpec.map(elem-1));
+	});
+	arr;
+};
+
+~scale =  Scale.phrygian.ratios;
+~scale = ~scale ++ ~create_octave_down_ratios.value(~scale);
+~change_rate = false;
 )
 

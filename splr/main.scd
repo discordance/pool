@@ -16,7 +16,7 @@
 
 
 // UTILS LIVE
-~set_dr_kit.value(5);
+~set_dr_kit.value(1);
 
 // INCLUDES
 (
@@ -36,16 +36,16 @@
 // INIT PROCESS
 {
 	"NUNJA SAMPLE STATION".postln;
-	"LOAD DEFS".postln;
+	"-LOAD DEFS".postln;
 	~init_defs.value();
-	"SYNC".postln;
+	"--SYNC".postln;
 	s.sync;
-	"ROUTING".postln;
+	"---ROUTING".postln;
 	~init_routing_and_clear.value();
-	"BUFFERS".postln;
+	"----BUFFERS".postln;
 	~init_buffers.value();
 	1.wait;
-	"MIDI".postln;
+	"-----MIDI".postln;
 	~init_midi.value();
 
 	~ascii.postln;

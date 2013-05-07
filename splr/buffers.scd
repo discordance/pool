@@ -54,6 +54,9 @@
 			kfile = kfile ++ "*";
 			kfile.pathMatch.sort.collect{|sfile, k|
 				var buf, idx = sfile.dirname.basename;
+				buf = Buffer.read(s,sfile,action:{|inbuf|
+
+				});
 				~kitBuffers[i][idx.asInt] = ~kitBuffers[i][idx.asInt] ++ buf;
 			};
 		};

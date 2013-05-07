@@ -17,7 +17,8 @@
 ~init_midi =
 {
 	var lpd8, ancient, a_sync_in, motu;
-
+	~last = 0;
+	~last_t = 0;
 	MIDIClient.init;
 	MIDIIn.connectAll;
 	//MIDIIn.sysrt = { arg src, chan, val; 				[chan,val].postln; };
@@ -36,6 +37,7 @@
 
 		//(Main.elapsedTime - ~test).postln;
 		//~test = Main.elapsedTime;
+		//("HIT " ++ num).postln;
 		switch(num,
 			36,{
 				~dr_synths[0].set(\t_trig,1);
@@ -120,6 +122,7 @@
 					\decay, [8,0.5].asSpec.map(~splr_params.density),
 					\freq, \freq.asSpec.map(val/127)
 			]);
+			~new_pad.value(idx);
 		});
 	};
 	~splr_control = { arg src, chan, num, val;
@@ -216,6 +219,14 @@
 	// clock
 	~splr_clock = { arg src, val;
 		if(src == a_sync_in.uid,{
+			/*
+			if(val == 2,{
+				(Main.elapsedTime - ~last).post; " _ ".post; (~timer.ticks - ~last_t).postln;
+				~last = Main.elapsedTime;
+				~last_t = ~timer.ticks;
+			});
+			*/
+
 			if(val == 10,{
 				~timer.ticks = 0;
 			});
@@ -229,7 +240,8 @@
 			// density
 			if(~splr_params.density > 0, {
 				var idx = [0,~timer.ivals.size-1].asSpec.map(~splr_params.density);
-				if(~timer.quav % ~timer.ivals[idx] == 0,{
+				var bias = ~splr_params.bias * ~timer.ivals[idx].rand;
+				if(~timer.quav % (~timer.ivals[idx]+bias) == 0,{
 					var idx = [~pad_counter.pad_a,~pad_counter.pad_b].choose;
 					~fx_echo.set(\length, 1.0.rand);
 					Synth.head(~splr_source,"nun_ossampler",
@@ -238,8 +250,10 @@
 							\rate, ~splr_params.rate,
 							\freq, ~splr_params.freq
 					]);
+					~new_pad.value(idx);
 				});
 			});
+			~new_tick.value(~timer.ticks);
 		});
 	};
 

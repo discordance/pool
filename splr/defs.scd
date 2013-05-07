@@ -123,7 +123,7 @@
 
 		//envs
 		envs = Array.fill(10, {
-			EnvGen.ar(Env.new(Array.rand(10, 0.1, 1.0).add(0.0), Array.exprand(9, 0.001, 2),curve:\welch))
+			EnvGen.ar(Env.new(Array.rand(4, 0.1, 1.0).add(0.0), Array.exprand(3, 0.001, 2),curve:\welch))
 		});
 
 		sig = 0;
@@ -164,13 +164,9 @@
 	}).add;
 
 	SynthDef(\nun_cv_Eq, {
-		arg in, out, buff_n, buff_l, buff_h, mix = 1, lo = 0.5, hi = 0.5, fftsize = 4096;
-		var input = In.ar(in,2);
-		var neutral, low, high, sum;
-		neutral = PartConv.ar(input, fftsize, buff_n, 0.5);
-		low = PartConv.ar(input, fftsize, buff_l, lo);
-		high = PartConv.ar(input, fftsize, buff_h, hi);
-		sum = low + neutral + high;
+		arg in, out, buff_n, mix = 1, fftsize = 2048;//4096;
+		var input = In.ar(in,2), sum;
+		sum = Convolution2.ar(input, buff_n, 1, fftsize);
 		Out.ar(out, SelectX.ar(mix*2,[input,sum]));
 
 	}).add;
