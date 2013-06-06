@@ -14,9 +14,10 @@ BOOTSTRAP CLASSES
 ******************************************************************/
 (
 ~oMODULE = CLASS.new;
-~oMODULE.id = "";
+~oMODULE.id = ""; // module id
+~oMODULE.router = (know:false); // router reference
 ~oMODULE.root_path = "";
-~oMODULE.kr_route_map = ();
-~oMODULE.ar_route_map = ();
-~oMODULE.func_route_map = ();
+~oMODULE.kr_route_map = (); // route of control busses
+~oMODULE.ar_route_map = (); // route of audio busses
+~oMODULE.func_route_map = (); // route of functions
 )

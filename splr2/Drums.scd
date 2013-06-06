@@ -16,6 +16,16 @@ DRUMS
 ~oDRUMS = ~oMODULE <
 (
 // VARS
+\synths:(
+	\kick: nil, //[(\name:"",\buffs:[]),(\name:"",\buffs:[])]
+	\drm1: nil,
+	\drm2: nil,
+	\snar: nil,
+	\clap: nil,
+	\cymb: nil,
+	\hat1: nil,
+	\hat2: nil,
+),
 \available_kits:(
 	\kick: [], //[(\name:"",\buffs:[]),(\name:"",\buffs:[])]
 	\drm1: [],
@@ -37,61 +47,26 @@ DRUMS
 	\hat2: 0,
 ),
 // METHODS
-\init: {|o, root_path = nil, ar_route_map = nil, kr_route_map = nil|
+\init: {|o, router, root_path = nil, ar_route_map = nil, kr_route_map = nil|
 	var next_kr = 0;
 	// id
-	o.id = "Drums";
+	o.id = "drums";
+	o.router = router;
 	// path
 	o.root_path = root_path ? "";
 	if("/\\*".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/*"});
 	o.root_path = o.root_path.replace("//","/");
 	// audio route
-	o.ar_route_map = ar_route_map ?
-	(   // id : audio bus
-		\kick:0,
-		\drm1:1,
-		\drm2:1,
-		\snar:2,
-		\clap:2,
-		\cymb:3,
-		\hat1:3,
-		\hat2:3,
-	);
+	o.ar_route_map = ar_route_map ? o.generate_ar();
 	// control route
-	if(kr_route_map == nil,
-	// HARD MAPPING
-	{
-		o.kr_route_map =
-		o.current_kit.collect{
-			var route = (\pitch: next_kr);
-			next_kr = next_kr + 1;
-			route;
-		};
-		// inserting manual controls
-		o.kr_route_map[\kick].add(\decay->8);
-		o.kr_route_map[\drm1].add(\decay->9);
-		o.kr_route_map[\drm2].add(\decay->9);
-		o.kr_route_map[\snar].add(\decay->9);
-
-		o.kr_route_map[\clap].add(\decay->9);
-		o.kr_route_map[\cymb].add(\decay->10);
-		o.kr_route_map[\hat1].add(\decay->11);
-		o.kr_route_map[\hat2].add(\decay->11);
-		// global
-		//o.kr_route_map[\global].add(\decay->12);
-	},{
-		o.kr_route_map = kr_route_map;
-	});
+	o.kr_route_map = kr_route_map ? o.generate_kr();
 	// functions
-	o.func_route_map = ();
-	o.func_route_map[\global] = ().add(\density->o[\set_density]);
-	o.func_route_map[\kick] = ().add(\kit->o[\select_kit]);
-	o.func_route_map[\drm1] = ().add(\kit->o[\select_kit]);
-	o.func_route_map[\drm2] = ().add(\kit->o[\select_kit]);
-	o.func_route_map[\clap] = ().add(\kit->o[\select_kit]);
-	o.func_route_map[\cymb] = ().add(\kit->o[\select_kit]);
-	o.func_route_map[\hat1] = ().add(\kit->o[\select_kit]);
-	o.func_route_map[\hat2] = ().add(\kit->o[\select_kit]);
+	o.func_route_map = o.generate_func();
+
+	// assign to router
+	o.router.assign(o);
+	// add synths
+	o.generate_synths();
 },
 \load: {|o|
 	var kits_paths;
@@ -115,9 +90,86 @@ DRUMS
 
 	});
 },
-\select_kit: {|o,val|
+\select_kit: {|o,scope,val|
 },
-\set_density: {|o,val|
+\set_density: {|o,scope,val|
+},
+\generate_synths:{|o|
+	var node_group;
+	node_group = o.router[\node_groups][\generators];
+	// \kick
+	o.synths[\kick] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\kick][\decay],
+		\pitch_busses,o.kr_route_map[\kick][\pitch],
+		\out, o.ar_route_map[\kick]
+		]
+	);
+	// \drm1
+	o.synths[\drm1] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\drm1][\decay],
+		\pitch_busses,o.kr_route_map[\drm1][\pitch],
+		\out, o.ar_route_map[\drm1]
+		]
+	);
+	// \drm2
+	o.synths[\drm2] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\drm2][\decay],
+		\pitch_busses,o.kr_route_map[\drm2][\pitch],
+		\out, o.ar_route_map[\drm2]
+		]
+	);
+},
+\generate_ar:{|o|
+	(   // id : audio bus
+		\kick:0,
+		\drm1:1,
+		\drm2:1,
+		\snar:2,
+		\clap:2,
+		\cymb:3,
+		\hat1:3,
+		\hat2:3,
+	);
+},
+\generate_kr:{|o|
+	var kr_route_map = (\k:8), next_kr = 0;
+	    kr_route_map =
+		o.current_kit.collect{
+			var route = (\pitch: next_kr);
+			next_kr = next_kr + 1;
+			route;
+		};
+		// inserting manual controls
+		kr_route_map[\kick].add(\decay->8);
+		kr_route_map[\drm1].add(\decay->9);
+		kr_route_map[\drm2].add(\decay->9);
+		kr_route_map[\snar].add(\decay->9);
+
+		kr_route_map[\clap].add(\decay->9);
+		kr_route_map[\cymb].add(\decay->10);
+		kr_route_map[\hat1].add(\decay->11);
+		kr_route_map[\hat2].add(\decay->11);
+
+	    // global can be added here
+		//o.kr_route_map[\global].add(\decay->12);
+	// return
+	kr_route_map;
+},
+\generate_func:{|o|
+	var func_route_map = ();
+	func_route_map[\global] = ().add(\density->o[\set_density]);
+	func_route_map[\kick] = ().add(\kit->o[\select_kit]);
+	func_route_map[\drm1] = ().add(\kit->o[\select_kit]);
+	func_route_map[\drm2] = ().add(\kit->o[\select_kit]);
+	func_route_map[\clap] = ().add(\kit->o[\select_kit]);
+	func_route_map[\cymb] = ().add(\kit->o[\select_kit]);
+	func_route_map[\hat1] = ().add(\kit->o[\select_kit]);
+	func_route_map[\hat2] = ().add(\kit->o[\select_kit]);
+	// return
+	func_route_map;
 },
 //--
 );

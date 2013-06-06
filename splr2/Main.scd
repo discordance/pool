@@ -28,10 +28,10 @@ s.waitForBoot({
 	// ROUTER FIRST
 	~oROUTER.init();
 	// DRUMS
-	~oDRUMS.init("/Users/nunja/Documents/AudioLib/supercollider/percussion/");
+	~oDRUMS.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/percussion/");
 	~oDRUMS.load();
-	~oROUTER.assign(~oDRUMS);
-
+	~oDRUMS.func_route_map.postln;
+	//~oROUTER.modules.postln;
 });
 )
 

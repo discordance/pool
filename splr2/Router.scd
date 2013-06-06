@@ -16,7 +16,8 @@ ROUTER
 ~oROUTER =
 (
 // VARS
-\modules: [],
+\node_groups: (),
+\modules: (),
 \next_kr: 15,
 \next_ar: 15,
 \void_buffer:nil,
@@ -31,11 +32,17 @@ ROUTER
 	Buffer.freeAll; // free all buffers
 	// create the emptybuffer zero, the void buffer
 	o.void_buffer = Buffer.alloc(s, s.sampleRate, 2);
+
+	// routing node groups
+	o.node_groups = o.node_groups.add(\generators -> Group.head(s));
+	o.node_groups = o.node_groups.add(\effects -> Group.tail(s));
+	o.node_groups = o.node_groups.add(\mix -> Group.tail(s));
+
 },
 \assign:{|o,target|
 	o.assign_ar(target);
 	o.assign_kr(target);
-	o.modules = o.modules.add(target);
+	o.modules = o.modules.add(target.id->target);
 },
 \assign_ar: {|o,target|
 	var needed, tmp_map;
@@ -64,7 +71,11 @@ ROUTER
 		tmp_map[i] = o.next_kr;
 		o.next_kr = o.next_kr + 1;
 	});
-	tmp_map.postln;
+	target.kr_route_map = target.kr_route_map.collect{|e|
+		e = e.collect{|ee|
+			ee = tmp_map[ee];
+		};
+	};
 }
 //--
 );
