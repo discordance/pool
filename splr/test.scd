@@ -6,8 +6,8 @@
 ~fxEq.set(\hi,1);
 ~fxEq.set(\lo,5);
 
-
-~get_os_buffers.value(60);
+~sampleSetsTotal
+~get_os_buffers.value(10);
 ~splr_params.rate = 0.5;
 ~splr_params.density = 0;
 ~splr_params.bias = 0.2;
