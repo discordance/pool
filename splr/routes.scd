@@ -16,7 +16,6 @@
 
 ~init_routing_and_clear =
 {
-
 	// clear clear !!
 	Server.all.do(_.freeAll);
 
