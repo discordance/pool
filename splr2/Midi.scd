@@ -17,7 +17,6 @@ MIDI
 (
 // VARS
 \devices:(),
-\modules:[],
 // METHODS
 \init:{|o, router|
 	var first_time = true;
@@ -33,43 +32,23 @@ MIDI
 	o.devices.ancient = MIDIIn.findPort("Ancient2 NOTES OUT", "Ancient2 NOTES OUT") ? (\uid:0);
 	o.devices.sync = MIDIIn.findPort("Ancient2 SYNC OUT", "Ancient2 SYNC OUT") ? (\uid:0);
 	o.devices.motu = MIDIIn.findPort("UltraLite mk3", "MIDI Port") ? (\uid:0);
+
+	Library.put(\device_map,o.devices.lpd8.uid,\lpd8);
+	Library.put(\device_map,o.devices.sync.uid,\sync);
+	Library.put(\device_map,o.devices.ancient.uid,\ancient);
+	Library.put(\device_map,o.devices.motu.uid,\motu);
+
 	if(first_time == true,{
 		MIDIIn.addFuncTo(\noteOn, {|src, chan, num, val|
-			o.on_note(src, chan, num, val);
+			router.on_note(src, chan, num, val);
 		});
 		MIDIIn.addFuncTo(\control, {|src, chan, num, val|
-			o.on_control(src, chan, num, val);
+			router.on_control(src, chan, num, val);
 		});
 		MIDIIn.addFuncTo(\sysrt, {|src, val|
-			o.on_clock(src, val);
+			router.on_clock(src, val);
 		});
 	});
-},
-\on_note: {|o, src, chan, num, val|
-
-	o.modules.do({|e,i|
-		e.devices.do({|ee,ii|
-			if(ee.uid == src,{
-				e.module.on_note(chan, num, val);
-			});
-		});
-	});
-},
-\on_control: {|o, src, chan, num, val|
-
-},
-\on_clock: {|o, src, val|
-	o.modules.do({|e,i|
-		e.devices.do({|ee,ii|
-			if(ee.uid == src,{
-				e.module.on_clock(val);
-			});
-		});
-	});
-},
-\register_module:{|o, module, devices|
-	var mod = (\module:module, \devices:devices);
-	o.modules = o.modules.add(mod);
 }
 )
 )

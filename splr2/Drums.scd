@@ -72,6 +72,7 @@ DRUMS
 		o.root_path = root_path ? "";
 		if("/\\*".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/*"});
 		o.root_path = o.root_path.replace("//","/");
+
 		// audio route
 		o.ar_route_map = ar_route_map ? o.generate_ar();
 		// control route
@@ -79,10 +80,14 @@ DRUMS
 		// functions
 		o.func_route_map = o.generate_func();
 
-		// assign to router
+		// assign from router
 		o.router.assign(o);
 		// add synths
 		o.generate_synths();
+
+		// generate control map
+		o.generate_control_map();
+
 		o.on_ready(init_routine);
 	}.fork;
 },
@@ -106,6 +111,8 @@ DRUMS
 				ct = ct + 1;
 				kit.buffs = kit.buffs ++ buff;
 				// to mono
+				//on_load.value();
+				//o.ready = true;
 
 				buff.loadToFloatArray(action: { arg array;
 					a = array;
@@ -117,7 +124,6 @@ DRUMS
 						});
 					});
 				});
-
 			};
 			o.available_kits[kind] = o.available_kits[kind].add(kit);
 		};
@@ -163,7 +169,7 @@ DRUMS
 	var node_group;
 	node_group = o.router[\node_groups][\generators];
 	// \kick
-	o.synths[\kick] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\kick] = Synth.head(node_group,"nun_basic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\kick][\decay],
 		\pitch_busses,o.kr_route_map[\kick][\pitch],
@@ -171,7 +177,7 @@ DRUMS
 		]
 	);
 	// \drm1
-	o.synths[\drm1] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\drm1] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm1][\decay],
 		\pitch_busses,o.kr_route_map[\drm1][\pitch],
@@ -179,7 +185,7 @@ DRUMS
 		]
 	);
 	// \drm2
-	o.synths[\drm2] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\drm2] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm2][\decay],
 		\pitch_busses,o.kr_route_map[\drm2][\pitch],
@@ -187,7 +193,7 @@ DRUMS
 		]
 	);
 	// \snar
-	o.synths[\snar] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\snar] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_busses,o.kr_route_map[\snar][\pitch],
@@ -195,7 +201,7 @@ DRUMS
 		]
 	);
 	// \clap
-	o.synths[\clap] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\clap] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\clap][\decay],
 		\pitch_busses,o.kr_route_map[\clap][\pitch],
@@ -203,7 +209,7 @@ DRUMS
 		]
 	);
 	// \cymb
-	o.synths[\cymb] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\cymb] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_busses,o.kr_route_map[\cymb][\pitch],
@@ -211,7 +217,7 @@ DRUMS
 		]
 	);
 	// \hh1
-	o.synths[\hat1] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\hat1] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat1][\decay],
 		\pitch_busses,o.kr_route_map[\hat1][\pitch],
@@ -219,7 +225,7 @@ DRUMS
 		]
 	);
 	// \hh2
-	o.synths[\hat2] = Synth.head(node_group,"nun_drsampler",[
+	o.synths[\hat2] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_busses,o.kr_route_map[\hat2][\pitch],
@@ -269,6 +275,7 @@ DRUMS
 	func_route_map[\kick] = ().add(\kit->o[\select_kit]);
 	func_route_map[\drm1] = ().add(\kit->o[\select_kit]);
 	func_route_map[\drm2] = ().add(\kit->o[\select_kit]);
+	func_route_map[\snar] = ().add(\kit->o[\select_kit]);
 	func_route_map[\clap] = ().add(\kit->o[\select_kit]);
 	func_route_map[\cymb] = ().add(\kit->o[\select_kit]);
 	func_route_map[\hat1] = ().add(\kit->o[\select_kit]);
@@ -276,14 +283,44 @@ DRUMS
 	// return
 	func_route_map;
 },
+\generate_control_map:{|o|
+	var b;
+	// DEN AND DEC AND FX
+	Library.put(\control_map,\motu,\3,\0,(\func:o.func_route_map[\global][\density],\scope:\global));
+	Library.put(\control_map,\motu,\3,\1,o.kr_route_map[\drm1][\decay]);
+	Library.put(\control_map,\motu,\3,\2,o.kr_route_map[\cymb][\decay]);
+	Library.put(\control_map,\motu,\3,\3,o.kr_route_map[\hat1][\decay]);
+	// PITCHES
+	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\pitch]);
+	Library.put(\control_map,\motu,\3,\17,o.kr_route_map[\drm1][\pitch]);
+	Library.put(\control_map,\motu,\3,\18,o.kr_route_map[\drm2][\pitch]);
+	Library.put(\control_map,\motu,\3,\19,o.kr_route_map[\snar][\pitch]);
+	Library.put(\control_map,\motu,\3,\20,o.kr_route_map[\clap][\pitch]);
+	Library.put(\control_map,\motu,\3,\21,o.kr_route_map[\cymb][\pitch]);
+	Library.put(\control_map,\motu,\3,\22,o.kr_route_map[\hat1][\pitch]);
+	Library.put(\control_map,\motu,\3,\23,o.kr_route_map[\hat2][\pitch]);
+	// KIT SELECTION
+	Library.put(\control_map,\motu,\3,\24,(\func:o.func_route_map[\kick][\kit],\scope:\kick));
+	Library.put(\control_map,\motu,\3,\25,(\func:o.func_route_map[\drm1][\kit],\scope:\drm1));
+	Library.put(\control_map,\motu,\3,\26,(\func:o.func_route_map[\drm2][\kit],\scope:\drm2));
+	Library.put(\control_map,\motu,\3,\27,(\func:o.func_route_map[\snar][\kit],\scope:\snar));
+	Library.put(\control_map,\motu,\3,\28,(\func:o.func_route_map[\clap][\kit],\scope:\clap));
+	Library.put(\control_map,\motu,\3,\29,(\func:o.func_route_map[\cymb][\kit],\scope:\cymb));
+	Library.put(\control_map,\motu,\3,\30,(\func:o.func_route_map[\hat1][\kit],\scope:\hat1));
+	Library.put(\control_map,\motu,\3,\31,(\func:o.func_route_map[\hat2][\kit],\scope:\hat2));
+
+	// default bus
+	b = Bus.new('control',o.kr_route_map[\kick][\decay],1,s);
+	b.set(1);
+
+},
 /* SynthDefs
 ******************************************************************/
 \load_synthdefs:{|o|
 	/**
 	* DRUM Sampler
 	*/
-
-	SynthDef(\nun_drsampler, {
+	SynthDef(\nun_organic_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
 		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
 		var sig, env, atkenv, rndsst, rate_mod, atksnd,
@@ -313,6 +350,18 @@ DRUMS
 		sig = DFM1.ar(sig, freq, 0.5, 3);
 		Out.ar(out, sig*vol*on);
 
+	}).add;
+
+	SynthDef(\nun_basic_sampler, {
+		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
+		var sig, env;
+		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		env = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
+		a = buf_bounds[0];
+		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
+		sig = DFM1.ar(sig, freq, 0.5, 1);
+		Out.ar(out, sig*vol*on);
 	}).add;
 }
 //--

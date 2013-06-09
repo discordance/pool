@@ -17,7 +17,7 @@ ROUTER
 (
 // VARS
 \node_groups: (),
-\modules: (),
+\modules: [],
 \next_kr: 15,
 \next_ar: 2,
 \void_buffer:nil,
@@ -37,12 +37,11 @@ ROUTER
 	o.node_groups = o.node_groups.add(\generators -> Group.head(s));
 	o.node_groups = o.node_groups.add(\effects -> Group.tail(s));
 	o.node_groups = o.node_groups.add(\mix -> Group.tail(s));
-
 },
 \assign:{|o,target|
 	o.assign_ar(target);
 	o.assign_kr(target);
-	o.modules = o.modules.add(target.id->target);
+	//o.modules = o.modules.add(target.id->target);
 },
 \assign_ar: {|o,target|
 	var needed, tmp_map;
@@ -76,6 +75,39 @@ ROUTER
 			ee = tmp_map[ee];
 		};
 	};
+},
+\on_note: {|o, src, chan, num, val|
+
+	o.modules.do({|e,i|
+		e.devices.do({|ee,ii|
+			if(ee.uid == src,{
+				e.module.on_note(chan, num, val);
+			});
+		});
+	});
+},
+\on_control: {|o, src, chan, num, val|
+	var device = Library.at(\device_map,src);
+	device.post;
+	" control: ".post;
+	chan.post;
+	" ".post;
+	num.post;
+	" ".post;
+	val.postln;
+},
+\on_clock: {|o, src, val|
+	o.modules.do({|e,i|
+		e.devices.do({|ee,ii|
+			if(ee.uid == src,{
+				e.module.on_clock(val);
+			});
+		});
+	});
+},
+\register_module:{|o, module, devices|
+	var mod = (\module:module, \devices:devices);
+	o.modules = o.modules.add(mod);
 }
 //--
 );
