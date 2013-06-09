@@ -19,7 +19,7 @@ ROUTER
 \node_groups: (),
 \modules: (),
 \next_kr: 15,
-\next_ar: 15,
+\next_ar: 2,
 \void_buffer:nil,
 // METHODS
 \init:{|o|

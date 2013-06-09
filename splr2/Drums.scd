@@ -16,6 +16,7 @@ DRUMS
 ~oDRUMS = ~oMODULE <
 (
 // VARS
+\density:1.0,
 \synths:(
 	\kick: nil, //[(\name:"",\buffs:[]),(\name:"",\buffs:[])]
 	\drm1: nil,
@@ -46,30 +47,48 @@ DRUMS
 	\hat1: 0,
 	\hat2: 0,
 ),
+\note_map:(
+	\36: \kick, // Ref to the object
+	\41: \drm1,
+	\43: \drm2,
+	\38: \snar,
+	\39: \clap,
+	\42: \cymb,
+	\44: \hat1,
+	\46: \hat2,
+),
 // METHODS
-\init: {|o, router, root_path = nil, ar_route_map = nil, kr_route_map = nil|
-	var next_kr = 0;
-	// id
-	o.id = "drums";
-	o.router = router;
-	// path
-	o.root_path = root_path ? "";
-	if("/\\*".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/*"});
-	o.root_path = o.root_path.replace("//","/");
-	// audio route
-	o.ar_route_map = ar_route_map ? o.generate_ar();
-	// control route
-	o.kr_route_map = kr_route_map ? o.generate_kr();
-	// functions
-	o.func_route_map = o.generate_func();
+\init: {|o, router, root_path, on_ready, ar_route_map = nil, kr_route_map = nil|
+	var init_routine;
+	// callback when ready
+	o.on_ready = on_ready;
+	init_routine = {
+		// id
+		o.id = "drums";
+		o.router = router;
+		o.load_synthdefs();
+		s.sync;
+		// path
+		o.root_path = root_path ? "";
+		if("/\\*".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/*"});
+		o.root_path = o.root_path.replace("//","/");
+		// audio route
+		o.ar_route_map = ar_route_map ? o.generate_ar();
+		// control route
+		o.kr_route_map = kr_route_map ? o.generate_kr();
+		// functions
+		o.func_route_map = o.generate_func();
 
-	// assign to router
-	o.router.assign(o);
-	// add synths
-	o.generate_synths();
+		// assign to router
+		o.router.assign(o);
+		// add synths
+		o.generate_synths();
+		o.on_ready(init_routine);
+	}.fork;
 },
-\load: {|o|
-	var kits_paths;
+\load: {|o, on_load|
+
+	var kits_paths, ct = 0;
 	"~oDRUMS: loading samples in buffers and create kits ...".postln;
 	kits_paths = o.root_path.pathMatch.sort.collect{|file|
 		(\kind:file.basename.asSymbol,\path:file.insert(file.size,"*"));
@@ -83,16 +102,62 @@ DRUMS
 			kit = (\name:name,\buffs:[]);
 			file = file ++ "*";
 			file.pathMatch.sort.collect{|sfile|
-				kit.buffs = kit.buffs ++ Buffer.read(s,sfile);
+				var buff = Buffer.read(s,sfile);
+				ct = ct + 1;
+				kit.buffs = kit.buffs ++ buff;
+				// to mono
+
+				buff.loadToFloatArray(action: { arg array;
+					a = array;
+					buff = Buffer.loadCollection(s, a.unlace(2).sum*0.5, action:{
+						ct = ct -1;
+						if(ct == 0,{
+							on_load.value();
+							o.ready = true;
+						});
+					});
+				});
+
 			};
 			o.available_kits[kind] = o.available_kits[kind].add(kit);
 		};
 
 	});
 },
+\get_bounds_from_kit:{|o,scope,val|
+	var arr = [0,0];
+	if(o.available_kits[scope][val] !== nil,{
+		var end = o.available_kits[scope][val].buffs.size -1;
+		arr[0] = o.available_kits[scope][val].buffs[0].bufnum;
+		arr[1] = o.available_kits[scope][val].buffs[end].bufnum;
+	});
+	arr;
+},
 \select_kit: {|o,scope,val|
+	var total = 0;
+	// determine numbers ofkits
+	total = o.available_kits[scope].size;
+	// map
+	o.current_kit[scope] = [0,total].asSpec.map(val).floor;
 },
 \set_density: {|o,scope,val|
+},
+\trig_drum:{|o,num,val|
+	var symb = o.note_map[num.asSymbol];
+	o.synths[symb].set(\buf_bounds,o.get_bounds_from_kit(symb,o.current_kit[symb]));
+	o.synths[symb].set(\t_trig,1);
+	o.synths[symb].set(\vol,val/127);
+	o.synths[symb].set(\freq,\freq.asSpec.map(val/127));
+},
+\on_note:{|o, chan, num, val|
+	if(o.ready == true,{
+		o.trig_drum(num,val);
+	});
+},
+\on_clock:{|o, val|
+	if(o.ready == true,{
+
+	});
 },
 \generate_synths:{|o|
 	var node_group;
@@ -119,6 +184,46 @@ DRUMS
 		\decay_bus, o.kr_route_map[\drm2][\decay],
 		\pitch_busses,o.kr_route_map[\drm2][\pitch],
 		\out, o.ar_route_map[\drm2]
+		]
+	);
+	// \snar
+	o.synths[\snar] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\snar][\decay],
+		\pitch_busses,o.kr_route_map[\snar][\pitch],
+		\out, o.ar_route_map[\snar]
+		]
+	);
+	// \clap
+	o.synths[\clap] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\clap][\decay],
+		\pitch_busses,o.kr_route_map[\clap][\pitch],
+		\out, o.ar_route_map[\clap]
+		]
+	);
+	// \cymb
+	o.synths[\cymb] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\cymb][\decay],
+		\pitch_busses,o.kr_route_map[\cymb][\pitch],
+		\out, o.ar_route_map[\cymb]
+		]
+	);
+	// \hh1
+	o.synths[\hat1] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\hat1][\decay],
+		\pitch_busses,o.kr_route_map[\hat1][\pitch],
+		\out, o.ar_route_map[\hat1]
+		]
+	);
+	// \hh2
+	o.synths[\hat2] = Synth.head(node_group,"nun_drsampler",[
+		\buf_bounds, [0,0],
+		\decay_bus, o.kr_route_map[\hat2][\decay],
+		\pitch_busses,o.kr_route_map[\hat2][\pitch],
+		\out, o.ar_route_map[\hat2]
 		]
 	);
 },
@@ -171,13 +276,13 @@ DRUMS
 	// return
 	func_route_map;
 },
-//--
-);
 /* SynthDefs
 ******************************************************************/
+\load_synthdefs:{|o|
 	/**
 	* DRUM Sampler
 	*/
+
 	SynthDef(\nun_drsampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
 		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
@@ -196,9 +301,9 @@ DRUMS
 		b = TRand.kr(buf_bounds[1],buf_bounds[1]+1,t_trig).floor;
 		rndsst = TRand.kr(0,(BufFrames.kr(b) * 0.9).ceil, t_trig);
 		master_env = EnvGen.ar(Env.perc(atk,decay*1.1),t_trig);
-		atksnd = PlayBuf.ar(2, a, BufRateScale.kr(a), trigger: t_trig) * atkenv;
-		sig = atksnd + PlayBuf.ar(2, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
-		sig = sig + PlayBuf.ar(2, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * env;
+		atksnd = PlayBuf.ar(1, a, BufRateScale.kr(a), trigger: t_trig) * atkenv;
+		sig = atksnd + PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
+		sig = sig + PlayBuf.ar(1, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * env;
 
 		// master env
 		sig = sig * master_env;
@@ -209,4 +314,7 @@ DRUMS
 		Out.ar(out, sig*vol*on);
 
 	}).add;
+}
+//--
+);
 )

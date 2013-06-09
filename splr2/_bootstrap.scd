@@ -20,4 +20,9 @@ BOOTSTRAP CLASSES
 ~oMODULE.kr_route_map = (); // route of control busses
 ~oMODULE.ar_route_map = (); // route of audio busses
 ~oMODULE.func_route_map = (); // route of functions
+~oMODULE.load_synthdefs = {};
+~oMODULE.on_ready = {};
+~oMODULE.on_note = {};
+~oMODULE.on_clock = {};
+~oMODULE.ready = false;
 )
