@@ -87,14 +87,19 @@ ROUTER
 	});
 },
 \on_control: {|o, src, chan, num, val|
-	var device = Library.at(\device_map,src);
-	device.post;
-	" control: ".post;
-	chan.post;
-	" ".post;
-	num.post;
-	" ".post;
-	val.postln;
+	var device = Library.at(\device_map,src), target;
+	target = Library.at(\control_map,device,chan.asSymbol,num.asSymbol);
+	//target.postln;
+	if(target !== nil, {
+		if(target.class.asString == "Function",{ // got function
+			//target.func.value(target.scope, val/127);
+			target.value(val/127);
+		});
+		if(target.class.asString == "Integer",{ // got bus
+			var bus = Bus.new('control', target,1,s);
+			bus.set(val/127);
+		});
+	});
 },
 \on_clock: {|o, src, val|
 	o.modules.do({|e,i|

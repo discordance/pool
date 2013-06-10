@@ -42,11 +42,3 @@ s.waitForBoot({
 	~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
 });
 )
-//~oDRUMS.available_kits[\kick][0];
-//Library.postTree;
-//~oDRUMS.get_bounds_from_kit(\kick, 5);
-//~oMIDI.devices;
-//~oDRUMS.available_kits.postln;
-//~oROUTER.modules.postln;
-//~oMIDI.modules;
-//
