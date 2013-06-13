@@ -63,19 +63,19 @@ DRUMS
 // METHODS
 \init: {|o, router, root_path, on_ready, ar_route_map = nil, kr_route_map = nil|
 	var init_routine;
+	// id
+	o.id = \drums; // must not be in da routine
+	// path
+	o.root_path = root_path ? "";
+	if("/\\*".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/*"});
+	o.root_path = o.root_path.replace("//","/");
+
 	// callback when ready
 	o.on_ready = on_ready;
 	init_routine = {
-		// id
-		o.id = "drums";
 		o.router = router;
 		o.load_synthdefs();
 		s.sync;
-		// path
-		o.root_path = root_path ? "";
-		if("/\\*".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/*"});
-		o.root_path = o.root_path.replace("//","/");
-
 		// audio route
 		o.ar_route_map = ar_route_map ? o.generate_ar();
 		// control route
@@ -191,6 +191,42 @@ DRUMS
 		o.ticks = 0;
 	});
 },
+\set_preset:{|o, archive|
+	o.current_kit = archive.kits;
+	archive.pitchs.collect({|e,key|
+		var busnum = o.kr_route_map[key][\pitch],b;
+		b = Bus.new('control',busnum,1,s);
+		b.set(e);
+	});
+},
+\get_preset:{|o, callback|
+	var archive = (), nb = 0;
+	// will save the kits
+	archive.kits = o.current_kit;
+
+	o.kr_route_map.collect{|e,key|
+		nb = nb + o.kr_route_map[key].size;
+	};
+	o.kr_route_map.collect{|e,key|
+		e.collect{|ee,kk|
+			var bus;
+			bus = Bus.new('control',ee,1,s);
+			key.post; " ".post; kk.post; " ".postln;
+			bus.get;
+			/*
+			bus.get({|val|
+				//archive.controls[key][kk] = val;
+				nb = nb - 1;
+				key.post; " ".post; kk.post; " ".post; nb.postln;
+				//if(nb == 0,{
+				//	callback.value(archive);
+				//});
+			});
+			*/
+		};
+	};
+	true;
+},
 \generate_synths:{|o|
 	var node_group;
 	node_group = o.router[\node_groups][\generators];
@@ -207,7 +243,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm1][\decay],
 		\pitch_bus,o.kr_route_map[\drm1][\pitch],
-		\out, o.ar_route_map[\drm1]
+		\out, o.ar_route_map[\drm1],
+		\lowcut, 70
 		]
 	);
 	// \drm2
@@ -215,7 +252,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm2][\decay],
 		\pitch_bus,o.kr_route_map[\drm2][\pitch],
-		\out, o.ar_route_map[\drm2]
+		\out, o.ar_route_map[\drm2],
+		\lowcut, 70
 		]
 	);
 	// \snar
@@ -223,7 +261,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
-		\out, o.ar_route_map[\snar]
+		\out, o.ar_route_map[\snar],
+		\lowcut, 70
 		]
 	);
 	// \clap
@@ -231,7 +270,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\clap][\decay],
 		\pitch_bus,o.kr_route_map[\clap][\pitch],
-		\out, o.ar_route_map[\clap]
+		\out, o.ar_route_map[\clap],
+		\lowcut, 90
 		]
 	);
 	// \cymb
@@ -239,7 +279,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
-		\out, o.ar_route_map[\cymb]
+		\out, o.ar_route_map[\cymb],
+		\lowcut, 120
 		]
 	);
 	// \hh1
@@ -247,7 +288,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat1][\decay],
 		\pitch_bus,o.kr_route_map[\hat1][\pitch],
-		\out, o.ar_route_map[\hat1]
+		\out, o.ar_route_map[\hat1],
+		\lowcut, 120
 		]
 	);
 	// \hh2
@@ -255,7 +297,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
-		\out, o.ar_route_map[\hat2]
+		\out, o.ar_route_map[\hat2],
+		\lowcut, 120
 		]
 	);
 },
@@ -272,26 +315,31 @@ DRUMS
 	);
 },
 \generate_kr:{|o|
-	var kr_route_map = (\k:8), next_kr = 0;
-	    kr_route_map =
-		o.current_kit.collect{
-			var route = (\pitch: next_kr);
-			next_kr = next_kr + 1;
-			route;
-		};
-		// inserting manual controls
-		kr_route_map[\kick].add(\decay->8);
-		kr_route_map[\drm1].add(\decay->9);
-		kr_route_map[\drm2].add(\decay->9);
-		kr_route_map[\snar].add(\decay->9);
+	var kr_route_map, next_kr = 0;
+	kr_route_map =
+	o.current_kit.collect{
+		var route = (\pitch: next_kr);
+		next_kr = next_kr + 1;
+		route;
+	};
+	// inserting manual controls
+	kr_route_map[\kick].add(\decay->8);
+	kr_route_map[\drm1].add(\decay->9);
+	kr_route_map[\drm2].add(\decay->9);
+	kr_route_map[\snar].add(\decay->9);
 
-		kr_route_map[\clap].add(\decay->9);
-		kr_route_map[\cymb].add(\decay->10);
-		kr_route_map[\hat1].add(\decay->11);
-		kr_route_map[\hat2].add(\decay->11);
+	kr_route_map[\clap].add(\decay->9);
+	kr_route_map[\cymb].add(\decay->10);
+	kr_route_map[\hat1].add(\decay->11);
+	kr_route_map[\hat2].add(\decay->11);
 
-	    // global can be added here
-		//o.kr_route_map[\global].add(\decay->12);
+	next_kr = 12;
+
+	o.current_kit.collect{|el,key|
+		kr_route_map[key].add(\volume->next_kr);
+		next_kr = next_kr + 1;
+	};
+	// global can be added here
 	// return
 	kr_route_map;
 },
@@ -334,12 +382,26 @@ DRUMS
 	Library.put(\control_map,\motu,\3,\29,o.func_route_map[\cymb][\kit]);
 	Library.put(\control_map,\motu,\3,\30,o.func_route_map[\hat1][\kit]);
 	Library.put(\control_map,\motu,\3,\31,o.func_route_map[\hat2][\kit]);
+	// VOLUME
+	Library.put(\control_map,\motu,\3,\32,o.kr_route_map[\kick][\volume]);
+	Library.put(\control_map,\motu,\3,\33,o.kr_route_map[\drm1][\volume]);
+	Library.put(\control_map,\motu,\3,\34,o.kr_route_map[\drm2][\volume]);
+	Library.put(\control_map,\motu,\3,\35,o.kr_route_map[\snar][\volume]);
+	Library.put(\control_map,\motu,\3,\36,o.kr_route_map[\clap][\volume]);
+	Library.put(\control_map,\motu,\3,\37,o.kr_route_map[\cymb][\volume]);
+	Library.put(\control_map,\motu,\3,\38,o.kr_route_map[\hat1][\volume]);
+	Library.put(\control_map,\motu,\3,\39,o.kr_route_map[\hat2][\volume]);
 
 	// default bus
 	b = Bus.new('control',o.kr_route_map[\kick][\decay],1,s);
 	b.set(1);
-	b = Bus.new('control',o.kr_route_map[\kick][\pitch],1,s);
-	b.set(1);
+	// all pitchs to 1
+	o.kr_route_map.collect{|el,key|
+		b = Bus.new('control', o.kr_route_map[key][\pitch],1,s);
+		b.set(1);
+		b = Bus.new('control', o.kr_route_map[key][\volume],1,s);
+		b.set(1);
+	};
 
 },
 /* SynthDefs
@@ -350,15 +412,17 @@ DRUMS
 	*/
 	SynthDef(\nun_organic_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1, lowcut = 0;
 		var sig, env, atkenv, rndsst, rate_mod, atksnd,
-		master_env, a, b;
+		master_env, a, b, attenuation_ratio; // decay attenuation
 
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
 		env = EnvGen.ar(Env.perc(0.1, decay, 1, -4),t_trig);
 		atkenv = EnvGen.ar(Env.perc(0.01, 0.02, 1, -4),t_trig);
+
+		attenuation_ratio = In.kr(decay_bus).lag(0.1) * 0.3;
 
 		sig = 0;
 		// random buffers, a is the lead
@@ -369,13 +433,14 @@ DRUMS
 		atksnd = PlayBuf.ar(1, a, BufRateScale.kr(a), trigger: t_trig) * atkenv;
 		sig = atksnd + PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
 		sig = sig + PlayBuf.ar(1, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * env;
-
+		vol = vol - (vol*attenuation_ratio);
 		// master env
 		sig = sig * master_env;
 
 		sig = LeakDC.ar(sig);
 		// filter
 		sig = DFM1.ar(sig, freq, 0.5, 3);
+		sig = HPF.ar(sig,lowcut);
 		Out.ar(out, sig*vol*on);
 
 	}).add;

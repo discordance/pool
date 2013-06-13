@@ -92,7 +92,6 @@ ROUTER
 	//target.postln;
 	if(target !== nil, {
 		if(target.class.asString == "Function",{ // got function
-			//target.func.value(target.scope, val/127);
 			target.value(val/127);
 		});
 		if(target.class.asString == "Integer",{ // got bus

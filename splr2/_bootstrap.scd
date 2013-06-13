@@ -25,4 +25,6 @@ BOOTSTRAP CLASSES
 ~oMODULE.on_note = {};
 ~oMODULE.on_clock = {};
 ~oMODULE.ready = false;
+~oMODULE.get_preset = {};
+~oMODULE.set_preset = {};
 )
