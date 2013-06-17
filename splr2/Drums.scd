@@ -116,7 +116,6 @@ DRUMS
 				// to mono
 				//on_load.value();
 				//o.ready = true;
-
 				buff.loadToFloatArray(action: { arg array;
 					a = array;
 					buff = Buffer.loadCollection(s, a.unlace(2).sum*0.5, action:{
@@ -193,39 +192,14 @@ DRUMS
 },
 \set_preset:{|o, archive|
 	o.current_kit = archive.kits;
-	archive.pitchs.collect({|e,key|
-		var busnum = o.kr_route_map[key][\pitch],b;
-		b = Bus.new('control',busnum,1,s);
-		b.set(e);
-	});
 },
 \get_preset:{|o, callback|
-	var archive = (), nb = 0;
+	var archive = ();
 	// will save the kits
 	archive.kits = o.current_kit;
-
-	o.kr_route_map.collect{|e,key|
-		nb = nb + o.kr_route_map[key].size;
-	};
-	o.kr_route_map.collect{|e,key|
-		e.collect{|ee,kk|
-			var bus;
-			bus = Bus.new('control',ee,1,s);
-			key.post; " ".post; kk.post; " ".postln;
-			bus.get;
-			/*
-			bus.get({|val|
-				//archive.controls[key][kk] = val;
-				nb = nb - 1;
-				key.post; " ".post; kk.post; " ".post; nb.postln;
-				//if(nb == 0,{
-				//	callback.value(archive);
-				//});
-			});
-			*/
-		};
-	};
-	true;
+	// what extra to save here ?
+	// nothing so return archive
+	archive;
 },
 \generate_synths:{|o|
 	var node_group;
@@ -303,7 +277,8 @@ DRUMS
 	);
 },
 \generate_ar:{|o|
-	(   // id : audio bus
+	var ar_route_map = ();
+	ar_route_map = (   // id : audio bus
 		\kick:0,
 		\drm1:1,
 		\drm2:1,
@@ -313,6 +288,7 @@ DRUMS
 		\hat1:3,
 		\hat2:3,
 	);
+	ar_route_map;
 },
 \generate_kr:{|o|
 	var kr_route_map, next_kr = 0;

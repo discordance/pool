@@ -19,7 +19,7 @@ ROUTER
 \node_groups: (),
 \modules: [],
 \next_kr: 15,
-\next_ar: 2,
+\next_ar: 15,
 \void_buffer:nil,
 // METHODS
 \init:{|o|
@@ -97,6 +97,8 @@ ROUTER
 		if(target.class.asString == "Integer",{ // got bus
 			var bus = Bus.new('control', target,1,s);
 			bus.set(val/127);
+			// we save last bus value to store in presets
+			Library.put(\control_store,target.asSymbol, val/127);
 		});
 	});
 },
