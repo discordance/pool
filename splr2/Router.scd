@@ -19,7 +19,7 @@ ROUTER
 \node_groups: (),
 \modules: [],
 \next_kr: 15,
-\next_ar: 15,
+\next_ar: 2,
 \void_buffer:nil,
 // METHODS
 \init:{|o|
@@ -77,7 +77,6 @@ ROUTER
 	};
 },
 \on_note: {|o, src, chan, num, val|
-
 	o.modules.do({|e,i|
 		e.devices.do({|ee,ii|
 			if(ee.uid == src,{

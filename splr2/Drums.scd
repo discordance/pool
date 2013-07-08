@@ -10,6 +10,8 @@
 SPLR v2 - Vauban
 ****
 
+@TODO -> available_kits are array, not good for preset as it can change while kits are upgraded
+      -> change it to objects, yeah dude, though, not urgent
 DRUMS
 ******************************************************************/
 (
@@ -82,15 +84,13 @@ DRUMS
 		o.kr_route_map = kr_route_map ? o.generate_kr();
 		// functions
 		o.func_route_map = o.generate_func();
-
 		// assign from router
 		o.router.assign(o);
 		// add synths
 		o.generate_synths();
-
 		// generate control map
 		o.generate_control_map();
-
+		//
 		o.on_ready(init_routine);
 	}.fork;
 },

@@ -45,15 +45,27 @@ s.waitForBoot({
 		});
 	});
 	// SHOTS
-	~oSHOT.init();
+	~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
+		"~oSHOT : initialized.".postln;
+		~oSHOT.load({|o|
+			"~oSHOT : samples loaded.".postln;
+		});
+	});
 
 	~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
 	~oPRESET.register_module(~oDRUMS);
 });
 )
 
+/**
+ * !!!!! ATTENTION CONNARD AVANT DE SAVE
+ */
 ~oPRESET.save_preset("drd_indus");
-~oPRESET.load_preset("drd_indus");
+/**
+ * !!!!! ATTENTION CONNARD AVANT DE SAVE
+ */
+
+~oPRESET.load_preset("vbn_tekdus");
 // MAXI LOL
 (
 //
