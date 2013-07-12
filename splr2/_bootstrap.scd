@@ -32,8 +32,8 @@ BOOTSTRAP CLASSES
 // FX is quite a module after all ;
 ~oFX = ~oMODULE <
 (
-\ar_route_in_map: (),
-\ar_route_out_map: ()
+\in_bus: 0,
+\out_bus: 0
 )
 
 )

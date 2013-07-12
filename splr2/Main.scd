@@ -35,14 +35,22 @@ s.waitForBoot({
 	// CLEAR LIB
 	Library.clear;
 	// ROUTER FIRST
-	~oROUTER.init();
+	~oROUTER.init(true); // is is for debug on standard stereo
 	// THEN PRESET
 	~oPRESET.init("/Users/nunja/Documents/SuperCollider/presets/");
 	// THEN MIDI
 	~oMIDI.init(~oROUTER);
+
+	// ---------------- FXS FIRST  !!!!
+	// REVERB
+	~oREVERB.init(~oROUTER, { "~oREVERB : fx unit loaded".postln; });
+
+	// ---------------- MODULES
 	// DRUMS
 	~oDRUMS.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/percussion/",{|o,init|
 		"~oDRUMS : initialized.".postln;
+		~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
+		~oPRESET.register_module(~oDRUMS);
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
 		});
@@ -55,12 +63,7 @@ s.waitForBoot({
 		});
 	});
 
-	// FXS
-	// REVERB
-	~oREVERB.init(~oROUTER, {});
 
-	~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
-	~oPRESET.register_module(~oDRUMS);
 });
 )
 
@@ -105,6 +108,11 @@ SynthDef(\nun_debug_out, {
 		Out.ar(0,sig);
 }).add;
 s.sync;
-	Synth.head(~oROUTER[\node_groups][\mix], "nun_debug_out", [\in_start, 15, \in_end, 19]);
+	Synth.head(~oROUTER[\node_groups][\main_out], "nun_debug_out", [\in_start, 15, \in_end, 19]);
 }.fork;
+)
+
+(
+//~oDRUMS.ar_route_map;
+//s.queryAllNodes;
 )

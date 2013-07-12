@@ -16,17 +16,21 @@ ROUTER
 ~oROUTER =
 (
 // VARS
+\debug: false,
 \node_groups: (),
 \modules: [],
 \next_kr: 15,
-\next_ar: 2, // routing assigned to modules out
-\next_fx_ar: 32, // next free input for FX, always mono
-\fx_bus_ar:0, // output for the FX
+\next_ar: 15, // routing assigned to modules out
+\next_fx_ar: 64, // next free input for FX, always mono
+\fx_bus_out:0, // output for the FX
 
 \void_buffer:nil,
 // METHODS
-\init:{|o|
+\init:{|o, debug_out = false|
 	"~oROUTER : clearing node tree, freeing all buffers ...".postln;
+
+	o.debug = debug_out;
+
 	// clear clear !!
 	Server.all.do(_.freeAll);
 
@@ -37,9 +41,14 @@ ROUTER
 	o.void_buffer = Buffer.alloc(s, s.sampleRate, 2);
 
 	// routing node groups
+	// generators -> modules that generate sounds
 	o.node_groups = o.node_groups.add(\generators -> Group.head(s));
+	// premixers -> to route generator into main and sends bus
+	o.node_groups = o.node_groups.add(\premixers -> Group.tail(s));
+	// effects -> bus of effects
 	o.node_groups = o.node_groups.add(\effects -> Group.tail(s));
-	o.node_groups = o.node_groups.add(\mix -> Group.tail(s));
+	// main mix -> get all the virtual bus and route to physical busses
+	o.node_groups = o.node_groups.add(\main_out -> Group.tail(s));
 },
 \assign:{|o,target|
 	o.assign_ar(target);
@@ -54,6 +63,10 @@ ROUTER
 },
 \assign_ar_fx: {|o,target|
 	//
+	target.in_bus = o.next_fx_ar;
+	o.next_fx_ar = o.next_fx_ar + 1;
+
+	target.out_bus = o.fx_bus_out;
 }
 ,
 \assign_ar: {|o,target|
@@ -124,9 +137,33 @@ ROUTER
 	});
 },
 \register_module:{|o, module, devices|
+	var min, num_busses;
 	var mod = (\module:module, \devices:devices);
 	o.modules = o.modules.add(mod);
+
+	// first audio bus used
+	min = module.ar_route_map.as(Set).minItem;
+	num_busses = module.ar_route_map.as(Set).size;
+
+	{
+		// dymanically creates a SynthDef
+
+		SynthDef("debug_out_%".format(module.id).asSymbol, {
+			var sig;
+			sig = In.ar(min, num_busses);
+			Out.ar(0, Splay.ar(sig,0));
+		}).add;
+
+		s.sync;
+		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);
+	}.fork;
+
+
+},
+/* SynthDefs
+******************************************************************/
+\load_synthdefs:{|o|
+
 }
-//--
 );
 )
