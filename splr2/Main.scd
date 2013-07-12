@@ -26,6 +26,9 @@ s.waitForBoot({
 	"Drums.scd".loadRelative;
 	"Shot.scd".loadRelative;
 
+	// effects
+	"Reverb.scd".loadRelative;
+
 	/**
 	* INIT AND LOAD
 	*/
@@ -51,6 +54,10 @@ s.waitForBoot({
 			"~oSHOT : samples loaded.".postln;
 		});
 	});
+
+	// FXS
+	// REVERB
+	~oREVERB.init(~oROUTER, {});
 
 	~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
 	~oPRESET.register_module(~oDRUMS);

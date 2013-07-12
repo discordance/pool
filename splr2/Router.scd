@@ -19,7 +19,10 @@ ROUTER
 \node_groups: (),
 \modules: [],
 \next_kr: 15,
-\next_ar: 2,
+\next_ar: 2, // routing assigned to modules out
+\next_fx_ar: 32, // next free input for FX, always mono
+\fx_bus_ar:0, // output for the FX
+
 \void_buffer:nil,
 // METHODS
 \init:{|o|
@@ -43,6 +46,16 @@ ROUTER
 	o.assign_kr(target);
 	//o.modules = o.modules.add(target.id->target);
 },
+\assign_fx:{|o,target|
+	// ar is different because must manage in and outs
+	o.assign_ar_fx(target);
+	// kr is same for FX and modules
+	o.assign_kr(target);
+},
+\assign_ar_fx: {|o,target|
+	//
+}
+,
 \assign_ar: {|o,target|
 	var needed, tmp_map;
 	needed = target.ar_route_map.as(Set).size;// how much busses I have to book ? thx supercollider ..
