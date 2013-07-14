@@ -27,6 +27,8 @@ BOOTSTRAP CLASSES
 ~oMODULE.ready = false;
 ~oMODULE.get_preset = {};
 ~oMODULE.set_preset = {};
+~oMODULE.premixers = ();
+~oMODULE.attached_fx =();
 
 
 // FX is quite a module after all ;

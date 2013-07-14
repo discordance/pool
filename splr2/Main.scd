@@ -25,7 +25,6 @@ s.waitForBoot({
 	"Preset.scd".loadRelative;
 	"Drums.scd".loadRelative;
 	"Shot.scd".loadRelative;
-
 	// effects
 	"Reverb.scd".loadRelative;
 
@@ -51,6 +50,7 @@ s.waitForBoot({
 		"~oDRUMS : initialized.".postln;
 		~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
 		~oPRESET.register_module(~oDRUMS);
+		~oDRUMS.attach_fx(~oREVERB);
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
 		});
@@ -75,14 +75,14 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
 
-~oPRESET.load_preset("vbn_tekdus");
+~oPRESET.load_preset("drd_indus");
 // MAXI LOL
 (
 //
 var bus = Bus.new('control', 21,1,s);
 bus.set(0.3);
-bus = Bus.new('control', 17,1,s);
-bus.set(0.3);
+bus = Bus.new('control', 19,1,s);
+bus.set(0.4);
 bus = Bus.new('control', 24,1,s);
 bus.set(0.4);
 bus = Bus.new('control', 25,1,s);
@@ -111,8 +111,29 @@ s.sync;
 	Synth.head(~oROUTER[\node_groups][\main_out], "nun_debug_out", [\in_start, 15, \in_end, 19]);
 }.fork;
 )
+(
+~oDRUMS.kr_route_map['premix_drums_2'];
+)
 
 (
-//~oDRUMS.ar_route_map;
-//s.queryAllNodes;
+var bus = Bus.new('control', 38,1,s); // 38 41 44 47
+bus.set(0.2);
+bus = Bus.new('control', 41,1,s); // 38 41 44 47
+bus.set(0.02);
+bus = Bus.new('control', 44,1,s); // 38 41 44 47
+bus.set(0.1);
+bus = Bus.new('control', 47,1,s); // 38 41 44 47
+bus.set(0.2);
 )
+
+(
+var bus = Bus.new('control', 38,1,s); // 38 41 44 47
+bus.set(0);
+bus = Bus.new('control', 41,1,s); // 38 41 44 47
+bus.set(0);
+bus = Bus.new('control', 44,1,s); // 38 41 44 47
+bus.set(0);
+bus = Bus.new('control', 47,1,s); // 38 41 44 47
+bus.set(0);
+)
+

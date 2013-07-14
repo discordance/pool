@@ -58,7 +58,7 @@ REVERB (FX)
 \generate_synths:{|o|
 	var node_group;
 	node_group = o.router[\node_groups][\effects];
-	o.synths[\schroeder] = Synth.head(node_group,"nun_reverb_schroeder",
+	o.synths[\classic] = Synth.head(node_group,"nun_reverb_classic",
 	[
 			\in, o.in_bus,
 			\out, o.out_bus
@@ -68,22 +68,20 @@ REVERB (FX)
 ******************************************************************/
 \load_synthdefs:{|o|
 
-	SynthDef(\nun_reverb_schroeder, {
+	SynthDef(\nun_reverb_classic, {
 		arg in = 0, out = 0;
-		var s, z, y, vol, sep;
-		sep = 0.001;
-		s = In.ar(in,1);
-		z = DelayN.ar(s, 0.048);
-		// 7 length modulated comb delays in parallel :
-		y = Mix.ar(Array.fill(7,{ CombL.ar(z, 0.1, LFNoise1.kr(0.1.rand, 0.04, 0.05), 4) }));
-		// two parallel chains of 4 allpass delays (8 total) :
-		4.do({ y = AllpassN.ar(y, 0.050, [0.050.rand, 0.050.rand], 1) });
-		s = (s+y);
-		// little stereo effect
-		s = [DelayC.ar(s, 1, LFNoise2.ar(2).range(0,sep)), DelayC.ar(s, 1, LFNoise2.ar(2).range(0,sep))];
+		var sig,local;
 
-		Out.ar(out,s);
+		sig = In.ar(in,1);
+		local = LocalIn.ar(2) + sig.dup;
+		30.do{local = AllpassN.ar(local,0.06,LFNoise2.kr(0.01).range(0.001,0.06),4)};
+
+		LocalOut.ar(local*0.6);
+
+        // Now let's hear it:
+        Out.ar(out, sig+local);
 	}).add;
 }
 )
 )
+

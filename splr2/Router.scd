@@ -148,6 +148,8 @@ ROUTER
 	{
 		// dymanically creates a SynthDef
 
+		// DEBUG MODE
+
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
@@ -155,7 +157,21 @@ ROUTER
 		}).add;
 
 		s.sync;
+
 		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);
+
+		// MIXER MODE
+		/*
+		SynthDef("physical_out_%".format(module.id).asSymbol, {
+			var sig;
+			sig = In.ar(min, num_busses);
+			Out.ar(min-13, sig);
+		}).add;
+
+		s.sync;
+
+		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol);
+		*/
 	}.fork;
 
 

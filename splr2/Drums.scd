@@ -79,9 +79,9 @@ DRUMS
 		o.load_synthdefs();
 		s.sync;
 		// audio route
-		o.ar_route_map = ar_route_map ? o.generate_ar();
+		o.ar_route_map = o.generate_ar();
 		// control route
-		o.kr_route_map = kr_route_map ? o.generate_kr();
+		o.kr_route_map = o.generate_kr();
 		// functions
 		o.func_route_map = o.generate_func();
 		// assign from router
@@ -131,6 +131,50 @@ DRUMS
 		};
 
 	});
+},
+\attach_fx:{|o, fx_module|
+
+	var node_group, fx_size;
+	fx_size = o.attached_fx.size;
+	o.attached_fx = o.attached_fx.add(fx_size.asSymbol->fx_module); // increment the number of attached fx
+	// get the group free
+	o.premixers.collect{|el,key|
+
+	};
+	node_group = o.router[\node_groups][\premixers];
+
+	{
+		var num_channels = o.ar_route_map.as(Set).size;
+		var next_ar = o.ar_route_map.as(Set).minItem;
+		num_channels.do({|el,i|
+			var name = "premix_"++o.id++"_"++i.asString;
+
+			SynthDef(name.asSymbol, {
+				var sig;
+				sig = In.ar(next_ar, 1);
+
+				// bypass signal
+				Out.ar(next_ar, sig);
+
+				o.attached_fx.collect({|el,key|
+					var name = "premix_"++o.id++"_"++i.asString;
+
+					Out.ar(el.in_bus,
+						sig * In.kr(o.kr_route_map[name.asSymbol][(\fx ++ \_ ++ key).asSymbol]).lag(0.1)
+					);
+				});
+
+			}).add;
+
+			next_ar = next_ar + 1;
+		});
+		s.sync;
+		// create the premaster synths
+		num_channels.do({|el,i|
+			Synth.head(node_group,"premix_"++o.id++"_"++i.asString,[]);
+		});
+
+	}.fork;
 },
 \get_bounds_from_kit:{|o,scope,val|
 	var arr = [0,0];
@@ -302,19 +346,34 @@ DRUMS
 	kr_route_map[\kick].add(\decay->8);
 	kr_route_map[\drm1].add(\decay->9);
 	kr_route_map[\drm2].add(\decay->9);
-	kr_route_map[\snar].add(\decay->9);
+	kr_route_map[\snar].add(\decay->10);
 
-	kr_route_map[\clap].add(\decay->9);
-	kr_route_map[\cymb].add(\decay->10);
-	kr_route_map[\hat1].add(\decay->11);
-	kr_route_map[\hat2].add(\decay->11);
+	kr_route_map[\clap].add(\decay->10);
+	kr_route_map[\cymb].add(\decay->11);
+	kr_route_map[\hat1].add(\decay->12);
+	kr_route_map[\hat2].add(\decay->12);
 
-	next_kr = 12;
+
+
+	next_kr = 13;
 
 	o.current_kit.collect{|el,key|
 		kr_route_map[key].add(\volume->next_kr);
 		next_kr = next_kr + 1;
 	};
+
+	//
+	// premix and FX busses
+	// how many premixers
+	{
+		var num_channels = o.ar_route_map.as(Set).size;
+		num_channels.do({|el,i|
+			var name = "premix_"++o.id++"_"++i.asString;
+			kr_route_map[name.asSymbol] = (\fx_0:next_kr,\fx_1:next_kr+1,\fx_2:next_kr+2);
+			next_kr = next_kr + 3;
+		});
+	}.value;
+
 	// global can be added here
 	// return
 	kr_route_map;
@@ -337,9 +396,12 @@ DRUMS
 	var b;
 	// DEN AND DEC AND FX
 	Library.put(\control_map,\motu,\3,\0,o.func_route_map[\global][\density]);
-	Library.put(\control_map,\motu,\3,\1,o.kr_route_map[\drm1][\decay]);
-	Library.put(\control_map,\motu,\3,\2,o.kr_route_map[\cymb][\decay]);
-	Library.put(\control_map,\motu,\3,\3,o.kr_route_map[\hat1][\decay]);
+	// 123 for delays
+
+	Library.put(\control_map,\motu,\3,\4,o.kr_route_map[\drm1][\decay]);
+	Library.put(\control_map,\motu,\3,\5,o.kr_route_map[\snar][\decay]);
+	Library.put(\control_map,\motu,\3,\6,o.kr_route_map[\cymb][\decay]);
+	Library.put(\control_map,\motu,\3,\7,o.kr_route_map[\hat1][\decay]);
 	// PITCHES
 	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\pitch]);
 	Library.put(\control_map,\motu,\3,\17,o.kr_route_map[\drm1][\pitch]);
@@ -367,16 +429,21 @@ DRUMS
 	Library.put(\control_map,\motu,\3,\37,o.kr_route_map[\cymb][\volume]);
 	Library.put(\control_map,\motu,\3,\38,o.kr_route_map[\hat1][\volume]);
 	Library.put(\control_map,\motu,\3,\39,o.kr_route_map[\hat2][\volume]);
+	// FX
 
 	// default bus
 	b = Bus.new('control',o.kr_route_map[\kick][\decay],1,s);
 	b.set(1);
-	// all pitchs to 1
+	// all pitchs and volumes to 1
 	o.kr_route_map.collect{|el,key|
-		b = Bus.new('control', o.kr_route_map[key][\pitch],1,s);
-		b.set(1);
-		b = Bus.new('control', o.kr_route_map[key][\volume],1,s);
-		b.set(1);
+		if(o.kr_route_map[key][\pitch] != nil,{
+			b = Bus.new('control', o.kr_route_map[key][\pitch],1,s);
+			b.set(1);
+		});
+		if(o.kr_route_map[key][\volume] != nil,{
+			b = Bus.new('control', o.kr_route_map[key][\volume],1,s);
+			b.set(1);
+		});
 	};
 
 },
