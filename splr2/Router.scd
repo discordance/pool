@@ -16,7 +16,7 @@ ROUTER
 ~oROUTER =
 (
 // VARS
-\debug: false,
+\debug_out: false,
 \node_groups: (),
 \modules: [],
 \next_kr: 15,
@@ -29,7 +29,7 @@ ROUTER
 \init:{|o, debug_out = false|
 	"~oROUTER : clearing node tree, freeing all buffers ...".postln;
 
-	o.debug = debug_out;
+	o.debug_out = debug_out;
 
 	// clear clear !!
 	Server.all.do(_.freeAll);

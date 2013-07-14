@@ -69,6 +69,9 @@ s.waitForBoot({
 
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
+ * !!!!! ATTENTION CONNARD AVANT DE SAVE
+ * !!!!! ATTENTION CONNARD AVANT DE SAVE
+ * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
 ~oPRESET.save_preset("drd_indus");
 /**
@@ -80,21 +83,23 @@ s.waitForBoot({
 (
 //
 var bus = Bus.new('control', 21,1,s);
-bus.set(0.3);
+bus.set(0.56);
 bus = Bus.new('control', 19,1,s);
-bus.set(0.4);
+bus.set(0.25);
 bus = Bus.new('control', 24,1,s);
-bus.set(0.4);
+bus.set(0.5);
 bus = Bus.new('control', 25,1,s);
-bus.set(0.4);
-bus = Bus.new('control', 26,1,s);
-bus.set(0.3);
-~oDRUMS.current_kit[\kick] = 3;
+bus.set(0.1);
+bus = Bus.new('control', 27,1,s);
+bus.set(0.5);
+~oDRUMS.current_kit[\kick] = 0;
 ~oDRUMS.current_kit[\drm1] = 3;
-~oDRUMS.current_kit[\drm2] = 3;
-~oDRUMS.current_kit[\snar] = 2;
-~oDRUMS.current_kit[\clap] = 5;
-~oDRUMS.current_kit[\cymb] = 5;
+~oDRUMS.current_kit[\drm2] = 2;
+~oDRUMS.current_kit[\snar] = 0;
+~oDRUMS.current_kit[\clap] = 0;
+~oDRUMS.current_kit[\cymb] = 3;
+~oDRUMS.current_kit[\hat1] = 1;
+~oDRUMS.current_kit[\hat2] = 4;
 ~oDRUMS.density = 1;
 ~oDRUMS.kr_route_map;
 )
@@ -117,13 +122,13 @@ s.sync;
 
 (
 var bus = Bus.new('control', 38,1,s); // 38 41 44 47
-bus.set(0.2);
+bus.set(0.01);
 bus = Bus.new('control', 41,1,s); // 38 41 44 47
-bus.set(0.02);
+bus.set(0.01);
 bus = Bus.new('control', 44,1,s); // 38 41 44 47
-bus.set(0.1);
+bus.set(0.05);
 bus = Bus.new('control', 47,1,s); // 38 41 44 47
-bus.set(0.2);
+bus.set(0.01);
 )
 
 (
@@ -136,4 +141,5 @@ bus.set(0);
 bus = Bus.new('control', 47,1,s); // 38 41 44 47
 bus.set(0);
 )
+
 

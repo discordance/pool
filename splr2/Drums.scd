@@ -152,15 +152,23 @@ DRUMS
 			SynthDef(name.asSymbol, {
 				var sig;
 				sig = In.ar(next_ar, 1);
+				// compress;
+				sig =  Compander.ar(sig, sig,
+					thresh: -14.dbamp,
+					slopeBelow: 1,
+					slopeAbove: 0.3,
+					clampTime: 0.001,
+					relaxTime: 0.1
+				);
 
 				// bypass signal
-				Out.ar(next_ar, sig);
+				Out.ar(next_ar, sig*0.73);
 
 				o.attached_fx.collect({|el,key|
 					var name = "premix_"++o.id++"_"++i.asString;
 
 					Out.ar(el.in_bus,
-						sig * In.kr(o.kr_route_map[name.asSymbol][(\fx ++ \_ ++ key).asSymbol]).lag(0.1)
+						0.73 * sig * In.kr(o.kr_route_map[name.asSymbol][(\fx ++ \_ ++ key).asSymbol]).lag(0.1)
 					);
 				});
 
@@ -196,11 +204,13 @@ DRUMS
 	o.density = val;
 },
 \trig_drum:{|o,num,val|
+	var freq;
 	var symb = o.note_map[num.asSymbol];
 	o.synths[symb].set(\buf_bounds,o.get_bounds_from_kit(symb,o.current_kit[symb]));
 	o.synths[symb].set(\t_trig,1);
 	o.synths[symb].set(\vol,val/127);
-	o.synths[symb].set(\freq,\freq.asSpec.map(val/127));
+	freq = \freq.asSpec.map((val/127).lincurve);
+	o.synths[symb].set(\freq,freq);
 },
 \on_note:{|o, chan, num, val|
 	if(o.ready == true,{
@@ -253,7 +263,8 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\kick][\decay],
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
-		\out, o.ar_route_map[\kick]
+		\out, o.ar_route_map[\kick], \vol, 1
+
 		]
 	);
 	// \drm1
@@ -262,7 +273,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\drm1][\decay],
 		\pitch_bus,o.kr_route_map[\drm1][\pitch],
 		\out, o.ar_route_map[\drm1],
-		\lowcut, 70
+		\lowcut, 60, \vol, 0.92
 		]
 	);
 	// \drm2
@@ -271,7 +282,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\drm2][\decay],
 		\pitch_bus,o.kr_route_map[\drm2][\pitch],
 		\out, o.ar_route_map[\drm2],
-		\lowcut, 70
+		\lowcut, 70, \vol, 0.92
 		]
 	);
 	// \snar
@@ -280,7 +291,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
 		\out, o.ar_route_map[\snar],
-		\lowcut, 70
+		\lowcut, 70, \vol, 0.90
 		]
 	);
 	// \clap
@@ -289,7 +300,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\clap][\decay],
 		\pitch_bus,o.kr_route_map[\clap][\pitch],
 		\out, o.ar_route_map[\clap],
-		\lowcut, 90
+		\lowcut, 80, \vol, 0.88
 		]
 	);
 	// \cymb
@@ -298,7 +309,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
 		\out, o.ar_route_map[\cymb],
-		\lowcut, 120
+		\lowcut, 120, \vol, 0.90
 		]
 	);
 	// \hh1
@@ -307,7 +318,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\hat1][\decay],
 		\pitch_bus,o.kr_route_map[\hat1][\pitch],
 		\out, o.ar_route_map[\hat1],
-		\lowcut, 120
+		\lowcut, 120, \vol, 0.85
 		]
 	);
 	// \hh2
@@ -316,7 +327,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 120
+		\lowcut, 120, \vol, 0.85
 		]
 	);
 },
@@ -402,6 +413,13 @@ DRUMS
 	Library.put(\control_map,\motu,\3,\5,o.kr_route_map[\snar][\decay]);
 	Library.put(\control_map,\motu,\3,\6,o.kr_route_map[\cymb][\decay]);
 	Library.put(\control_map,\motu,\3,\7,o.kr_route_map[\hat1][\decay]);
+
+	//VERBS
+	Library.put(\control_map,\motu,\3,\8,o.kr_route_map[\premix_drums_0][\fx_0]);
+	Library.put(\control_map,\motu,\3,\9,o.kr_route_map[\premix_drums_1][\fx_0]);
+	Library.put(\control_map,\motu,\3,\10,o.kr_route_map[\premix_drums_2][\fx_0]);
+	Library.put(\control_map,\motu,\3,\11,o.kr_route_map[\premix_drums_3][\fx_0]);
+
 	// PITCHES
 	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\pitch]);
 	Library.put(\control_map,\motu,\3,\17,o.kr_route_map[\drm1][\pitch]);
@@ -463,22 +481,24 @@ DRUMS
 		rate = rate_mod * rate;
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
 		env = EnvGen.ar(Env.perc(0.1, decay, 1, -4),t_trig);
-		atkenv = EnvGen.ar(Env.perc(0.01, 0.02, 1, -4),t_trig);
+		atkenv = EnvGen.ar(Env.perc(0.01, 0.035, 1, -4),t_trig);
 
-		attenuation_ratio = In.kr(decay_bus).lag(0.1) * 0.3;
+		attenuation_ratio = In.kr(decay_bus).lag(0.1) * 0.4;
 
 		sig = 0;
 		// random buffers, a is the lead
 		a = buf_bounds[0];
 		b = TRand.kr(buf_bounds[1],buf_bounds[1]+1,t_trig).floor;
-		rndsst = TRand.kr(0,(BufFrames.kr(b) * 0.9).ceil, t_trig);
+		rndsst = TRand.kr((BufFrames.kr(b) * 0.1).ceil,(BufFrames.kr(b) * 0.9).ceil, t_trig);
 		master_env = EnvGen.ar(Env.perc(atk,decay*1.1),t_trig);
-		atksnd = PlayBuf.ar(1, a, BufRateScale.kr(a), trigger: t_trig) * atkenv;
+		atksnd = PlayBuf.ar(1, a, BufRateScale.kr(a), trigger: t_trig) * atkenv * 1.3;
 		sig = atksnd + PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
 		sig = sig + PlayBuf.ar(1, b, BufRateScale.kr(b)*rate, trigger: t_trig, startPos: rndsst ) * env;
 		vol = vol - (vol*attenuation_ratio);
 		// master env
 		sig = sig * master_env;
+
+		sig = sig.round(0.5 ** 12)*1.1;
 
 		sig = LeakDC.ar(sig);
 		// filter
@@ -492,13 +512,14 @@ DRUMS
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
 		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
 		var sig, env, rate_mod;
+
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
 		env = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
 		a = buf_bounds[0];
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
-		sig = DFM1.ar(sig, freq, 0.5, 1);
+		sig = DFM1.ar(sig, 20000, 0.5, 1);
 		Out.ar(out, sig*vol*on);
 	}).add;
 }
