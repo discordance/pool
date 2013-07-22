@@ -80,7 +80,7 @@ ECHO DELAY (FX)
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
-	b.set(1);
+	b.set(0.5);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
 	b.set(0.85);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);

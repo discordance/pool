@@ -147,4 +147,5 @@ bus.set(0);
 
 )
 
-~oDRUMS.kr_route_map;
+~oDRUMS.available_kits.postcs;
+~oDRUMS.select_kit(\hat1,0.4);

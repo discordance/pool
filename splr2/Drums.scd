@@ -33,24 +33,24 @@ DRUMS
 	\hat2: nil,
 ),
 \available_kits:(
-	\kick: [], //[(\name:"",\buffs:[]),(\name:"",\buffs:[])]
-	\drm1: [],
-	\drm2: [],
-	\snar: [],
-	\clap: [],
-	\cymb: [],
-	\hat1: [],
-	\hat2: [],
+	\kick: (), //[(\name:"",\buffs:[]),(\name:"",\buffs:[])]
+	\drm1: (),
+	\drm2: (),
+	\snar: (),
+	\clap: (),
+	\cymb: (),
+	\hat1: (),
+	\hat2: (),
 ),
 \current_kit:(
-	\kick: 0, // Ref to the object
-	\drm1: 0,
-	\drm2: 0,
-	\snar: 0,
-	\clap: 0,
-	\cymb: 0,
-	\hat1: 0,
-	\hat2: 0,
+	\kick: \default, // Ref to the object
+	\drm1: \default,
+	\drm2: \default,
+	\snar: \default,
+	\clap: \default,
+	\cymb: \default,
+	\hat1: \default,
+	\hat2: \default,
 ),
 \note_map:(
 	\36: \kick, // Ref to the object
@@ -107,12 +107,13 @@ DRUMS
 		kits_path.pathMatch.sort.collect{|file|
 			var name, kit;
 			name = file.basename;
-			kit = (\name:name,\buffs:[]);
+			//kit = (\name:name,\buffs:[]);
+			kit = [];
 			file = file ++ "*";
 			file.pathMatch.sort.collect{|sfile|
 				var buff = Buffer.read(s,sfile);
 				ct = ct + 1;
-				kit.buffs = kit.buffs ++ buff;
+				kit = kit.add(buff);
 				// to mono
 				//on_load.value();
 				//o.ready = true;
@@ -127,7 +128,7 @@ DRUMS
 					});
 				});
 			};
-			o.available_kits[kind] = o.available_kits[kind].add(kit);
+			o.available_kits[kind] = o.available_kits[kind].add(name.asSymbol -> kit);
 		};
 
 	});
@@ -191,18 +192,23 @@ DRUMS
 \get_bounds_from_kit:{|o,scope,val|
 	var arr = [0,0];
 	if(o.available_kits[scope][val] !== nil,{
-		var end = o.available_kits[scope][val].buffs.size -1;
-		arr[0] = o.available_kits[scope][val].buffs[0].bufnum;
-		arr[1] = o.available_kits[scope][val].buffs[end].bufnum;
+		var end = o.available_kits[scope][val].size -1;
+		arr[0] = o.available_kits[scope][val][0].bufnum;
+		arr[1] = o.available_kits[scope][val][end].bufnum;
 	});
 	arr;
 },
 \select_kit: {|o,scope,val|
-	var total = 0;
+	var total = 0, keys;
 	// determine numbers ofkits
 	total = o.available_kits[scope].size;
+	keys = o.available_kits[scope].keys.asArray;
 	// map
-	o.current_kit[scope] = [0,total].asSpec.map(val).floor;
+	o.current_kit[scope] = keys[[0,total-1].asSpec.map(val).floor];
+	"DRUM ".post;
+	scope.post;
+	" IS ".post;
+	o.current_kit[scope].postln;
 },
 \set_density: {|o,scope,val|
 	o.density = val;
