@@ -466,7 +466,7 @@ DRUMS
 	o.kr_route_map.collect{|el,key|
 		if(o.kr_route_map[key][\pitch] != nil,{
 			b = Bus.new('control', o.kr_route_map[key][\pitch],1,s);
-			b.set(1);
+			b.set(0.7);
 		});
 		if(o.kr_route_map[key][\volume] != nil,{
 			b = Bus.new('control', o.kr_route_map[key][\volume],1,s);
@@ -520,7 +520,7 @@ DRUMS
 
 	SynthDef(\nun_basic_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
+		atk = 0.01, decay = 5, rate = 0.5, freq = 20000, t_trig = 0, vol = 1, on = 1;
 		var sig, env, rate_mod;
 
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));

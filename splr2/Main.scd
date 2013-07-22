@@ -137,15 +137,15 @@ s.sync;
 ~oDRUMS.kr_route_map;
 (
 var bus;
-bus = Bus.new('control', 47,1,s); // 38 41 44 47
-bus.set(1);
+bus = Bus.new('control', 46,1,s); // 38 41 44 47
+bus.set(0);
 )
 
 (
 var bus = Bus.new('control', 47,1,s); // 38 41 44 47
 bus.set(0);
-
 )
 
 ~oDRUMS.available_kits.postcs;
 ~oDRUMS.select_kit(\hat1,0.4);
+

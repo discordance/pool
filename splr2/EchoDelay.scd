@@ -80,7 +80,7 @@ ECHO DELAY (FX)
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
-	b.set(0.5);
+	b.set(0.2);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
 	b.set(0.85);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);
@@ -94,11 +94,11 @@ ECHO DELAY (FX)
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1;
 		var sep = 0.012, decay = 2, freq = 20000, vol = 1, output, input, feedback;
 
-		decay = [0.1, 5].asSpec.map(In.kr(decay_kr).lag(0.1));
+		decay = [0.1, 1].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0005, 0.01].asSpec.map(In.kr(stereo_kr).lag(0.1));
 		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
 
-		input = In.ar(in, 2);
+		input = In.ar(in, 1);
 		feedback = LocalIn.ar(2);
 		output = LeakDC.ar(feedback*decay + input);
 
