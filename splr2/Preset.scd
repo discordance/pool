@@ -28,7 +28,7 @@ PRESET
 		File.mkdir(o.root_path);
 	});
 },
-\register_module:{|o, module|
+\register:{|o, module|
 	o.modules[module.id] = module;
 },
 \save_preset:{|o,name|

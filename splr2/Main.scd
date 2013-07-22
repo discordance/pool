@@ -27,6 +27,8 @@ s.waitForBoot({
 	"Shot.scd".loadRelative;
 	// effects
 	"Reverb.scd".loadRelative;
+	"EchoDelay.scd".loadRelative;
+
 
 	/**
 	* INIT AND LOAD
@@ -42,15 +44,26 @@ s.waitForBoot({
 
 	// ---------------- FXS FIRST  !!!!
 	// REVERB
-	~oREVERB.init(~oROUTER, { "~oREVERB : fx unit loaded".postln; });
+	~oREVERB.init(~oROUTER, {
+		"~oREVERB : fx unit loaded".postln;
+		~oPRESET.register(~oREVERB);
+		~oROUTER.register_fx(~oREVERB, [~oMIDI.devices.motu]);
+	});
+	// DELAY
 
+	~oECHO.init(~oROUTER, {
+		"~oECHO : fx unit loaded".postln;
+		~oPRESET.register(~oECHO);
+		~oROUTER.register_fx(~oECHO, [~oMIDI.devices.motu]);
+	});
 	// ---------------- MODULES
 	// DRUMS
 	~oDRUMS.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/percussion/",{|o,init|
 		"~oDRUMS : initialized.".postln;
 		~oROUTER.register_module(~oDRUMS, [~oMIDI.devices.motu,~oMIDI.devices.ancient,~oMIDI.devices.sync]);
-		~oPRESET.register_module(~oDRUMS);
+		~oPRESET.register(~oDRUMS);
 		~oDRUMS.attach_fx(~oREVERB);
+		~oDRUMS.attach_fx(~oECHO);
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
 		});
@@ -73,33 +86,33 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-~oPRESET.save_preset("drd_indus");
+~oPRESET.save_preset("vbn_hrdhse");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
 
-~oPRESET.load_preset("drd_indus");
+~oPRESET.load_preset("vbn_hrdhse");
 // MAXI LOL
 (
 //
 var bus = Bus.new('control', 21,1,s);
 bus.set(0.56);
-bus = Bus.new('control', 19,1,s);
-bus.set(0.25);
-bus = Bus.new('control', 24,1,s);
-bus.set(0.5);
+bus = Bus.new('control', 20,1,s);
+bus.set(0.3);
+bus = Bus.new('control', 33,1,s);
+bus.set(0.3);
 bus = Bus.new('control', 25,1,s);
-bus.set(0.1);
-bus = Bus.new('control', 27,1,s);
+bus.set(0.3);
+bus = Bus.new('control', 28,1,s);
 bus.set(0.5);
 ~oDRUMS.current_kit[\kick] = 0;
-~oDRUMS.current_kit[\drm1] = 3;
+~oDRUMS.current_kit[\drm1] = 4;
 ~oDRUMS.current_kit[\drm2] = 2;
-~oDRUMS.current_kit[\snar] = 0;
-~oDRUMS.current_kit[\clap] = 0;
+~oDRUMS.current_kit[\snar] = 2;
+~oDRUMS.current_kit[\clap] = 4;
 ~oDRUMS.current_kit[\cymb] = 3;
-~oDRUMS.current_kit[\hat1] = 1;
-~oDRUMS.current_kit[\hat2] = 4;
+~oDRUMS.current_kit[\hat1] = 2;
+~oDRUMS.current_kit[\hat2] = 5;
 ~oDRUMS.density = 1;
 ~oDRUMS.kr_route_map;
 )
@@ -117,29 +130,21 @@ s.sync;
 }.fork;
 )
 (
-~oDRUMS.kr_route_map['premix_drums_2'];
+~oDRUMS.kr_route_map['premix_drums_3'];
+)
+
+
+~oDRUMS.kr_route_map;
+(
+var bus;
+bus = Bus.new('control', 47,1,s); // 38 41 44 47
+bus.set(1);
 )
 
 (
-var bus = Bus.new('control', 38,1,s); // 38 41 44 47
-bus.set(0.01);
-bus = Bus.new('control', 41,1,s); // 38 41 44 47
-bus.set(0.01);
-bus = Bus.new('control', 44,1,s); // 38 41 44 47
-bus.set(0.05);
-bus = Bus.new('control', 47,1,s); // 38 41 44 47
-bus.set(0.01);
+var bus = Bus.new('control', 47,1,s); // 38 41 44 47
+bus.set(0);
+
 )
 
-(
-var bus = Bus.new('control', 38,1,s); // 38 41 44 47
-bus.set(0);
-bus = Bus.new('control', 41,1,s); // 38 41 44 47
-bus.set(0);
-bus = Bus.new('control', 44,1,s); // 38 41 44 47
-bus.set(0);
-bus = Bus.new('control', 47,1,s); // 38 41 44 47
-bus.set(0);
-)
-
-
+~oDRUMS.kr_route_map;

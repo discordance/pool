@@ -136,6 +136,10 @@ ROUTER
 		});
 	});
 },
+\register_fx:{|o, module, devices|
+	var mod = (\module:module, \devices:devices);
+	o.modules = o.modules.add(mod);
+},
 \register_module:{|o, module, devices|
 	var min, num_busses;
 	var mod = (\module:module, \devices:devices);

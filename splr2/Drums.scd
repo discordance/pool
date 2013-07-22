@@ -137,10 +137,7 @@ DRUMS
 	var node_group, fx_size;
 	fx_size = o.attached_fx.size;
 	o.attached_fx = o.attached_fx.add(fx_size.asSymbol->fx_module); // increment the number of attached fx
-	// get the group free
-	o.premixers.collect{|el,key|
 
-	};
 	node_group = o.router[\node_groups][\premixers];
 
 	{
@@ -177,9 +174,16 @@ DRUMS
 			next_ar = next_ar + 1;
 		});
 		s.sync;
+
+		// get the group free
+		o.premixers.collect{|el,key|
+			el.free;
+		};
+
 		// create the premaster synths
 		num_channels.do({|el,i|
-			Synth.head(node_group,"premix_"++o.id++"_"++i.asString,[]);
+			o.premixers[("premix_"++o.id++"_"++i.asString).asSymbol]
+			= Synth.head(node_group,"premix_"++o.id++"_"++i.asString,[]);
 		});
 
 	}.fork;
@@ -286,7 +290,7 @@ DRUMS
 		]
 	);
 	// \snar
-	o.synths[\snar] = Synth.head(node_group,"nun_organic_sampler",[
+	o.synths[\snar] = Synth.head(node_group,"nun_basic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
@@ -304,7 +308,7 @@ DRUMS
 		]
 	);
 	// \cymb
-	o.synths[\cymb] = Synth.head(node_group,"nun_organic_sampler",[
+	o.synths[\cymb] = Synth.head(node_group,"nun_basic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
@@ -322,7 +326,7 @@ DRUMS
 		]
 	);
 	// \hh2
-	o.synths[\hat2] = Synth.head(node_group,"nun_organic_sampler",[
+	o.synths[\hat2] = Synth.head(node_group,"nun_basic_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
@@ -520,6 +524,7 @@ DRUMS
 		rate = rate_mod * rate;
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
 		sig = DFM1.ar(sig, 20000, 0.5, 1);
+
 		Out.ar(out, sig*vol*on);
 	}).add;
 }
