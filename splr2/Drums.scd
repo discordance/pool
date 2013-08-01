@@ -145,7 +145,7 @@ DRUMS
 		var num_channels = o.ar_route_map.as(Set).size;
 		var next_ar = o.ar_route_map.as(Set).minItem;
 		num_channels.do({|el,i|
-			var name = "premix_"++o.id++"_"++i.asString;
+			var name = o.id++"_"++i.asString;
 
 			SynthDef(name.asSymbol, {
 				var sig;
@@ -163,7 +163,7 @@ DRUMS
 				Out.ar(next_ar, sig*0.73);
 
 				o.attached_fx.collect({|el,key|
-					var name = "premix_"++o.id++"_"++i.asString;
+					var name = o.id++"_"++i.asString;
 
 					Out.ar(el.in_bus,
 						0.73 * sig * In.kr(o.kr_route_map[name.asSymbol][(\fx ++ \_ ++ key).asSymbol]).lag(0.1)
@@ -183,8 +183,8 @@ DRUMS
 
 		// create the premaster synths
 		num_channels.do({|el,i|
-			o.premixers[("premix_"++o.id++"_"++i.asString).asSymbol]
-			= Synth.head(node_group,"premix_"++o.id++"_"++i.asString,[]);
+			o.premixers[(o.id++"_"++i.asString).asSymbol]
+			= Synth.head(node_group,o.id++"_"++i.asString,[]);
 		});
 
 	}.fork;
@@ -301,7 +301,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
 		\out, o.ar_route_map[\snar],
-		\lowcut, 70, \vol, 0.90
+		\lowcut, 70, \vol, 0.85
 		]
 	);
 	// \clap
@@ -310,7 +310,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\clap][\decay],
 		\pitch_bus,o.kr_route_map[\clap][\pitch],
 		\out, o.ar_route_map[\clap],
-		\lowcut, 80, \vol, 0.88
+		\lowcut, 80, \vol, 0.80
 		]
 	);
 	// \cymb
@@ -319,7 +319,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
 		\out, o.ar_route_map[\cymb],
-		\lowcut, 120, \vol, 0.90
+		\lowcut, 120, \vol, 0.85
 		]
 	);
 	// \hh1
@@ -328,7 +328,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\hat1][\decay],
 		\pitch_bus,o.kr_route_map[\hat1][\pitch],
 		\out, o.ar_route_map[\hat1],
-		\lowcut, 120, \vol, 0.85
+		\lowcut, 120, \vol, 0.75
 		]
 	);
 	// \hh2
@@ -337,7 +337,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 120, \vol, 0.85
+		\lowcut, 120, \vol, 0.75
 		]
 	);
 },
@@ -389,7 +389,7 @@ DRUMS
 	{
 		var num_channels = o.ar_route_map.as(Set).size;
 		num_channels.do({|el,i|
-			var name = "premix_"++o.id++"_"++i.asString;
+			var name = o.id++"_"++i.asString;
 			kr_route_map[name.asSymbol] = (\fx_0:next_kr,\fx_1:next_kr+1,\fx_2:next_kr+2);
 			next_kr = next_kr + 3;
 		});
@@ -425,10 +425,10 @@ DRUMS
 	Library.put(\control_map,\motu,\3,\7,o.kr_route_map[\hat1][\decay]);
 
 	//VERBS
-	Library.put(\control_map,\motu,\3,\8,o.kr_route_map[\premix_drums_0][\fx_0]);
-	Library.put(\control_map,\motu,\3,\9,o.kr_route_map[\premix_drums_1][\fx_0]);
-	Library.put(\control_map,\motu,\3,\10,o.kr_route_map[\premix_drums_2][\fx_0]);
-	Library.put(\control_map,\motu,\3,\11,o.kr_route_map[\premix_drums_3][\fx_0]);
+	Library.put(\control_map,\motu,\3,\8,o.kr_route_map[\drums_0][\fx_0]);
+	Library.put(\control_map,\motu,\3,\9,o.kr_route_map[\drums_1][\fx_0]);
+	Library.put(\control_map,\motu,\3,\10,o.kr_route_map[\drums_2][\fx_0]);
+	Library.put(\control_map,\motu,\3,\11,o.kr_route_map[\drums_3][\fx_0]);
 
 	// PITCHES
 	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\pitch]);

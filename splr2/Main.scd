@@ -12,6 +12,15 @@ SPLR v2 - Vauban
 
 MAIN
 ******************************************************************/
+
+
+
+
+
+/* JUST SWEET THE TRIGGER */
+
+
+******************************************************************/
 (
 s.waitForBoot({
 	/**
@@ -29,6 +38,8 @@ s.waitForBoot({
 	"Reverb.scd".loadRelative;
 	"EchoDelay.scd".loadRelative;
 
+	// debug ui
+	"UI.scd".loadRelative;
 
 	/**
 	* INIT AND LOAD
@@ -41,6 +52,9 @@ s.waitForBoot({
 	~oPRESET.init("/Users/nunja/Documents/SuperCollider/presets/");
 	// THEN MIDI
 	~oMIDI.init(~oROUTER);
+	// ui
+	// now inits UI
+	~oUI.init();
 
 	// ---------------- FXS FIRST  !!!!
 	// REVERB
@@ -67,6 +81,7 @@ s.waitForBoot({
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
 		});
+		~oUI.bind_module(~oDRUMS);
 	});
 	// SHOTS
 	~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
@@ -75,8 +90,6 @@ s.waitForBoot({
 			"~oSHOT : samples loaded.".postln;
 		});
 	});
-
-
 });
 )
 
@@ -94,27 +107,16 @@ s.waitForBoot({
 ~oPRESET.load_preset("vbn_hrdhse");
 // MAXI LOL
 (
-//
-var bus = Bus.new('control', 21,1,s);
-bus.set(0.56);
-bus = Bus.new('control', 20,1,s);
-bus.set(0.3);
-bus = Bus.new('control', 33,1,s);
-bus.set(0.3);
-bus = Bus.new('control', 25,1,s);
-bus.set(0.3);
-bus = Bus.new('control', 28,1,s);
-bus.set(0.5);
-~oDRUMS.current_kit[\kick] = 0;
-~oDRUMS.current_kit[\drm1] = 4;
-~oDRUMS.current_kit[\drm2] = 2;
-~oDRUMS.current_kit[\snar] = 2;
-~oDRUMS.current_kit[\clap] = 4;
-~oDRUMS.current_kit[\cymb] = 3;
-~oDRUMS.current_kit[\hat1] = 2;
-~oDRUMS.current_kit[\hat2] = 5;
+~oDRUMS.current_kit[\kick] = ~oDRUMS.available_kits[\kick].keys.asArray.choose;
+~oDRUMS.current_kit[\drm1] = ~oDRUMS.available_kits[\drm1].keys.asArray.choose;
+~oDRUMS.current_kit[\drm2] = ~oDRUMS.available_kits[\drm2].keys.asArray.choose;
+~oDRUMS.current_kit[\snar] = ~oDRUMS.available_kits[\snar].keys.asArray.choose;
+~oDRUMS.current_kit[\clap] = ~oDRUMS.available_kits[\clap].keys.asArray.choose;
+~oDRUMS.current_kit[\cymb] = ~oDRUMS.available_kits[\cymb].keys.asArray.choose;
+~oDRUMS.current_kit[\hat1] = ~oDRUMS.available_kits[\hat1].keys.asArray.choose;
+~oDRUMS.current_kit[\hat2] = ~oDRUMS.available_kits[\hat2].keys.asArray.choose;
 ~oDRUMS.density = 1;
-~oDRUMS.kr_route_map;
+~oDRUMS.kr_route_map.postcs;
 )
 Library.postTree;
 (
@@ -137,8 +139,8 @@ s.sync;
 ~oDRUMS.kr_route_map;
 (
 var bus;
-bus = Bus.new('control', 46,1,s); // 38 41 44 47
-bus.set(0);
+bus = Bus.new('control', 46,s); // 38 41 44 47
+bus.set(0.6);
 )
 
 (
@@ -147,5 +149,5 @@ bus.set(0);
 )
 
 ~oDRUMS.available_kits.postcs;
-~oDRUMS.select_kit(\hat1,0.4);
-
+~oDRUMS.select_kit(\kick,0.8);
+~oSHOT.available_kits.postcs;

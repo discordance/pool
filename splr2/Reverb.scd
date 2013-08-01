@@ -98,20 +98,36 @@ REVERB (FX)
 		bitrate = [12, 24].asSpec.map(In.kr(bitrate_kr).lag(0.1)).floor;
 
 		sig = In.ar(in,1);
+		//
 		local = LocalIn.ar(2) + sig.dup;
-		12.do{local = AllpassL.ar(local,0.1,LFNoise2.kr(0.1).range(0.0001,0.1), decay)};
+		12.do{local = AllpassL.ar(local,0.1,LFNoise2.kr(0.1).range(0.001,0.05), decay)};
 
-		LocalOut.ar(local*0.5);
+		LocalOut.ar(local*0.4);
 		sig = local;
-		sig = sig.round(0.3 ** bitrate);
+		//sig = sig.round(0.3 ** bitrate);
 		sig = DFM1.ar(sig, freq);
-		sig =  [DelayL.ar(sig, 1, LFNoise2.ar(5).range(0,sep)), DelayL.ar(sig, 1, LFNoise2.ar(6).range(0,sep))];
+		sig =  [DelayL.ar(sig, 1, LFNoise2.ar(5).range(0.00005,sep)), DelayL.ar(sig, 1, LFNoise2.ar(6).range(0.00005,sep))];
         // Now let's hear it:
+		CheckBadValues.ar(sig);
         Out.ar(out, sig);
 	}).add;
 }
 )
 )
 
+/*
+({
+	var b;
 
+	// default values
+	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\decay],1,s);
+	b.set(0.5);
+	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\lopass],1,s);
+	b.set(0.4);
+	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\stereo],1,s);
+	b.set(0.05);
+	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\bitrate],1,s);
+	b.set(0.7);
+}.value;)
+*/
 

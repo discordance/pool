@@ -19,6 +19,7 @@ SHOT
 // VARS
 \available_kits:(),
 \selected_pads:[],
+\selected_kit:\default,
 \density: 0.5,
 // METHOD
 \init:{|o, router, root_path, on_ready, ar_route_map = nil, kr_route_map = nil|
@@ -80,7 +81,7 @@ SHOT
 			pad_nm = file.basename;
 			file = file ++ "*";//.postln;
 
-			pad = (\buffs:[]);
+			pad = [];
 			file.pathMatch.sort.collect{|sfile|
 				var buff = Buffer.read(s,sfile,action:{
 					ct = ct -1;
@@ -90,7 +91,7 @@ SHOT
 				    });
 				});
 				ct = ct + 1;
-				pad.buffs = pad.buffs ++ buff;
+				pad = pad.add(buff);
 			};
 			kit[pad_nm.asSymbol] = pad;
 		};
