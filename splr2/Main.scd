@@ -20,7 +20,7 @@ MAIN
 /* JUST SWEET THE TRIGGER */
 
 
-******************************************************************/
+/******************************************************************/
 (
 s.waitForBoot({
 	/**
@@ -107,7 +107,7 @@ s.waitForBoot({
 ~oPRESET.load_preset("vbn_hrdhse");
 // MAXI LOL
 (
-~oDRUMS.current_kit[\kick] = ~oDRUMS.available_kits[\kick].keys.asArray.choose;
+~oDRUMS.current_kit[\kick] = ~oDRUMS.available_kits[\kick].keys.asArray.choose.postln;
 ~oDRUMS.current_kit[\drm1] = ~oDRUMS.available_kits[\drm1].keys.asArray.choose;
 ~oDRUMS.current_kit[\drm2] = ~oDRUMS.available_kits[\drm2].keys.asArray.choose;
 ~oDRUMS.current_kit[\snar] = ~oDRUMS.available_kits[\snar].keys.asArray.choose;
@@ -116,7 +116,7 @@ s.waitForBoot({
 ~oDRUMS.current_kit[\hat1] = ~oDRUMS.available_kits[\hat1].keys.asArray.choose;
 ~oDRUMS.current_kit[\hat2] = ~oDRUMS.available_kits[\hat2].keys.asArray.choose;
 ~oDRUMS.density = 1;
-~oDRUMS.kr_route_map.postcs;
+//~oDRUMS.kr_route_map.postcs;
 )
 Library.postTree;
 (

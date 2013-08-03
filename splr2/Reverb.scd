@@ -76,7 +76,7 @@ REVERB (FX)
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
-	b.set(0.05);
+	b.set(0.5);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
 	b.set(0.85);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);
@@ -90,7 +90,7 @@ REVERB (FX)
 
 	SynthDef(\nun_reverb_classic, {
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, bitrate_kr = 0;
-		var sig, local, sep = 0.0001, decay = 2, freq = 20000, bitrate = 12;
+		var sig, local, sep = 0.00005, decay = 2, freq = 20000, bitrate = 12;
 
 		decay = [0.1, 5].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0005, 0.01].asSpec.map(In.kr(stereo_kr).lag(0.1));
@@ -100,13 +100,16 @@ REVERB (FX)
 		sig = In.ar(in,1);
 		//
 		local = LocalIn.ar(2) + sig.dup;
-		12.do{local = AllpassL.ar(local,0.1,LFNoise2.kr(0.1).range(0.001,0.05), decay)};
+		//12.do{local = AllpassL.ar(local,0.1,LFNoise2.kr(0.001).range(0.01,0.05), decay)};
+		14.collect({ arg i;
+			local = AllpassL.ar(local,0.1,i.nthPrime*0.0023, decay);
+		});
 
-		LocalOut.ar(local*0.4);
+		LocalOut.ar(local*0.6);
 		sig = local;
 		//sig = sig.round(0.3 ** bitrate);
 		sig = DFM1.ar(sig, freq);
-		sig =  [DelayL.ar(sig, 1, LFNoise2.ar(5).range(0.00005,sep)), DelayL.ar(sig, 1, LFNoise2.ar(6).range(0.00005,sep))];
+		sig =  [DelayL.ar(sig, 1, LFNoise2.kr(0.003).range(0.00001,sep)), DelayL.ar(sig, 1, LFNoise2.kr(0.002).range(0.00005,sep))];
         // Now let's hear it:
 		CheckBadValues.ar(sig);
         Out.ar(out, sig);
@@ -121,13 +124,16 @@ REVERB (FX)
 
 	// default values
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\decay],1,s);
-	b.set(0.5);
+	b.set(0.9);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\lopass],1,s);
-	b.set(0.4);
+	b.set(0.8);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\stereo],1,s);
 	b.set(0.05);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\bitrate],1,s);
 	b.set(0.7);
 }.value;)
 */
+
+
+
 
