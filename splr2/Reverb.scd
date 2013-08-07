@@ -15,7 +15,7 @@ REVERB (FX)
 (
 ~oREVERB = ~oFX <
 (
-\synths:(\schroeder:nil, \classic:nil),
+\synths:(\verb:nil),
 \init:{|o, router, on_ready|
 
 	var init_routine;
@@ -57,10 +57,24 @@ REVERB (FX)
 	var func_route_map = ();
 	func_route_map;
 },
+\swap_verb:{|o,name|
+	var node_group;
+	node_group = o.router[\node_groups][\effects];
+	o.synths[\verb].free;
+	o.synths[\verb] = Synth.head(node_group,name,
+	[
+			\in, o.in_bus,
+			\out, o.out_bus,
+			\decay_kr, o.kr_route_map[\global][\decay],
+			\lopass_kr, o.kr_route_map[\global][\lopass],
+			\stereo_kr, o.kr_route_map[\global][\stereo],
+			\bitrate_kr, o.kr_route_map[\global][\bitrate]
+	]);
+},
 \generate_synths:{|o|
 	var node_group;
 	node_group = o.router[\node_groups][\effects];
-	o.synths[\classic] = Synth.head(node_group,"nun_reverb_classic",
+	o.synths[\verb] = Synth.head(node_group,"nun_reverb_gverb",
 	[
 			\in, o.in_bus,
 			\out, o.out_bus,
@@ -76,21 +90,34 @@ REVERB (FX)
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
-	b.set(0.5);
+	b.set(0.95);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
 	b.set(0.85);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);
-	b.set(0.0);
+	b.set(1);
 	b = Bus.new('control', o.kr_route_map[\global][\bitrate],1,s);
-	b.set(0.0);
+	b.set(1);
 },
 /* SynthDefs
 ******************************************************************/
 \load_synthdefs:{|o|
 
+	SynthDef(\nun_reverb_gverb, {
+		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0;
+		var sig, decay = 2, freq = 20000, sep;
+		decay = [0.1, 5].asSpec.map(In.kr(decay_kr).lag(0.1));
+		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
+		sep = [0, 100].asSpec.map(In.kr(stereo_kr).lag(0.1));
+
+		sig = In.ar(in,1);
+		sig = GVerb.ar(sig, 80, decay, 0.10, 0.5, sep, 0, 0.7, 0.8);
+		sig = DFM1.ar(sig, freq);
+		Out.ar(out, sig);
+	}).add;
+
 	SynthDef(\nun_reverb_classic, {
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, bitrate_kr = 0;
-		var sig, local, sep = 0.00005, decay = 2, freq = 20000, bitrate = 12;
+		var sig, local, sep = 0.00005, decay = 2, freq = 20000, bitrate = 24;
 
 		decay = [0.1, 5].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0005, 0.01].asSpec.map(In.kr(stereo_kr).lag(0.1));
@@ -119,19 +146,32 @@ REVERB (FX)
 )
 
 /*
+
+// change verb
+
+(
+~oREVERB.swap_verb("nun_reverb_gverb");
+)
+
+(
+~oREVERB.swap_verb("nun_reverb_classic");
+)
+
 ({
 	var b;
 
 	// default values
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\decay],1,s);
-	b.set(0.9);
+	b.set(1);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\lopass],1,s);
-	b.set(0.75);
+	b.set(1);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\stereo],1,s);
-	b.set(0.05);
+	b.set(1);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\bitrate],1,s);
-	b.set(0.7);
+	b.set(0);
 }.value;)
+
+
 */
 
 

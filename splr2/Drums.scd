@@ -111,12 +111,19 @@ DRUMS
 			kit = [];
 			file = file ++ "*";
 			file.pathMatch.sort.collect{|sfile|
-				var buff = Buffer.read(s,sfile);
+				var buff = Buffer.read(s,sfile,action:{
+					ct = ct -1;
+						if(ct == 0,{
+							on_load.value();
+							o.ready = true;
+						});
+				});
 				ct = ct + 1;
 				kit = kit.add(buff);
 				// to mono
 				//on_load.value();
 				//o.ready = true;
+				/*
 				buff.loadToFloatArray(action: { arg array;
 					a = array;
 					buff = Buffer.loadCollection(s, a.unlace(2).sum*0.5, action:{
@@ -126,7 +133,7 @@ DRUMS
 							o.ready = true;
 						});
 					});
-				});
+				});*/
 			};
 			o.available_kits[kind] = o.available_kits[kind].add(name.asSymbol -> kit);
 		};
