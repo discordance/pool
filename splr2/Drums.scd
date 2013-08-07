@@ -280,6 +280,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\kick][\decay],
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
+		\vol_bus,o.kr_route_map[\kick][\volume],
 		\out, o.ar_route_map[\kick], \vol, 1
 
 		]
@@ -289,6 +290,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm1][\decay],
 		\pitch_bus,o.kr_route_map[\drm1][\pitch],
+		\vol_bus,o.kr_route_map[\drm1][\volume],
 		\out, o.ar_route_map[\drm1],
 		\lowcut, 60, \vol, 0.92
 		]
@@ -298,6 +300,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm2][\decay],
 		\pitch_bus,o.kr_route_map[\drm2][\pitch],
+		\vol_bus,o.kr_route_map[\drm2][\volume],
 		\out, o.ar_route_map[\drm2],
 		\lowcut, 70, \vol, 0.92
 		]
@@ -307,6 +310,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
+		\vol_bus,o.kr_route_map[\snar][\volume],
 		\out, o.ar_route_map[\snar],
 		\lowcut, 70, \vol, 0.85
 		]
@@ -316,6 +320,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\clap][\decay],
 		\pitch_bus,o.kr_route_map[\clap][\pitch],
+		\vol_bus,o.kr_route_map[\clap][\volume],
 		\out, o.ar_route_map[\clap],
 		\lowcut, 80, \vol, 0.80
 		]
@@ -325,6 +330,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
+		\vol_bus,o.kr_route_map[\cymb][\volume],
 		\out, o.ar_route_map[\cymb],
 		\lowcut, 120, \vol, 0.85
 		]
@@ -334,6 +340,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat1][\decay],
 		\pitch_bus,o.kr_route_map[\hat1][\pitch],
+		\vol_bus,o.kr_route_map[\hat1][\volume],
 		\out, o.ar_route_map[\hat1],
 		\lowcut, 120, \vol, 0.75
 		]
@@ -343,6 +350,7 @@ DRUMS
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
+		\vol_bus,o.kr_route_map[\hat2][\volume],
 		\out, o.ar_route_map[\hat2],
 		\lowcut, 120, \vol, 0.60
 		]
@@ -489,14 +497,16 @@ DRUMS
 	* DRUM Sampler
 	*/
 	SynthDef(\nun_organic_sampler, {
-		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
+		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0,
 		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1, lowcut = 0;
 		var sig, env, atkenv, rndsst, rate_mod, atksnd,
-		master_env, a, b, attenuation_ratio; // decay attenuation
+		master_env, a, b, attenuation_ratio, manual_vol = 1; // decay attenuation
 
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		manual_vol = [0, 1].asSpec.map(In.kr(vol_bus).lag(0.1));
+
 		env = EnvGen.ar(Env.perc(0.1, decay, 1, -4),t_trig);
 		atkenv = EnvGen.ar(Env.perc(0.01, 0.035, 1, -4),t_trig);
 
@@ -521,16 +531,18 @@ DRUMS
 		// filter
 		sig = DFM1.ar(sig, freq, 0.5, 3);
 		sig = HPF.ar(sig,lowcut);
-		Out.ar(out, sig*vol*on);
+		Out.ar(out, sig*vol*on*manual_vol);
 
 	}).add;
 
 	SynthDef(\nun_basic_sampler, {
-		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0,
+		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0,
 		atk = 0.01, decay = 5, rate = 0.5, freq = 20000, t_trig = 0, vol = 1, on = 1;
-		var sig, env, rate_mod;
+		var sig, env, rate_mod, manual_vol = 1;
 
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		manual_vol = [0, 1].asSpec.map(In.kr(vol_bus).lag(0.1));
+
 		env = EnvGen.ar(Env.perc(0.01, decay, 1, -4),t_trig);
 		a = buf_bounds[0];
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
@@ -538,7 +550,7 @@ DRUMS
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
 		sig = DFM1.ar(sig, 20000, 0.5, 1);
 
-		Out.ar(out, sig*vol*on);
+		Out.ar(out, sig*vol*on*manual_vol);
 	}).add;
 }
 //--
