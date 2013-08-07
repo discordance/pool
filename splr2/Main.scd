@@ -86,6 +86,8 @@ s.waitForBoot({
 	// SHOTS
 	~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
 		"~oSHOT : initialized.".postln;
+		~oROUTER.register_module(~oSHOT, [~oMIDI.devices.sync, ~oMIDI.devices.dj3]);
+		~oPRESET.register(~oSHOT);
 		~oSHOT.load({|o|
 			"~oSHOT : samples loaded.".postln;
 		});
@@ -151,3 +153,8 @@ bus.set(0);
 ~oDRUMS.available_kits.postcs;
 ~oDRUMS.select_kit(\kick,0.8);
 ~oSHOT.available_kits.postcs;
+~oSHOT.ar_route_map;
+
+~oSHOT.trig_shot(0);
+
+~oSHOT.kr_route_map;

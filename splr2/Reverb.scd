@@ -126,7 +126,7 @@ REVERB (FX)
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\decay],1,s);
 	b.set(0.9);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\lopass],1,s);
-	b.set(0.8);
+	b.set(0.75);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\stereo],1,s);
 	b.set(0.05);
 	b = Bus.new('control', ~oREVERB.kr_route_map[\global][\bitrate],1,s);

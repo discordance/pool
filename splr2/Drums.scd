@@ -337,7 +337,7 @@ DRUMS
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 120, \vol, 0.75
+		\lowcut, 120, \vol, 0.60
 		]
 	);
 },
