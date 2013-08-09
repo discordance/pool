@@ -20,8 +20,15 @@ SHOT
 \available_kits:(),
 \memory_pads:[],
 \selected_kit:\default,
+
 \pitch:1,
+\freq:1,
+\decay:1,
+\atk:0.05,
 \density: 0.5,
+
+\note_map:(
+),
 // METHOD
 \init:{|o, router, root_path, on_ready, ar_route_map = nil, kr_route_map = nil|
 	var init_routine;
@@ -44,6 +51,8 @@ SHOT
 		o.kr_route_map = kr_route_map ? o.generate_kr();
 		// functions
 		o.func_route_map = o.generate_func();
+		// note map
+		o.note_map = o.generate_note();
 
 		// assign from router
 		o.router.assign(o);
@@ -78,6 +87,17 @@ SHOT
 	// default bus
 	b = Bus.new('control',o.kr_route_map[\global][\decay],1,s);
 	b.set(1);
+},
+\generate_note:{|o|
+	var note_map = ();
+	note_map = note_map.add(\88->0);
+	note_map = note_map.add(\89->1);
+	note_map = note_map.add(\90->2);
+	note_map = note_map.add(\91->3);
+	// next and prev
+	note_map = note_map.add(\72->{ o.select_prev_kit(); });
+	note_map = note_map.add(\73->{ o.select_next_kit(); });
+	note_map;
 },
 \set_preset:{|o, archive|
 	//o.current_kit = archive.kits;
@@ -124,11 +144,23 @@ SHOT
 	};
 },
 \select_next_kit:{|o|
+	var index = 0;
+	var ordered_keys = o.available_kits.order;
+	index = ordered_keys.indexOf(o.selected_kit);
+	index = (index + 1).clip(0,o.available_kits.size-1);
+	o.selected_kit = ordered_keys[index];
+	"selected Shot kit: ".post; o.selected_kit.postln;
 },
 \select_prev_kit:{|o|
+	var index = 0;
+	var ordered_keys = o.available_kits.order;
+	index = ordered_keys.indexOf(o.selected_kit);
+	index = (index - 1).clip(0,o.available_kits.size-1);
+	o.selected_kit = ordered_keys[index];
+	"selected Shot kit: ".post; o.selected_kit.postln;
 },
-\trig_shot:{|o,idx|
-	var kit = o.available_kits[o.selected_kit].asArray, buffs = [], low = 0, hi = 0;
+\trig_shot:{|o,target_kit,idx,vol,pitch,decay,atk|
+	var kit = o.available_kits[target_kit].asArray, buffs = [], low = 0, hi = 0;
 	var node_group;
 	node_group = o.router[\node_groups][\generators];
 	buffs = kit.at(idx.clip(0,3));
@@ -140,12 +172,28 @@ SHOT
 		\decay_bus, o.kr_route_map[\global][\decay],
 		\atk_bus,o.kr_route_map[\global][\attack],
 		\out, o.ar_route_map[\global_L],
-		\vol, 0.82,
-		\rate, o.pitch,
-		\freq, 20000
+		\vol, vol,
+		\rate, pitch,
+		\decay, decay,
+		\atk, atk
 		]
 	);
 
+},
+\on_clock:{|o, val|
+
+},
+\on_note:{|o, chan, num, val|
+	var idx;
+	idx = o.note_map[num.asSymbol];
+	if(idx != nil,{
+		if(idx.class.asString == "Function",{
+			idx.value();
+		});
+		if(idx.class.asString == "Integer",{
+			o.trig_shot(o.selected_kit, idx, 0.5, o.pitch, o.decay, o.atk);
+		});
+	});
 },
 \load_synthdefs:{
 	/**
@@ -154,7 +202,7 @@ SHOT
 	SynthDef(\nun_ossampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus=0, atk_bus=0,
 		buf_shape = 1, vol = 0.82,
-		atk = 0.05, decay = 5, drate = 1, rate = 1, freq = 20000;
+		atk = 0.05, decay = 1, drate = 1, rate = 1, freq = 20000;
 		var sig, envs,
 		master_env,
 		a, b
@@ -170,10 +218,10 @@ SHOT
 		a = IRand(buf_bounds[0],buf_bounds[1]);
 		b = IRand(buf_bounds[0],buf_bounds[1]);
 
-		drate = [0.0, 1.0].asSpec.map(In.kr(decay_bus).lag(0.1));
-		atk = [0.05, 1.0].asSpec.map(In.kr(atk_bus).lag(0.1));
+		//drate = [0.0, 1.0].asSpec.map(In.kr(decay_bus).lag(0.1));
+		//atk = [0.05, 1.0].asSpec.map(In.kr(atk_bus).lag(0.1));
 
-		decay = BufDur.kr(a) * 0.8 * drate;
+		decay = BufDur.kr(a) * 0.8 * decay;
 		// master env
 		master_env = EnvGen.ar(Env.adsr(atk,decay,1,0.3,1,3), Line.kr(1,-1,decay*1.2), doneAction:2);
 

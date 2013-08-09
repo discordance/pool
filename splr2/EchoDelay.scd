@@ -15,6 +15,9 @@ ECHO DELAY (FX)
 (
 ~oECHO = ~oFX <
 (
+\multiplier:1,
+\tempo:0,
+\last_time:0,
 \synths:(\echo:nil),
 \init:{|o, router, on_ready|
 
@@ -65,7 +68,7 @@ ECHO DELAY (FX)
 \generate_synths:{|o|
 	var node_group;
 	node_group = o.router[\node_groups][\effects];
-	o.synths[\classic] = Synth.head(node_group,"nun_dub_echo",
+	o.synths[\echo] = Synth.head(node_group,"nun_dub_echo",
 	[
 			\in, o.in_bus,
 			\out, o.out_bus,
@@ -80,11 +83,19 @@ ECHO DELAY (FX)
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
-	b.set(0.2);
+	b.set(0.6);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
 	b.set(0.85);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);
 	b.set(0.0);
+},
+\on_clock:{|o, val|
+	var time, ival;
+	time = Main.elapsedTime;
+	ival = (time - o.last_time)*24;
+	o.tempo = (60/ival).round.lag;
+	o.synths[\echo].set(\length, ival*o.multiplier);
+	o.last_time = time;
 },
 /* SynthDefs
 ******************************************************************/
@@ -92,7 +103,7 @@ ECHO DELAY (FX)
 
 	SynthDef(\nun_dub_echo, {
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1;
-		var sep = 0.012, decay = 2, freq = 20000, vol = 1, output, input, feedback;
+		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback;
 
 		decay = [0.1, 1].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0005, 0.01].asSpec.map(In.kr(stereo_kr).lag(0.1));
@@ -108,8 +119,9 @@ ECHO DELAY (FX)
 
 
 		LocalOut.ar(
-			DelayC.ar(output*vol, 1,
-				LFNoise2.kr(0.2).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])
+			DelayC.ar(output*vol, 5,
+				length
+				//LFNoise2.kr(0.2).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])
 			).reverse
 		);
         Out.ar(out, output);
@@ -117,3 +129,5 @@ ECHO DELAY (FX)
 }
 )
 )
+
+//~oECHO.multiplier = 0.25;

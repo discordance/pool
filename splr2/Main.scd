@@ -68,7 +68,7 @@ s.waitForBoot({
 	~oECHO.init(~oROUTER, {
 		"~oECHO : fx unit loaded".postln;
 		~oPRESET.register(~oECHO);
-		~oROUTER.register_fx(~oECHO, [~oMIDI.devices.motu]);
+		~oROUTER.register_fx(~oECHO, [~oMIDI.devices.motu,~oMIDI.devices.sync]);
 	});
 	// ---------------- MODULES
 	// DRUMS
@@ -155,6 +155,6 @@ bus.set(0);
 ~oSHOT.available_kits.postcs;
 ~oSHOT.ar_route_map;
 
-~oSHOT.trig_shot(0);
+~oSHOT.trig_shot(3);
 
 ~oSHOT.kr_route_map;
