@@ -103,6 +103,9 @@ ROUTER
 	};
 },
 \on_note: {|o, src, chan, num, val|
+
+	//chan.asSymbol.post; " ".post; num.asSymbol.postln;
+
 	o.modules.do({|e,i|
 		e.devices.do({|ee,ii|
 			if(ee.uid == src,{
@@ -114,6 +117,9 @@ ROUTER
 \on_control: {|o, src, chan, num, val|
 	var device = Library.at(\device_map,src), target;
 	target = Library.at(\control_map,device,chan.asSymbol,num.asSymbol);
+
+	chan.asSymbol.post; " ".post; num.asSymbol.postln;
+
 	//target.postln;
 	if(target !== nil, {
 		if(target.class.asString == "Function",{ // got function

@@ -15,7 +15,7 @@ ECHO DELAY (FX)
 (
 ~oECHO = ~oFX <
 (
-\multiplier:1,
+\multiplier:0.25,
 \tempo:0,
 \last_time:0,
 \synths:(\echo:nil),

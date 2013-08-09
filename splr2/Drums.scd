@@ -282,7 +282,6 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
 		\vol_bus,o.kr_route_map[\kick][\volume],
 		\out, o.ar_route_map[\kick], \vol, 1
-
 		]
 	);
 	// \drm1
@@ -352,7 +351,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
 		\vol_bus,o.kr_route_map[\hat2][\volume],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 120, \vol, 0.60
+		\lowcut, 6000, \vol, 0.60
 		]
 	);
 },
@@ -388,8 +387,6 @@ DRUMS
 	kr_route_map[\cymb].add(\decay->11);
 	kr_route_map[\hat1].add(\decay->12);
 	kr_route_map[\hat2].add(\decay->12);
-
-
 
 	next_kr = 13;
 
@@ -537,7 +534,7 @@ DRUMS
 
 	SynthDef(\nun_basic_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1;
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1, lowcut = 0;
 		var sig, env, rate_mod, manual_vol = 1;
 
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
@@ -545,13 +542,13 @@ DRUMS
 
 		vol = vol.lag(0.3);
 
-		env = EnvGen.ar(Env.perc(0.001, decay, 1, -4),t_trig);
+		env = EnvGen.ar(Env.perc(0.001, decay, 1, 0),t_trig);
 		a = buf_bounds[0];
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
 		sig = DFM1.ar(sig, 20000, 0.5, 1);
-
+		sig = HPF.ar(sig,lowcut);
 		Out.ar(out, sig*vol*on*manual_vol);
 	}).add;
 }

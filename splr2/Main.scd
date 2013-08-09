@@ -81,7 +81,7 @@ s.waitForBoot({
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
 		});
-		~oUI.bind_module(~oDRUMS);
+		//~oUI.bind_module(~oDRUMS);
 	});
 	// SHOTS
 	~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
@@ -158,3 +158,8 @@ bus.set(0);
 ~oSHOT.trig_shot(3);
 
 ~oSHOT.kr_route_map;
+
+~oUI.bind_module(~oDRUMS);
+
+
+~oROUTER.modules;
