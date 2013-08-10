@@ -88,6 +88,8 @@ s.waitForBoot({
 		"~oSHOT : initialized.".postln;
 		~oROUTER.register_module(~oSHOT, [~oMIDI.devices.sync, ~oMIDI.devices.dj3]);
 		~oPRESET.register(~oSHOT);
+		~oSHOT.attach_fx(~oREVERB);
+		~oSHOT.attach_fx(~oECHO);
 		~oSHOT.load({|o|
 			"~oSHOT : samples loaded.".postln;
 		});
@@ -101,7 +103,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-~oPRESET.save_preset("vbn_hrdhse");
+~oPRESET.save_preset("vbn_tribhs");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */

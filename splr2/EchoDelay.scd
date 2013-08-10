@@ -83,7 +83,7 @@ ECHO DELAY (FX)
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
-	b.set(0.6);
+	b.set(0.45);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
 	b.set(0.85);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);
@@ -114,8 +114,8 @@ ECHO DELAY (FX)
 		output = LeakDC.ar(feedback*decay + input);
 
 		output = HPF.ar(output, 280);
-		output = LPF.ar(output, 5000);
-		output = output.tanh;
+		output = LPF.ar(output, 12000);
+		output = output.tanh*1.5;
 
 
 		LocalOut.ar(

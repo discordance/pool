@@ -17,10 +17,13 @@ SHOT
 ~oSHOT = ~oMODULE <
 (
 // VARS
+\premixers:(),
+\attached_fx:(),
+//
 \available_kits:(),
 \memory_pads:[],
 \selected_kit:\default,
-
+//
 \pitch:1,
 \decay:1,
 \atk:0.05,
@@ -76,10 +79,13 @@ SHOT
 	ar_route_map;
 },
 \generate_kr:{|o|
-	var kr_route_map, next_kr = 0;
+	var kr_route_map, next_kr = 0, name;
 	kr_route_map = (\global:());
 	// inserting manual controls
 	kr_route_map[\global].add(\filter->0);
+	next_kr = 1;
+	name = o.id++"_0";
+	kr_route_map[name.asSymbol] = (\fx_0:next_kr,\fx_1:next_kr+1,\fx_2:next_kr+2);
 	kr_route_map;
 },
 \generate_control_map:{|o|
@@ -93,6 +99,8 @@ SHOT
 
 	//kr
 	Library.put(\control_map,\dj3,\3,\0,o.kr_route_map[\global][\filter]);
+	Library.put(\control_map,\dj3,\3,\1,o.kr_route_map[\shots_0][\fx_0]);
+	Library.put(\control_map,\dj3,\3,\2,o.kr_route_map[\shots_0][\fx_1]);
 
 
 	// default bus
@@ -103,16 +111,16 @@ SHOT
 	var note_map = ();
 
 	note_map = note_map.add(\88->{
-		o.trig_shot(o.selected_kit, 0, 0.35, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 0, 0.3, o.pitch, o.decay, o.atk, o.memory);
 	}); // select first pad
 	note_map = note_map.add(\89->{
-		o.trig_shot(o.selected_kit, 1, 0.35, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 1, 0.3, o.pitch, o.decay, o.atk, o.memory);
 	}); // select second pad
 	note_map = note_map.add(\90->{
-		o.trig_shot(o.selected_kit, 2, 0.35, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 2, 0.3, o.pitch, o.decay, o.atk, o.memory);
 	}); // select third pad
 	note_map = note_map.add(\91->{
-		o.trig_shot(o.selected_kit, 3, 0.35, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 3, 0.3, o.pitch, o.decay, o.atk, o.memory);
 	}); // select fouth pad
 
 	// next and prev
@@ -217,6 +225,51 @@ SHOT
 		o.available_kits[kind.asSymbol] = kit;
 	};
 },
+\attach_fx:{|o, fx_module|
+	var node_group, fx_size;
+	fx_size = o.attached_fx.size;
+	o.attached_fx = o.attached_fx.add(fx_size.asSymbol->fx_module); // increment the number of attached fx
+	node_group = o.router[\node_groups][\premixers];
+
+	{
+
+		var next_ar = o.ar_route_map.as(Set).minItem;
+		SynthDef((o.id++"_0").asSymbol, {
+				var sig;
+				sig = In.ar(next_ar, 1);
+				// compress;
+				sig =  Compander.ar(sig, sig,
+					thresh: -14.dbamp,
+					slopeBelow: 1,
+					slopeAbove: 0.3,
+					clampTime: 0.001,
+					relaxTime: 0.1
+				);
+
+				// bypass signal
+				Out.ar(next_ar, sig*0.73);
+
+				o.attached_fx.collect({|el,key|
+					var name = o.id++"_0";
+					Out.ar(el.in_bus,
+						0.73 * sig * In.kr(o.kr_route_map[name.asSymbol][(\fx ++ \_ ++ key).asSymbol]).lag(0.1)
+					);
+				});
+
+		}).add;
+		s.sync;
+
+		// get the group free
+		o.premixers.collect{|el,key|
+			el.free;
+		};
+
+		// create the premaster synths
+		o.premixers[(o.id++"_0").asSymbol] = Synth.head(node_group,o.id++"_0",[]);
+
+	}.fork;
+
+},
 \select_next_kit:{|o|
 	var index = 0;
 	var ordered_keys = o.available_kits.order;
@@ -289,15 +342,13 @@ SHOT
 		if(o.memory_pads.size > 0,{
 			if((o.quav % o.quant[idx]).floor == 0,{
 				var pad = o.memory_pads.choose;
-				o.trig_shot(pad.kit, pad.idx, 0.3-(0.3*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
+				o.trig_shot(pad.kit, pad.idx, 0.2-(0.2*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
 			},{
-				var thres = o.density/80;
+				var thres = o.density/200;
 				var rnd = 1.0.rand;
 				if(rnd < thres,{
 					var pad = o.memory_pads.choose;
-					//"TRUE ".post; rnd.post; " < ".post; thres.postln;
-
-					o.trig_shot(pad.kit, pad.idx, 0.3-(0.3*(o.density*0.6)), pad.pitch, pad.decay, pad.atk, false);
+					o.trig_shot(pad.kit, pad.idx, 0.2-(0.2*(o.density*0.6)), pad.pitch, pad.decay, pad.atk, false);
 				});
 			});
 		});

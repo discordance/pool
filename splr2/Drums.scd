@@ -18,6 +18,9 @@ DRUMS
 ~oDRUMS = ~oMODULE <
 (
 // VARS
+\premixers:(),
+\attached_fx:(),
+//
 \ticks:0,
 \quav:0,
 \quant: [64,48,32,24,16,12,8,6,4,3,2,1],
@@ -151,6 +154,7 @@ DRUMS
 	{
 		var num_channels = o.ar_route_map.as(Set).size;
 		var next_ar = o.ar_route_map.as(Set).minItem;
+
 		num_channels.do({|el,i|
 			var name = o.id++"_"++i.asString;
 

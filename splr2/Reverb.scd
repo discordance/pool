@@ -68,7 +68,8 @@ REVERB (FX)
 			\decay_kr, o.kr_route_map[\global][\decay],
 			\lopass_kr, o.kr_route_map[\global][\lopass],
 			\stereo_kr, o.kr_route_map[\global][\stereo],
-			\bitrate_kr, o.kr_route_map[\global][\bitrate]
+			\bitrate_kr, o.kr_route_map[\global][\bitrate],
+			\vol, 0.75
 	]);
 },
 \generate_synths:{|o|
@@ -81,7 +82,8 @@ REVERB (FX)
 			\decay_kr, o.kr_route_map[\global][\decay],
 			\lopass_kr, o.kr_route_map[\global][\lopass],
 			\stereo_kr, o.kr_route_map[\global][\stereo],
-			\bitrate_kr, o.kr_route_map[\global][\bitrate]
+			\bitrate_kr, o.kr_route_map[\global][\bitrate],
+			\vol, 0.75
 	]);
 },
 \generate_control_map:{|o|
@@ -103,7 +105,7 @@ REVERB (FX)
 \load_synthdefs:{|o|
 
 	SynthDef(\nun_reverb_gverb, {
-		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0;
+		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, vol =1;
 		var sig, decay = 2, freq = 20000, sep;
 		decay = [0.1, 5].asSpec.map(In.kr(decay_kr).lag(0.1));
 		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
@@ -112,11 +114,11 @@ REVERB (FX)
 		sig = In.ar(in,1);
 		sig = GVerb.ar(sig, 80, decay, 0.10, 0.5, sep, 0, 0.7, 0.8);
 		sig = DFM1.ar(sig, freq);
-		Out.ar(out, sig);
+		Out.ar(out, sig*vol);
 	}).add;
 
 	SynthDef(\nun_reverb_classic, {
-		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, bitrate_kr = 0;
+		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, bitrate_kr = 0, vol =1;
 		var sig, local, sep = 0.00005, decay = 2, freq = 20000, bitrate = 24;
 
 		decay = [0.1, 5].asSpec.map(In.kr(decay_kr).lag(0.1));
@@ -138,8 +140,7 @@ REVERB (FX)
 		sig = DFM1.ar(sig, freq);
 		sig =  [DelayL.ar(sig, 1, LFNoise2.kr(0.003).range(0.00001,sep)), DelayL.ar(sig, 1, LFNoise2.kr(0.002).range(0.00005,sep))];
         // Now let's hear it:
-		CheckBadValues.ar(sig);
-        Out.ar(out, sig);
+        Out.ar(out, sig*vol);
 	}).add;
 }
 )
