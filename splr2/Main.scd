@@ -37,6 +37,7 @@ s.waitForBoot({
 	// effects
 	"Reverb.scd".loadRelative;
 	"EchoDelay.scd".loadRelative;
+	"Nasty.scd".loadRelative;
 
 	// debug ui
 	"UI.scd".loadRelative;
@@ -64,12 +65,18 @@ s.waitForBoot({
 		~oROUTER.register_fx(~oREVERB, [~oMIDI.devices.motu]);
 	});
 	// DELAY
-
 	~oECHO.init(~oROUTER, {
 		"~oECHO : fx unit loaded".postln;
 		~oPRESET.register(~oECHO);
 		~oROUTER.register_fx(~oECHO, [~oMIDI.devices.motu,~oMIDI.devices.sync]);
 	});
+	//NASTY
+	~oNASTY.init(~oROUTER, {
+		"~oNASTY : fx unit loaded".postln;
+		~oPRESET.register(~oNASTY);
+		~oROUTER.register_fx(~oNASTY, [~oMIDI.devices.motu]);
+	});
+
 	// ---------------- MODULES
 	// DRUMS
 	~oDRUMS.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/percussion/",{|o,init|
@@ -78,6 +85,7 @@ s.waitForBoot({
 		~oPRESET.register(~oDRUMS);
 		~oDRUMS.attach_fx(~oREVERB);
 		~oDRUMS.attach_fx(~oECHO);
+		~oDRUMS.attach_fx(~oNASTY);
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
 		});
@@ -90,6 +98,7 @@ s.waitForBoot({
 		~oPRESET.register(~oSHOT);
 		~oSHOT.attach_fx(~oREVERB);
 		~oSHOT.attach_fx(~oECHO);
+		~oSHOT.attach_fx(~oNASTY);
 		~oSHOT.load({|o|
 			"~oSHOT : samples loaded.".postln;
 		});

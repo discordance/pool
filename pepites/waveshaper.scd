@@ -12,6 +12,7 @@ b.sendCollection(a, 0);
 //b = Buffer.sendCollection(s, a, 1);
 )
 
+b;
 
 
 Buffer.freeAll;

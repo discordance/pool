@@ -101,6 +101,7 @@ SHOT
 	Library.put(\control_map,\dj3,\3,\0,o.kr_route_map[\global][\filter]);
 	Library.put(\control_map,\dj3,\3,\1,o.kr_route_map[\shots_0][\fx_0]);
 	Library.put(\control_map,\dj3,\3,\2,o.kr_route_map[\shots_0][\fx_1]);
+	Library.put(\control_map,\dj3,\3,\3,o.kr_route_map[\shots_0][\fx_2]);
 
 
 	// default bus
@@ -111,16 +112,16 @@ SHOT
 	var note_map = ();
 
 	note_map = note_map.add(\88->{
-		o.trig_shot(o.selected_kit, 0, 0.3, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 0, 0.25, o.pitch, o.decay, o.atk, o.memory);
 	}); // select first pad
 	note_map = note_map.add(\89->{
-		o.trig_shot(o.selected_kit, 1, 0.3, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 1, 0.25, o.pitch, o.decay, o.atk, o.memory);
 	}); // select second pad
 	note_map = note_map.add(\90->{
-		o.trig_shot(o.selected_kit, 2, 0.3, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 2, 0.25, o.pitch, o.decay, o.atk, o.memory);
 	}); // select third pad
 	note_map = note_map.add(\91->{
-		o.trig_shot(o.selected_kit, 3, 0.3, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 3, 0.25, o.pitch, o.decay, o.atk, o.memory);
 	}); // select fouth pad
 
 	// next and prev
@@ -182,11 +183,23 @@ SHOT
 	func_route_map;
 },
 \set_preset:{|o, archive|
-	//o.current_kit = archive.kits;
+	o.memory_pads = archive.memory_pads;
+	o.density = archive.density;
+	o.selected_kit = archive.selected_kit;
+	o.pitch = archive.pitch;
+	o.decay = archive.decay;
+	o.atk = archive.atk;
 },
 \get_preset:{|o, callback|
 	var archive = ();
+	archive.memory_pads = o.memory_pads;
+	archive.density = o.density;
+	archive.selected_kit = o.selected_kit;
+	archive.pitch = o.pitch;
+	archive.decay = o.decay;
+	archive.atk = o.atk;
 	// will save the kits
+	archive;
 },
 \load:{|o, on_load|
 	var kits_paths, ct = 0;
@@ -309,7 +322,7 @@ SHOT
 
 		if(memorize == true,{
 			var pad = (\kit:target_kit, \idx:idx, \pitch:pitch, \decay:decay, \atk: atk);
-			if(o.memory_pads.size < 4,{
+			if(o.memory_pads.size < 8,{
 				o.memory_pads = o.memory_pads.add(pad);
 				},{
 					o.memory_pads = o.memory_pads.addFirst(pad);
@@ -404,7 +417,7 @@ SHOT
 
 		// filter and DC
 		sig = LeakDC.ar(sig);
-		sig = DFM1.ar(sig, freq, 0.5, 1.1);
+		sig = DFM1.ar(sig, freq, 0.6, 1.2);
 
 		Out.ar(out, sig*vol);
 	}).add;
