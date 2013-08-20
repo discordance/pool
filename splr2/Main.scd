@@ -13,15 +13,11 @@ SPLR v2 - Vauban
 MAIN
 ******************************************************************/
 
-
-
-
-
 /* JUST SWEET THE TRIGGER */
-
 
 /******************************************************************/
 (
+s.options.numOutputBusChannels = 16;
 s.waitForBoot({
 	/**
 	* LOAD CLASSES
@@ -112,12 +108,19 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-~oPRESET.save_preset("vbn_tribhs");
+                                         ~oPRESET.save_preset("vbn_hrdhse");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
 
+
+/**
+ * Presets
+ * vbn_deep1 - 115
+ */
 ~oPRESET.load_preset("vbn_hrdhse");
+
+
 // MAXI LOL
 (
 ~oDRUMS.current_kit[\kick] = ~oDRUMS.available_kits[\kick].keys.asArray.choose.postln;
@@ -174,3 +177,5 @@ bus.set(0);
 
 
 ~oROUTER.modules;
+
+~oECHO.multiplier = 1;

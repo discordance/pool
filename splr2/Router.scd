@@ -22,7 +22,7 @@ ROUTER
 \next_kr: 15,
 \next_ar: 15, // routing assigned to modules out
 \next_fx_ar: 64, // next free input for FX, always mono
-\fx_bus_out:0, // output for the FX
+\fx_bus_out:8, // output for the FX
 
 \void_buffer:nil,
 // METHODS
@@ -101,6 +101,17 @@ ROUTER
 			ee = tmp_map[ee];
 		};
 	};
+	o.register_reverse_map(target);
+},
+\register_reverse_map:{|o, target|
+	var kr_map = target.kr_route_map;
+	kr_map.collect{|e,k|
+		e.collect{|ee,kk|
+			//target.id.post; " ".post; k.post; " ".post; ee.post; " ".post; kk.postln;
+			Library.put(\reverse_map, ee.asSymbol, (\device:target.id, \cat:k, \control: kk));
+		};
+	};
+
 },
 \on_note: {|o, src, chan, num, val|
 
@@ -118,7 +129,7 @@ ROUTER
 	var device = Library.at(\device_map,src), target;
 	target = Library.at(\control_map,device,chan.asSymbol,num.asSymbol);
 
-	chan.asSymbol.post; " ".post; num.asSymbol.postln;
+	//chan.asSymbol.post; " ".post; num.asSymbol.postln;
 
 	//target.postln;
 	if(target !== nil, {
@@ -126,10 +137,15 @@ ROUTER
 			target.value(val/127);
 		});
 		if(target.class.asString == "Integer",{ // got bus
+			var ctrl_path;
 			var bus = Bus.new('control', target,1,s);
 			bus.set(val/127);
+
+			ctrl_path = Library.at(\reverse_map,target.asSymbol);
+			//ctrl_path.asCompileString.postln;
+
 			// we save last bus value to store in presets
-			Library.put(\control_store,target.asSymbol, val/127);
+			Library.put(\control_store, ctrl_path.asCompileString.asSymbol, val/127);
 		});
 	});
 },
@@ -159,29 +175,29 @@ ROUTER
 		// dymanically creates a SynthDef
 
 		// DEBUG MODE
-
+		/*
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
-			Out.ar(0, Splay.ar(sig,0)*0.87); // too loud so we cut
+			Out.ar(0, Splay.ar(sig,0)*0.83); // too loud so we cut
 		}).add;
 
 		s.sync;
 
 		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);
-
+		*/
 		// MIXER MODE
-		/*
+
 		SynthDef("physical_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
-			Out.ar(min-13, sig);
+			Out.ar(min-13, sig*0.65);
 		}).add;
 
 		s.sync;
 
 		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol);
-		*/
+
 
 		// SOUND FLOWER
 	}.fork;

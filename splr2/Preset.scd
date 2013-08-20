@@ -39,7 +39,7 @@ PRESET
 		full_archive[\modules][id] = e.get_preset();
 	});
 	// save all control busses
-	full_archive[\kr_busses] = Library.at(\control_store);
+	full_archive[\kr_values] = Library.at(\control_store);
 	// write archive to disk
 	full_archive.writeArchive(o.root_path ++ "/" ++ name);
 	true;
@@ -53,10 +53,17 @@ PRESET
 			o.modules[key].set_preset(e);
 		});
 		// control busses
-		full_archive[\kr_busses].collect({|e,key|
-			var kr_bus = key.asInteger;
-			var bus = Bus.new('control', kr_bus,1,s);
+		full_archive[\kr_values].collect({|e,key|
+			// get bus number
+			var bus, path, kr_bus;
+			path = key.asString.compile.value;
+
+			kr_bus = o.modules[path[\device]].kr_route_map[path[\cat]][path[\control]];
+			//var kr_bus = key.asInteger; // <---------------------------------------------------
+			bus = Bus.new('control', kr_bus,1,s);
 			bus.set(e);
+
+			Library.put(\control_store, key, e);
 		});
 	});
 

@@ -434,6 +434,9 @@ DRUMS
 	// DEN AND DEC AND FX
 	Library.put(\control_map,\motu,\3,\0,o.func_route_map[\global][\density]);
 	// 123 for delays
+	Library.put(\control_map,\motu,\3,\1,o.kr_route_map[\drums_1][\fx_1]);
+	Library.put(\control_map,\motu,\3,\2,o.kr_route_map[\drums_2][\fx_1]);
+	Library.put(\control_map,\motu,\3,\3,o.kr_route_map[\drums_3][\fx_1]);
 
 	Library.put(\control_map,\motu,\3,\4,o.kr_route_map[\drm1][\decay]);
 	Library.put(\control_map,\motu,\3,\5,o.kr_route_map[\snar][\decay]);
@@ -445,6 +448,12 @@ DRUMS
 	Library.put(\control_map,\motu,\3,\9,o.kr_route_map[\drums_1][\fx_0]);
 	Library.put(\control_map,\motu,\3,\10,o.kr_route_map[\drums_2][\fx_0]);
 	Library.put(\control_map,\motu,\3,\11,o.kr_route_map[\drums_3][\fx_0]);
+
+	// NASTY
+	Library.put(\control_map,\motu,\3,\12,o.kr_route_map[\drums_0][\fx_2]);
+	Library.put(\control_map,\motu,\3,\13,o.kr_route_map[\drums_1][\fx_2]);
+	Library.put(\control_map,\motu,\3,\14,o.kr_route_map[\drums_2][\fx_2]);
+	Library.put(\control_map,\motu,\3,\15,o.kr_route_map[\drums_3][\fx_2]);
 
 	// PITCHES
 	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\pitch]);
