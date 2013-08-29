@@ -179,7 +179,7 @@ ROUTER
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
-			Out.ar(0, Splay.ar(sig,0)*0.83); // too loud so we cut
+			Out.ar(2, Splay.ar(sig,0)*0.83); // too loud so we cut
 		}).add;
 
 		s.sync;
@@ -191,7 +191,7 @@ ROUTER
 		SynthDef("physical_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
-			Out.ar(min-13, sig*0.65);
+			Out.ar(min-13, sig*0.9);
 		}).add;
 
 		s.sync;

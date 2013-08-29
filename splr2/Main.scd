@@ -27,6 +27,7 @@ s.waitForBoot({
 	// modules
 	"Router.scd".loadRelative;
 	"Midi.scd".loadRelative;
+
 	"Preset.scd".loadRelative;
 	"Drums.scd".loadRelative;
 	"Shot.scd".loadRelative;
@@ -108,7 +109,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("vbn_hrdhse");
+                                         ~oPRESET.save_preset("vbn_deikean2");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -178,4 +179,14 @@ bus.set(0);
 
 ~oROUTER.modules;
 
-~oECHO.multiplier = 1;
+~oECHO.multiplier = 0.23;
+
+~oSHOT.memory_pads = 0;
+
+
+
+s.prepareForRecord;
+s.record;
+s.stopRecording;
+
+

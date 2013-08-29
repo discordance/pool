@@ -123,20 +123,6 @@ DRUMS
 				});
 				ct = ct + 1;
 				kit = kit.add(buff);
-				// to mono
-				//on_load.value();
-				//o.ready = true;
-				/*
-				buff.loadToFloatArray(action: { arg array;
-					a = array;
-					buff = Buffer.loadCollection(s, a.unlace(2).sum*0.5, action:{
-						ct = ct -1;
-						if(ct == 0,{
-							on_load.value();
-							o.ready = true;
-						});
-					});
-				});*/
 			};
 			o.available_kits[kind] = o.available_kits[kind].add(name.asSymbol -> kit);
 		};
@@ -162,6 +148,7 @@ DRUMS
 				var sig;
 				sig = In.ar(next_ar, 1);
 				// compress;
+
 				sig =  Compander.ar(sig, sig,
 					thresh: -14.dbamp,
 					slopeBelow: 1,
@@ -285,9 +272,10 @@ DRUMS
 		\decay_bus, o.kr_route_map[\kick][\decay],
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
 		\vol_bus,o.kr_route_map[\kick][\volume],
-		\out, o.ar_route_map[\kick], \vol, 1
+		\out, o.ar_route_map[\kick], \base_vol, 0.55
 		]
 	);
+
 	// \drm1
 	o.synths[\drm1] = Synth.head(node_group,"nun_organic_sampler",[
 		\buf_bounds, [0,0],
@@ -295,7 +283,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\drm1][\pitch],
 		\vol_bus,o.kr_route_map[\drm1][\volume],
 		\out, o.ar_route_map[\drm1],
-		\lowcut, 60, \vol, 0.92
+		\lowcut, 60, \base_vol, 0.42
 		]
 	);
 	// \drm2
@@ -305,7 +293,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\drm2][\pitch],
 		\vol_bus,o.kr_route_map[\drm2][\volume],
 		\out, o.ar_route_map[\drm2],
-		\lowcut, 70, \vol, 0.92
+		\lowcut, 70, \base_vol, 0.42
 		]
 	);
 	// \snar
@@ -315,7 +303,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
 		\vol_bus,o.kr_route_map[\snar][\volume],
 		\out, o.ar_route_map[\snar],
-		\lowcut, 70, \vol, 0.85
+		\lowcut, 70, \base_vol, 0.42
 		]
 	);
 	// \clap
@@ -325,7 +313,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\clap][\pitch],
 		\vol_bus,o.kr_route_map[\clap][\volume],
 		\out, o.ar_route_map[\clap],
-		\lowcut, 80, \vol, 0.80
+		\lowcut, 80, \base_vol, 0.35
 		]
 	);
 	// \cymb
@@ -335,7 +323,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
 		\vol_bus,o.kr_route_map[\cymb][\volume],
 		\out, o.ar_route_map[\cymb],
-		\lowcut, 120, \vol, 0.85
+		\lowcut, 120, \base_vol, 0.42
 		]
 	);
 	// \hh1
@@ -345,7 +333,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\hat1][\pitch],
 		\vol_bus,o.kr_route_map[\hat1][\volume],
 		\out, o.ar_route_map[\hat1],
-		\lowcut, 120, \vol, 0.75
+		\lowcut, 120, \base_vol, 0.35
 		]
 	);
 	// \hh2
@@ -355,7 +343,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
 		\vol_bus,o.kr_route_map[\hat2][\volume],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 6000, \vol, 0.60
+		\lowcut, 6000, \base_vol, 0.30
 		]
 	);
 },
@@ -508,7 +496,7 @@ DRUMS
 	*/
 	SynthDef(\nun_organic_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1, lowcut = 0;
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, base_vol = 1, vol = 1, on = 1, lowcut = 0;
 		var sig, env, atkenv, rndsst, rate_mod, atksnd,
 		master_env, a, b, attenuation_ratio, manual_vol = 1; // decay attenuation
 
@@ -537,17 +525,17 @@ DRUMS
 
 		sig = sig.round(0.5 ** 12)*1.1;
 
-		sig = LeakDC.ar(sig);
 		// filter
-		sig = DFM1.ar(sig, freq, 0.5, 3);
+		sig = DFM1.ar(sig, freq, 0.5, 3) * base_vol; // fixed ratio
 		sig = HPF.ar(sig,lowcut);
+		sig = LeakDC.ar(sig);
 		Out.ar(out, sig*vol*on*manual_vol);
 
 	}).add;
 
 	SynthDef(\nun_basic_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1, lowcut = 0;
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, base_vol = 1, vol = 1, on = 1, lowcut = 0;
 		var sig, env, rate_mod, manual_vol = 1;
 
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
@@ -555,13 +543,14 @@ DRUMS
 
 		vol = vol.lag(0.3);
 
-		env = EnvGen.ar(Env.perc(0.001, decay, 1, 0),t_trig);
+		env = EnvGen.ar(Env.perc(0.01, decay, 1, 0),t_trig);
 		a = buf_bounds[0];
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
-		sig = DFM1.ar(sig, 20000, 0.5, 1);
+		sig = DFM1.ar(sig, 20000, 0.3, 1, 0, 0.0001) * base_vol; // fixed ratio
 		sig = HPF.ar(sig,lowcut);
+		sig = LeakDC.ar(sig);
 		Out.ar(out, sig*vol*on*manual_vol);
 	}).add;
 }
