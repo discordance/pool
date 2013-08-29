@@ -15,6 +15,7 @@ ECHO DELAY (FX)
 (
 ~oECHO = ~oFX <
 (
+\lengths:[1, 0.75, 0.66, 0.5, 0.33, 0.25, 0.125],
 \multiplier:0.25,
 \tempo:0,
 \last_time:0,
@@ -58,7 +59,8 @@ ECHO DELAY (FX)
 	kr_route_map;
 },
 \set_length:{|o, scope,val|
-
+	o.multiplier = o.lengths[(val*(o.lengths.size-1))];
+	o.multiplier.postln;
 },
 \generate_func:{|o|
 	var func_route_map = ();
@@ -79,13 +81,16 @@ ECHO DELAY (FX)
 },
 \generate_control_map:{|o|
 	var b;
-
+	Library.put(\control_map,\motu,\4,\4,o.func_route_map[\global][\length]);
+	Library.put(\control_map,\motu,\4,\5,o.kr_route_map[\global][\decay]);
+	Library.put(\control_map,\motu,\4,\6,o.kr_route_map[\global][\lopass]);
+	Library.put(\control_map,\motu,\4,\7,o.kr_route_map[\global][\stereo]);
 
 	// default values
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
 	b.set(0.45);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
-	b.set(0.85);
+	b.set(1);
 	b = Bus.new('control', o.kr_route_map[\global][\stereo],1,s);
 	b.set(0.0);
 },
@@ -103,28 +108,22 @@ ECHO DELAY (FX)
 
 	SynthDef(\nun_dub_echo, {
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1;
-		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback;
+		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback, dly, dly2;
 
-		decay = [0.1, 1].asSpec.map(In.kr(decay_kr).lag(0.1));
-		sep = [0.0005, 0.01].asSpec.map(In.kr(stereo_kr).lag(0.1));
+		decay = [0,1].asSpec.map(In.kr(decay_kr).lag(0.1));
+		sep = [0.0, 1].asSpec.map(In.kr(stereo_kr).lag(0.1));
 		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
+		length = length.lag(1);
 
-		input = In.ar(in, 1);
-		feedback = LocalIn.ar(2);
-		output = LeakDC.ar(feedback*decay + input);
+		input = In.ar(in, 1) ! 2;
+		output = LeakDC.ar(LocalIn.ar(2)*(decay/2)+input);
+		output = HPF.ar(output, 200);
+		output = DFM1.ar(output, freq);
 
-		output = HPF.ar(output, 280);
-		output = LPF.ar(output, 12000);
-		output = output.tanh*1.5;
-
-
-		LocalOut.ar(
-			DelayC.ar(output*vol, 5,
-				length
-				//LFNoise2.kr(0.2).range([length,length+SinOsc.kr(0.1).range(0,0.012)],[length+sep,length])
-			).reverse
-		);
-        Out.ar(out, output);
+		dly = LeakDC.ar(CombC.ar(output*vol, 2, length, decay));
+		dly2 = LeakDC.ar(CombC.ar(output*vol, 2, length, decay))*sep;
+		LocalOut.ar(dly);
+        Out.ar(out, dly+dly2);
 	}).add;
 }
 )

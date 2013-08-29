@@ -10,6 +10,10 @@
  */
 
 
+s.prepareForRecord;
+s.record;
+s.stopRecording;
+
 
 ~load_drum_engine.value();
 ~load_drum_gui.value();
