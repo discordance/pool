@@ -267,13 +267,13 @@ DRUMS
 	var node_group;
 	node_group = o.router[\node_groups][\generators];
 	// \kick
-	o.synths[\kick] = Synth.head(node_group,"nun_basic_sampler",[
+	o.synths[\kick] = Synth.head(node_group,"nun_kick_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\kick][\decay],
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
 		\vol_bus,o.kr_route_map[\kick][\volume],
 		\lpf_bus, o.kr_route_map[\kick][\lpf],
-		\out, o.ar_route_map[\kick], \base_vol, 0.55
+		\out, o.ar_route_map[\kick], \base_vol, 0.3
 		]
 	);
 
@@ -285,7 +285,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\drm1][\volume],
 		\lpf_bus, o.kr_route_map[\drm1][\lpf],
 		\out, o.ar_route_map[\drm1],
-		\lowcut, 60, \base_vol, 0.42
+		\lowcut, 60, \base_vol, 0.23
 		]
 	);
 	// \drm2
@@ -296,7 +296,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\drm2][\volume],
 		\lpf_bus, o.kr_route_map[\drm2][\lpf],
 		\out, o.ar_route_map[\drm2],
-		\lowcut, 70, \base_vol, 0.42
+		\lowcut, 70, \base_vol, 0.23
 		]
 	);
 	// \snar
@@ -307,7 +307,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\snar][\volume],
 		\lpf_bus, o.kr_route_map[\snar][\lpf],
 		\out, o.ar_route_map[\snar],
-		\lowcut, 70, \base_vol, 0.42
+		\lowcut, 70, \base_vol, 0.22
 		]
 	);
 	// \clap
@@ -318,7 +318,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\clap][\volume],
 		\lpf_bus, o.kr_route_map[\clap][\lpf],
 		\out, o.ar_route_map[\clap],
-		\lowcut, 80, \base_vol, 0.35
+		\lowcut, 80, \base_vol, 0.2
 		]
 	);
 	// \cymb
@@ -329,7 +329,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\cymb][\volume],
 		\lpf_bus, o.kr_route_map[\cymb][\lpf],
 		\out, o.ar_route_map[\cymb],
-		\lowcut, 120, \base_vol, 0.42
+		\lowcut, 120, \base_vol, 0.25
 		]
 	);
 	// \hh1
@@ -340,7 +340,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\hat1][\volume],
 		\lpf_bus, o.kr_route_map[\hat1][\lpf],
 		\out, o.ar_route_map[\hat1],
-		\lowcut, 120, \base_vol, 0.35
+		\lowcut, 120, \base_vol, 0.2
 		]
 	);
 	// \hh2
@@ -351,7 +351,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\hat2][\volume],
 		\lpf_bus, o.kr_route_map[\hat2][\lpf],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 900, \base_vol, 0.30
+		\lowcut, 900, \base_vol, 0.2
 		]
 	);
 },
@@ -459,7 +459,7 @@ DRUMS
 
 
 	// VOLUMES AND LPF
-	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\volume]);
+	Library.put(\control_map,\motu,\3,\16,o.kr_route_map[\kick][\decay]);
 	Library.put(\control_map,\motu,\3,\17,o.kr_route_map[\kick][\lpf]);
 	Library.put(\control_map,\motu,\3,\18,o.kr_route_map[\kick][\pitch]);
 	Library.put(\control_map,\motu,\3,\19,o.func_route_map[\kick][\kit]);
@@ -561,7 +561,8 @@ DRUMS
 
 		// filter
 		sig = DFM1.ar(sig, min(freq,lpf), 0.5, 3) * base_vol; // fixed ratio
-		sig = HPF.ar(sig,lowcut);
+		sig = DFM1.ar(sig,lowcut,0.1,1,1);
+		//sig = HPF.ar(sig,lowcut);
 		sig = LeakDC.ar(sig);
 		Out.ar(out, sig*vol*on*manual_vol);
 
@@ -582,9 +583,27 @@ DRUMS
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
-		sig = DFM1.ar(sig, lpf, 0.3, 1, 0, 0.0001) * base_vol; // fixed ratio
-		sig = HPF.ar(sig,lowcut);
-		sig = LeakDC.ar(sig);
+		sig = DFM1.ar(sig, lpf, 0.1, 1+LFNoise2.kr(20).range(-0.1,0.1), 0, 0.0) * base_vol; // fixed ratio
+		sig = DFM1.ar(sig,lowcut,0.1,1,1,0);
+		Out.ar(out, sig*vol*on*manual_vol);
+	}).add;
+
+	SynthDef(\nun_kick_sampler, {
+		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0, lpf_bus=0,
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, base_vol = 1, vol = 1, on = 1, lowcut = 0;
+		var sig, env, rate_mod, manual_vol = 1, lpf = 20000;
+
+		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		manual_vol = [0, 1].asSpec.map(In.kr(vol_bus).lag(0.1));
+		lpf = \freq.asSpec.map(In.kr(lpf_bus).lag(0.1));
+		vol = vol.lag(0.3);
+
+		env = EnvGen.ar(Env.perc(0.01, decay, 1, 0),t_trig);
+		a = buf_bounds[0];
+		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
+		rate = rate_mod * rate;
+		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
+		sig = MoogFF.ar(sig, lpf, 0.1);
 		Out.ar(out, sig*vol*on*manual_vol);
 	}).add;
 }

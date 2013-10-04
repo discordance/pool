@@ -17,6 +17,7 @@ MAIN
 
 /******************************************************************/
 (
+s.options.numInputBusChannels = 0;
 s.options.numOutputBusChannels = 16;
 s.waitForBoot({
 	/**
@@ -109,7 +110,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("vbn_deikean2");
+                                         ~oPRESET.save_preset("v1_shape");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -119,7 +120,7 @@ s.waitForBoot({
  * Presets
  * vbn_deep1 - 115
  */
-~oPRESET.load_preset("vbn_hrdhse");
+~oPRESET.load_preset("v1_hop2"); //v1_deepdus // v1_hsette // v1_hop2 // v1_geo // v1_shed
 
 
 // MAXI LOL
@@ -170,7 +171,7 @@ bus.set(0);
 ~oSHOT.available_kits.postcs;
 ~oSHOT.ar_route_map;
 
-~oSHOT.trig_shot(3);
+~oSHOT.trig_shot(0);
 
 ~oSHOT.kr_route_map;
 
@@ -181,12 +182,17 @@ bus.set(0);
 
 ~oECHO.multiplier = 0.23;
 
-~oSHOT.memory_pads = 0;
+~oSHOT.memory_pads = []; //VIDER LES PADS
 
 
 
 s.prepareForRecord;
 s.record;
 s.stopRecording;
+
+//
+
+
+~oDRUMS.synths[\kick].set(\t_trig,1);
 
 

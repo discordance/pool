@@ -57,14 +57,21 @@ NASTY (FX)
 	func_route_map;
 },
 \generate_synths:{|o|
-	var node_group;
+	var node_group, buffs, int_buff;
 	node_group = o.router[\node_groups][\effects];
 
-	"bufnum : ".post; o.cheb_buff.numChannels.postln;
-	o.synths[\nasty] = Synth.head(node_group,"nun_nasty",
+	buffs = [o.router.shape_buffers[0],o.router.shape_buffers[o.router.shape_buffers.size-1]];
+	int_buff = o.router.mixshape_buffer;
+
+
+	"BUFSSSSSSSSSSSSSSSSSSSSSS ".post; buffs[1].postln;
+
+	o.synths[\nasty] = Synth.head(node_group,"nun_waveshaper",
 	[
 			\in, o.in_bus,
-			\out, o.out_bus
+			\out, o.out_bus,
+			\buffers, buffs,
+			\mix_buffer, int_buff
 	]);
 },
 \generate_control_map:{|o|
@@ -77,14 +84,19 @@ NASTY (FX)
 ******************************************************************/
 \load_synthdefs:{|o|
 
-	SynthDef(\nun_nasty, {
-		arg in, out;
-		var soundIn, output;
-		soundIn = In.ar(in,1);
-		output = CrossoverDistortion.ar(soundIn,0.7,0.4)*Amplitude.ar(soundIn*4);
-		output = DFM1.ar(output,14000,0.2,1) *0.5;
+	SynthDef(\nun_waveshaper, {
+		arg in, out, buffers = #[0,0], mix_buffer;
+		var input, shp, output = 0;
+		var buf = MouseY.kr(0,buffers[1]+1).lag;
+		input = In.ar(in,1);
+		input = HPF.ar(input,80);
 
-		Out.ar(out, output!2);
+		shp = Pan2.ar((Shaper.ar(buf,input,2)*0.15) + (Shaper.ar(buf,input,2)*0.15),LFNoise2.kr(100).range(-0.1,0.1));
+		shp = LeakDC.ar(shp);
+		shp = (Amplitude.kr(input)*16).abs.lag(0.1) * shp;
+		shp = Compander.ar(shp,shp,-34.dbamp, 1, 1.1, 0.2, 0.5, 1.2);
+
+		Out.ar(out, shp);
 	}).add;
 }
 )

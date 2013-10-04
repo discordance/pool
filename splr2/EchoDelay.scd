@@ -110,7 +110,7 @@ ECHO DELAY (FX)
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1;
 		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback, dly, dly2;
 
-		decay = [0,1].asSpec.map(In.kr(decay_kr).lag(0.1));
+		decay = [0,0.7].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0, 1].asSpec.map(In.kr(stereo_kr).lag(0.1));
 		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
 		length = length.lag(1);

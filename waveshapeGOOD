@@ -1,0 +1,30 @@
+
+~bfz = "/Users/nunja/Documents/AudioLib/supercollider/waveshape/*".pathMatch.collect{|elem|
+	Buffer.readChannel(s,elem,0,2048,0,{|b|
+	b.normalize;
+	});
+};
+
+~int = Buffer.alloc(s, 2048, 1);
+
+(
+{
+	var shp;
+	var snd = {
+		Saw.ar(50)
+	 };
+
+	var buf = Select.kr(MouseY.kr(0,~bfz.size+1),~bfz);
+	var lfbuf = Select.kr(MouseX.kr(0,~bfz.size+1),~bfz);
+	var res =
+	PlayBuf.ar(1,buf,BufRateScale.kr(buf),1,0,1)*
+	PlayBuf.ar(1,lfbuf,BufRateScale.kr(lfbuf),1,0,1) * LFNoise2.ar(LFNoise2.kr(0.1).range(0.1,10),2);
+
+	BufWr.ar(res, ~int, Phasor.ar(1, BufRateScale.kr(res), 0, BufFrames.kr(res)),1);
+
+	shp = Pan2.ar((Shaper.ar(~int,snd,2)*0.15) + (Shaper.ar(buf,snd,2)*0.15),LFNoise2.kr(100).range(-0.1,0.1));
+
+	shp;
+}.scope;
+)
+

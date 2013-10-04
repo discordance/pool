@@ -23,10 +23,12 @@ ROUTER
 \next_ar: 15, // routing assigned to modules out
 \next_fx_ar: 64, // next free input for FX, always mono
 \fx_bus_out:8, // output for the FX
-
+\shape_buffers:nil,
+\mixshape_buffer:nil,
 \void_buffer:nil,
 // METHODS
 \init:{|o, debug_out = false|
+	var cheb_sin = Signal.sineFill(1000, 1.0/[1, 2, 3, 4, 5, 6]);
 	"~oROUTER : clearing node tree, freeing all buffers ...".postln;
 
 	o.debug_out = debug_out;
@@ -39,6 +41,14 @@ ROUTER
 	Buffer.freeAll; // free all buffers
 	// create the emptybuffer zero, the void buffer
 	o.void_buffer = Buffer.alloc(s, s.sampleRate, 2);
+
+	// WAVESHAPER BUFFERS
+	o.shape_buffers = "/Users/nunja/Documents/AudioLib/supercollider/waveshape/*".pathMatch.collect{|elem|
+		Buffer.readChannel(s,elem,0,600,0,{|b|
+			b.normalize;
+		});
+	};
+	o.mixshape_buffer = Buffer.alloc(s, 600, 1);
 
 	// routing node groups
 	// generators -> modules that generate sounds
@@ -179,7 +189,7 @@ ROUTER
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
-			Out.ar(2, Splay.ar(sig,0)*0.83); // too loud so we cut
+			Out.ar(0, Splay.ar(sig,0)*0.83); // too loud so we cut
 		}).add;
 
 		s.sync;
