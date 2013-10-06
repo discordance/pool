@@ -110,7 +110,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("v1_shape");
+                                         ~oPRESET.save_preset("v1_crypt");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -120,7 +120,7 @@ s.waitForBoot({
  * Presets
  * vbn_deep1 - 115
  */
-~oPRESET.load_preset("v1_hop2"); //v1_deepdus // v1_hsette // v1_hop2 // v1_geo // v1_shed
+~oPRESET.load_preset("v1_deepdus"); //v1_deepdus // v1_hsette // v1_hop2 // v1_geo // v1_shed // v1_berg // v1_shape // v1_crypt
 
 
 // MAXI LOL
@@ -195,4 +195,4 @@ s.stopRecording;
 
 ~oDRUMS.synths[\kick].set(\t_trig,1);
 
-
+~oROUTER.fxs.size;

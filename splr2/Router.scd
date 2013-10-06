@@ -22,10 +22,13 @@ ROUTER
 \next_kr: 15,
 \next_ar: 15, // routing assigned to modules out
 \next_fx_ar: 64, // next free input for FX, always mono
+\next_chain_ar: 96,
 \fx_bus_out:8, // output for the FX
 \shape_buffers:nil,
 \mixshape_buffer:nil,
 \void_buffer:nil,
+\num_fx:0,
+\fxs:(),
 // METHODS
 \init:{|o, debug_out = false|
 	var cheb_sin = Signal.sineFill(1000, 1.0/[1, 2, 3, 4, 5, 6]);
@@ -77,6 +80,9 @@ ROUTER
 	o.next_fx_ar = o.next_fx_ar + 1;
 
 	target.out_bus = o.fx_bus_out;
+
+	target.chain_bus = o.next_chain_ar;
+	o.next_chain_ar = o.next_chain_ar + 1;
 }
 ,
 \assign_ar: {|o,target|
@@ -171,6 +177,11 @@ ROUTER
 \register_fx:{|o, module, devices|
 	var mod = (\module:module, \devices:devices);
 	o.modules = o.modules.add(mod);
+	o.fxs.add(module.id.asSymbol->module);
+
+	if(o.num_fx == o.fxs.size,{
+		o.activate_chain();
+	});
 },
 \register_module:{|o, module, devices|
 	var min, num_busses;
@@ -212,6 +223,54 @@ ROUTER
 		// SOUND FLOWER
 	}.fork;
 
+
+},
+\activate_chain:{|o|
+	// special, set controls
+	var verb_in_echo = o.next_kr;
+	var verb_in_nasty = o.next_kr + 1;
+	var nasty_in_verb = o.next_kr + 2;
+	var echo_in_verb = o.next_kr + 3;
+	o.next_kr = o.next_kr + 4;
+	Library.put(\control_map,\motu,\4,\12,verb_in_echo);
+	Library.put(\control_map,\motu,\4,\13,verb_in_nasty);
+	Library.put(\control_map,\motu,\4,\14,nasty_in_verb);
+	Library.put(\control_map,\motu,\4,\15,echo_in_verb);
+
+
+	SynthDef("fx_chain", {
+		arg rev_chain_bus, echo_chain_bus, nasty_chain_bus,
+		rev_in_bus, echo_in_bus, nasty_in_bus,
+		verb_in_echo, verb_in_nasty, nasty_in_verb, echo_in_verb
+		;
+
+		var rev_out = InFeedback.ar(rev_chain_bus,2);
+		var ech_out = InFeedback.ar(echo_chain_bus,2);
+		var nast_out = InFeedback.ar(nasty_chain_bus,2);
+
+
+		// rev in wave
+		Out.ar(echo_in_bus,rev_out * In.kr(verb_in_echo).lag(0.1));
+		Out.ar(nasty_in_bus,rev_out* In.kr(verb_in_nasty).lag(0.1));
+		Out.ar(rev_in_bus,nast_out * In.kr(nasty_in_verb).lag(0.1));
+		Out.ar(rev_in_bus,ech_out * In.kr(echo_in_verb).lag(0.1));
+
+
+	}).add;
+	s.sync;
+	Synth.head(o.node_groups[\premixers],"fx_chain",
+		[\rev_chain_bus, o.fxs[\reverb].chain_bus,
+		 \echo_chain_bus, o.fxs[\echo].chain_bus,
+		 \nasty_chain_bus, o.fxs[\nasty].chain_bus,
+		 \rev_in_bus, o.fxs[\reverb].in_bus,
+		 \echo_in_bus,  o.fxs[\echo].in_bus,
+		 \nasty_in_bus,  o.fxs[\nasty].in_bus,
+		 \verb_in_echo, verb_in_echo,
+		 \verb_in_nasty, verb_in_nasty,
+		 \nasty_in_verb, nasty_in_verb,
+		 \echo_in_verb, echo_in_verb
+		]
+	);
 
 },
 /* SynthDefs

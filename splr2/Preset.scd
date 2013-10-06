@@ -33,6 +33,7 @@ PRESET
 },
 \save_preset:{|o,name|
 	// how many to save cause it's async shit
+	var target;
 	var num = o.modules.size, full_archive = (\modules:()), busses;
 	o.modules.collect({|e,key|
 		var id = e.id;
@@ -41,6 +42,11 @@ PRESET
 	// save all control busses
 	full_archive[\kr_values] = Library.at(\control_store);
 	// write archive to disk
+	// check
+	target = o.root_path ++ "/" ++ name;
+	if(File.exists(target),{
+		File.copy(target,target++"~");
+	});
 	full_archive.writeArchive(o.root_path ++ "/" ++ name);
 	true;
 },

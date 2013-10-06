@@ -134,7 +134,6 @@ DRUMS
 	var node_group, fx_size;
 	fx_size = o.attached_fx.size;
 	o.attached_fx = o.attached_fx.add(fx_size.asSymbol->fx_module); // increment the number of attached fx
-
 	node_group = o.router[\node_groups][\premixers];
 
 	{

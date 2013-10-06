@@ -29,6 +29,7 @@ ECHO DELAY (FX)
 	o.on_ready = on_ready;
 	init_routine = {
 		o.router = router;
+		o.router.num_fx = o.router.num_fx+1; // inc router expected
 		o.load_synthdefs();
 		s.sync;
 
@@ -74,6 +75,7 @@ ECHO DELAY (FX)
 	[
 			\in, o.in_bus,
 			\out, o.out_bus,
+			\chain, o.chain_bus,
 			\decay_kr, o.kr_route_map[\global][\decay],
 			\lopass_kr, o.kr_route_map[\global][\lopass],
 			\stereo_kr, o.kr_route_map[\global][\stereo]
@@ -107,7 +109,7 @@ ECHO DELAY (FX)
 \load_synthdefs:{|o|
 
 	SynthDef(\nun_dub_echo, {
-		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1;
+		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1, chain =0;
 		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback, dly, dly2;
 
 		decay = [0,0.7].asSpec.map(In.kr(decay_kr).lag(0.1));
@@ -122,8 +124,10 @@ ECHO DELAY (FX)
 
 		dly = LeakDC.ar(CombC.ar(output*vol, 2, length, decay));
 		dly2 = LeakDC.ar(CombC.ar(output*vol, 2, length, decay))*sep;
-		LocalOut.ar(dly);
+		LocalOut.ar(dly*0.2);
         Out.ar(out, dly+dly2);
+		// chain
+		Out.ar(chain, dly+dly2);
 	}).add;
 }
 )

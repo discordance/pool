@@ -33,7 +33,8 @@ BOOTSTRAP CLASSES
 ~oFX = ~oMODULE <
 (
 \in_bus: 0,
-\out_bus: 0
+\out_bus: 0,
+\chain_bus: 0
 )
 
 )

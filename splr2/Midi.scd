@@ -46,6 +46,8 @@ MIDI
 		});
 		MIDIIn.addFuncTo(\control, {|src, chan, num, val|
 			router.on_control(src, chan, num, val);
+			"contrl ".post;
+			(\src:src,\chan:chan, \num: num, \val: val).postln;
 		});
 		MIDIIn.addFuncTo(\sysrt, {|src, val|
 			router.on_clock(src, val);

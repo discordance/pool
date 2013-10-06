@@ -25,6 +25,7 @@ REVERB (FX)
 	o.on_ready = on_ready;
 	init_routine = {
 		o.router = router;
+		o.router.num_fx = o.router.num_fx+1; // inc router expected
 		o.load_synthdefs();
 		s.sync;
 
@@ -79,6 +80,7 @@ REVERB (FX)
 	[
 			\in, o.in_bus,
 			\out, o.out_bus,
+			\chain, o.chain_bus,
 			\decay_kr, o.kr_route_map[\global][\decay],
 			\lopass_kr, o.kr_route_map[\global][\lopass],
 			\room_kr, o.kr_route_map[\global][\room],
@@ -108,7 +110,7 @@ REVERB (FX)
 \load_synthdefs:{|o|
 
 	SynthDef(\nun_reverb_gverb, {
-		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, room_kr = 0, damp_kr = 0, vol =1;
+		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, room_kr = 0, damp_kr = 0, vol =1, chain = 0;
 		var sig, decay = 2, freq = 20000, room, damp;
 		decay = [0.1, 10].asSpec.map(In.kr(decay_kr).lag(0.1));
 		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
@@ -119,6 +121,8 @@ REVERB (FX)
 		sig = GVerb.ar(sig, room, decay, damp, 0.5, 15, 0, 0.7, 0.8);
 		sig = DFM1.ar(sig, freq);
 		Out.ar(out, sig*vol);
+		// chain
+		Out.ar(chain, sig*vol);
 	}).add;
 /*
 	SynthDef(\nun_reverb_classic, {
