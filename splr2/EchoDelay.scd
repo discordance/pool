@@ -112,7 +112,7 @@ ECHO DELAY (FX)
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1, chain =0;
 		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback, dly, dly2;
 
-		decay = [0,0.7].asSpec.map(In.kr(decay_kr).lag(0.1));
+		decay = [0,0.8].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0, 1].asSpec.map(In.kr(stereo_kr).lag(0.1));
 		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
 		length = length.lag(1);
@@ -124,7 +124,7 @@ ECHO DELAY (FX)
 
 		dly = LeakDC.ar(CombC.ar(output*vol, 2, length, decay));
 		dly2 = LeakDC.ar(CombC.ar(output*vol, 2, length, decay))*sep;
-		LocalOut.ar(dly*0.2);
+		LocalOut.ar(dly*EnvGen.kr(Env.perc(0.01,10,1),Amplitude.kr(input)));
         Out.ar(out, dly+dly2);
 		// chain
 		Out.ar(chain, dly+dly2);

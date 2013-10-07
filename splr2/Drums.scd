@@ -559,8 +559,8 @@ DRUMS
 		sig = sig.round(0.5 ** 12)*1.1;
 
 		// filter
-		sig = DFM1.ar(sig, min(freq,lpf), 0.5, 3) * base_vol; // fixed ratio
-		sig = DFM1.ar(sig,lowcut,0.1,1,1);
+		sig = DFM1.ar(sig, min(freq,lpf), 0.01, 3) * base_vol; // fixed ratio
+		sig = DFM1.ar(sig,lowcut,0.01,1,1);
 		//sig = HPF.ar(sig,lowcut);
 		sig = LeakDC.ar(sig);
 		Out.ar(out, sig*vol*on*manual_vol);
@@ -582,8 +582,8 @@ DRUMS
 		rate_mod = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
 		rate = rate_mod * rate;
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
-		sig = DFM1.ar(sig, lpf, 0.1, 1+LFNoise2.kr(20).range(-0.1,0.1), 0, 0.0) * base_vol; // fixed ratio
-		sig = DFM1.ar(sig,lowcut,0.1,1,1,0);
+		sig = DFM1.ar(sig, lpf, 0.01, 1+LFNoise2.kr(20).range(-0.1,0.1), 0, 0.0) * base_vol; // fixed ratio
+		sig = DFM1.ar(sig,lowcut,0.01,1,1,0);
 		Out.ar(out, sig*vol*on*manual_vol);
 	}).add;
 

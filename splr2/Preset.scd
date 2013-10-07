@@ -45,31 +45,39 @@ PRESET
 	// check
 	target = o.root_path ++ "/" ++ name;
 	if(File.exists(target),{
-		File.copy(target,target++"~");
+		if(File.exists(target++"~") == false,{
+			File.copy(target,target++"~");
+		},{
+				File.delete(target++"~");
+			File.copy(target,target++"~");
+		});
+
 	});
 	full_archive.writeArchive(o.root_path ++ "/" ++ name);
 	true;
 },
 \load_preset:{|o,name|
-	var full_archive, path = o.root_path ++ "/" ++ name;
-	if(File.exists(path) == true,{
-		full_archive = Object.readArchive(path);
+	var full_archive, rpath = o.root_path ++ "/" ++ name;
+	if(File.exists(rpath) == true,{
+		full_archive = Object.readArchive(rpath);
 		// modules presets
 		full_archive[\modules].collect({|e,key|
 			o.modules[key].set_preset(e);
 		});
+
 		// control busses
 		full_archive[\kr_values].collect({|e,key|
 			// get bus number
 			var bus, path, kr_bus;
 			path = key.asString.compile.value;
+			if(path != nil,{
+				kr_bus = o.modules[path[\device]].kr_route_map[path[\cat]][path[\control]];
+				//var kr_bus = key.asInteger; // <---------------------------------------------------
+				bus = Bus.new('control', kr_bus,1,s);
+				bus.set(e);
+				Library.put(\control_store, key, e);
+			})
 
-			kr_bus = o.modules[path[\device]].kr_route_map[path[\cat]][path[\control]];
-			//var kr_bus = key.asInteger; // <---------------------------------------------------
-			bus = Bus.new('control', kr_bus,1,s);
-			bus.set(e);
-
-			Library.put(\control_store, key, e);
 		});
 	});
 

@@ -120,8 +120,10 @@ s.waitForBoot({
  * Presets
  * vbn_deep1 - 115
  */
-~oPRESET.load_preset("v1_deepdus"); //v1_deepdus // v1_hsette // v1_hop2 // v1_geo // v1_shed // v1_berg // v1_shape // v1_crypt
+~oPRESET.load_preset("v1_crypt"); //v1_d eepdus // v1_hsette // v1_hop2 // v1_geo // v1_shed // v1_berg // v1_shape // v1_crypt
 
+ //VIDER LES PADS
+~oSHOT.memory_pads = []; //VIDER LES PADS
 
 // MAXI LOL
 (
@@ -182,7 +184,7 @@ bus.set(0);
 
 ~oECHO.multiplier = 0.23;
 
-~oSHOT.memory_pads = []; //VIDER LES PADS
+
 
 
 

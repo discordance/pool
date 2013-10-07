@@ -158,7 +158,6 @@ ROUTER
 			bus.set(val/127);
 
 			ctrl_path = Library.at(\reverse_map,target.asSymbol);
-			//ctrl_path.asCompileString.postln;
 
 			// we save last bus value to store in presets
 			Library.put(\control_store, ctrl_path.asCompileString.asSymbol, val/127);
@@ -247,13 +246,13 @@ ROUTER
 		var rev_out = InFeedback.ar(rev_chain_bus,2);
 		var ech_out = InFeedback.ar(echo_chain_bus,2);
 		var nast_out = InFeedback.ar(nasty_chain_bus,2);
-
+		var amp = Amplitude.kr(rev_out+ech_out+nast_out).lag(2)*2;
 
 		// rev in wave
-		Out.ar(echo_in_bus,rev_out * In.kr(verb_in_echo).lag(0.1));
-		Out.ar(nasty_in_bus,rev_out* In.kr(verb_in_nasty).lag(0.1));
-		Out.ar(rev_in_bus,nast_out * In.kr(nasty_in_verb).lag(0.1));
-		Out.ar(rev_in_bus,ech_out * In.kr(echo_in_verb).lag(0.1));
+		Out.ar(echo_in_bus,rev_out * In.kr(verb_in_echo).lag(0.1)*amp);
+		Out.ar(nasty_in_bus,rev_out* In.kr(verb_in_nasty).lag(0.1)*amp);
+		Out.ar(rev_in_bus,nast_out * In.kr(nasty_in_verb).lag(0.1)*amp);
+		Out.ar(rev_in_bus,ech_out * In.kr(echo_in_verb).lag(0.1)*amp);
 
 
 	}).add;
