@@ -98,6 +98,8 @@ SHOT
 	Library.put(\control_map,\dj3,\3,\32,o.func_route_map[\global][\pitch]);
 	Library.put(\control_map,\dj3,\3,\33,o.func_route_map[\global][\decay]);
 	Library.put(\control_map,\dj3,\3,\48,o.func_route_map[\global][\atk]);
+	Library.put(\control_map,\dj3,\3,\64,o.func_route_map[\global][\offset]);
+	Library.put(\control_map,\dj3,\3,\65,o.func_route_map[\global][\chaos]);
 
 	//kr
 	Library.put(\control_map,\dj3,\3,\0,o.kr_route_map[\global][\filter]);
@@ -180,6 +182,26 @@ SHOT
 			o.atk = (o.atk - (1-val)).clip(0.05,1);
 		});
 		"Shot atk: ".post; o.atk.postln;
+	});
+	// relative CC
+	func_route_map[\global] = func_route_map[\global].add(\chaos->{|val|
+		val = (val*127)/128;
+		if(val < 0.5,{
+			o.chaos = (o.chaos + val).clip(0,1);
+		},{
+			o.chaos = (o.chaos - (1-val)).clip(0,1);
+		});
+		"Shot chaos: ".post; o.chaos.postln;
+	});
+	// relative CC
+	func_route_map[\global] = func_route_map[\global].add(\offset->{|val|
+		val = (val*127)/128;
+		if(val < 0.5,{
+			o.offset = (o.offset + val).clip(0,1);
+		},{
+			o.offset = (o.offset - (1-val)).clip(0,1);
+		});
+		"Shot offset: ".post; o.offset.postln;
 	});
 	// return
 	func_route_map;
@@ -360,8 +382,16 @@ SHOT
 
 	if(o.density > 0, {
 		var idx = [0,o.quant.size-1].asSpec.map(o.density).floor;
+		var step, chaos = 0, offset = 0;
+
+		if(1.0.rand < o.chaos, {
+			chaos = (1.0.rand*128).floor;
+		});
+
+		step = o.quant[idx];
+		offset = (128 * o.offset).floor + chaos;
 		if(o.memory_pads.size > 0,{
-			if((o.quav % o.quant[idx]).floor == 0,{
+			if(( (o.quav+offset) % step).floor == 0,{
 				var pad = o.memory_pads.choose;
 				o.trig_shot(pad.kit, pad.idx, 0.2-(0.2*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
 			},{
@@ -433,3 +463,7 @@ SHOT
 );
 
 )
+
+
+
+

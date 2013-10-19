@@ -219,7 +219,3 @@ s.stopRecording;
 ~oDRUMS.synths[\kick].set(\t_trig,1);
 
 ~oROUTER.fxs.size;
-
-
-d = {}.class;
-(d == "Function");
