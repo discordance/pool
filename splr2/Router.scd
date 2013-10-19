@@ -147,7 +147,6 @@ ROUTER
 
 	//chan.asSymbol.post; " ".post; num.asSymbol.postln;
 
-	//target.postln;
 	if(target !== nil, {
 		if(target.class.asString == "Function",{ // got function
 			target.value(val/127);

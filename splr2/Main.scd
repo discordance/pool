@@ -13,7 +13,14 @@ SPLR v2 - Vauban
 MAIN
 ******************************************************************/
 
-/* JUST SWEET THE TRIGGER */
+
+// TODO
+// - check presets again
+// - sample load failures
+
+
+
+
 
 /******************************************************************/
 (
@@ -32,6 +39,8 @@ s.waitForBoot({
 	"Preset.scd".loadRelative;
 	"Drums.scd".loadRelative;
 	"Shot.scd".loadRelative;
+	"Nappler.scd".loadRelative;
+
 	// effects
 	"Reverb.scd".loadRelative;
 	"EchoDelay.scd".loadRelative;
@@ -86,21 +95,31 @@ s.waitForBoot({
 		~oDRUMS.attach_fx(~oNASTY);
 		~oDRUMS.load({|o|
 			"~oDRUMS : samples loaded.".postln;
+			// SHOTS
+			~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
+				"~oSHOT : initialized.".postln;
+				~oROUTER.register_module(~oSHOT, [~oMIDI.devices.sync, ~oMIDI.devices.dj3]);
+				~oPRESET.register(~oSHOT);
+				~oSHOT.attach_fx(~oREVERB);
+				~oSHOT.attach_fx(~oECHO);
+				~oSHOT.attach_fx(~oNASTY);
+				~oSHOT.load({|o|
+					"~oSHOT : samples loaded.".postln;
+				});
+			});
 		});
-		//~oUI.bind_module(~oDRUMS);
 	});
-	// SHOTS
-	~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
-		"~oSHOT : initialized.".postln;
-		~oROUTER.register_module(~oSHOT, [~oMIDI.devices.sync, ~oMIDI.devices.dj3]);
-		~oPRESET.register(~oSHOT);
-		~oSHOT.attach_fx(~oREVERB);
-		~oSHOT.attach_fx(~oECHO);
-		~oSHOT.attach_fx(~oNASTY);
-		~oSHOT.load({|o|
-			"~oSHOT : samples loaded.".postln;
+
+
+	// LOOPS
+	/*
+	~oNAPPLER.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/loop/",{|o,init|
+
+		~oNAPPLER.load({|o|
+			"~~oNAPPLER : samples loaded.".postln;
 		});
 	});
+	*/
 });
 )
 
@@ -110,7 +129,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("v1_crypt");
+                                         ~oPRESET.save_preset("TEST");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -120,12 +139,14 @@ s.waitForBoot({
  * Presets
  * vbn_deep1 - 115
  */
-~oPRESET.load_preset("v1_crypt"); //v1_d eepdus // v1_hsette // v1_hop2 // v1_geo // v1_shed // v1_berg // v1_shape // v1_crypt
+~oPRESET.load_preset("TEST");
 
  //VIDER LES PADS
 ~oSHOT.memory_pads = []; //VIDER LES PADS
+~oSHOT.density = 0.5;
+~oSHOT.memory_pads;
 
-// MAXI LOL
+// UN MAX DE LOL
 (
 ~oDRUMS.current_kit[\kick] = ~oDRUMS.available_kits[\kick].keys.asArray.choose.postln;
 ~oDRUMS.current_kit[\drm1] = ~oDRUMS.available_kits[\drm1].keys.asArray.choose;
@@ -198,3 +219,7 @@ s.stopRecording;
 ~oDRUMS.synths[\kick].set(\t_trig,1);
 
 ~oROUTER.fxs.size;
+
+
+d = {}.class;
+(d == "Function");

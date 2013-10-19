@@ -69,10 +69,13 @@ DEBUG UI
 				var ctrl_name = k ++ "_" ++ kk;
 
 				EZKnob(panels[pandx], 105@74, ctrl_name, [0, 1].asSpec.default = 0.5,{ |widget|
+					var ctrl_path;
 					var bus = Bus.new('control', ee,1,s);
 					bus.set(widget.value);
+					ctrl_path = Library.at(\reverse_map,ee.asSymbol);
+					ctrl_path.postln;
 					// we save last bus value to store in presets
-					Library.put(\control_store,ee.asSymbol, widget.value);
+					Library.put(\control_store,ctrl_path.asCompileString.asSymbol, widget.value);
 				},
 				layout:\vert2, initAction:false );
 

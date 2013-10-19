@@ -66,11 +66,12 @@ PRESET
 		});
 
 		// control busses
+		full_archive[\kr_values].postcs;
 		full_archive[\kr_values].collect({|e,key|
 			// get bus number
 			var bus, path, kr_bus;
 			path = key.asString.compile.value;
-			if(path != nil,{
+			if(path.class.asString == "Event",{
 				kr_bus = o.modules[path[\device]].kr_route_map[path[\cat]][path[\control]];
 				//var kr_bus = key.asInteger; // <---------------------------------------------------
 				bus = Bus.new('control', kr_bus,1,s);

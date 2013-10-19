@@ -99,8 +99,11 @@ DRUMS
 },
 \load: {|o, on_load|
 
-	var kits_paths, ct = 0;
+	var kits_paths, ct = 0, cmd;
 	"~oDRUMS: loading samples in buffers and create kits ...".postln;
+	cmd = "find "++o.root_path++" -name \"*.wav\" | wc -l";
+	ct = cmd.unixCmdGetStdOut.asInteger;
+
 	kits_paths = o.root_path.pathMatch.sort.collect{|file|
 		(\kind:file.basename.asSymbol,\path:file.insert(file.size,"*"));
 	};
@@ -115,14 +118,14 @@ DRUMS
 			file = file ++ "*";
 			file.pathMatch.sort.collect{|sfile|
 				var buff = Buffer.read(s,sfile,action:{
+					kit = kit.add(buff);
 					ct = ct -1;
 						if(ct == 0,{
 							on_load.value();
 							o.ready = true;
 						});
 				});
-				ct = ct + 1;
-				kit = kit.add(buff);
+				0.01.wait;
 			};
 			o.available_kits[kind] = o.available_kits[kind].add(name.asSymbol -> kit);
 		};
