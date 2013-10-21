@@ -352,11 +352,11 @@ SHOT
 
 		if(memorize == true,{
 			var pad = (\kit:target_kit, \idx:idx, \pitch:pitch, \decay:decay, \atk: atk);
-			if(o.memory_pads.size < 8,{
+			if(o.memory_pads.size < 4,{
 				o.memory_pads = o.memory_pads.add(pad);
 				},{
-					o.memory_pads = o.memory_pads.addFirst(pad);
-					o.memory_pads.pop;
+				o.memory_pads = o.memory_pads.addFirst(pad);
+				o.memory_pads.pop;
 			});
 			"SHOT - Memorized : ".post;
 			target_kit.post; " idx: ".post;

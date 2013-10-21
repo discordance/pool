@@ -15,11 +15,6 @@ MAIN
 
 
 // TODO
-// - check presets again
-// - sample load failures
-
-
-
 
 
 /******************************************************************/
@@ -98,6 +93,7 @@ s.waitForBoot({
 			// SHOTS
 			~oSHOT.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/os/",{|o,init|
 				"~oSHOT : initialized.".postln;
+
 				~oROUTER.register_module(~oSHOT, [~oMIDI.devices.sync, ~oMIDI.devices.dj3]);
 				~oPRESET.register(~oSHOT);
 				~oSHOT.attach_fx(~oREVERB);
@@ -105,6 +101,17 @@ s.waitForBoot({
 				~oSHOT.attach_fx(~oNASTY);
 				~oSHOT.load({|o|
 					"~oSHOT : samples loaded.".postln;
+					// LOOPS
+					~oNAPPLER.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/loop/",{|o,init|
+						~oROUTER.register_module(~oNAPPLER, [~oMIDI.devices.dj3],2);
+						~oPRESET.register(~oNAPPLER);
+						~oNAPPLER.attach_fx(~oREVERB);
+						~oNAPPLER.attach_fx(~oECHO);
+						~oNAPPLER.attach_fx(~oNASTY);
+						~oNAPPLER.load({|o|
+							"~oNAPPLER : samples loaded.".postln;
+						});
+					});
 				});
 			});
 		});
@@ -200,7 +207,6 @@ bus.set(0);
 
 ~oUI.bind_module(~oDRUMS);
 
-
 ~oROUTER.modules;
 
 ~oECHO.multiplier = 0.23;
@@ -219,3 +225,9 @@ s.stopRecording;
 ~oDRUMS.synths[\kick].set(\t_trig,1);
 
 ~oROUTER.fxs.size;
+
+
+~oNAPPLER.synth_instance.set(\buffer,~oNAPPLER.available_loops[~oNAPPLER.selected_loop]);
+~oNAPPLER.available_loops[~oNAPPLER.selected_loop];
+
+~oNAPPLER.kr_route_map;

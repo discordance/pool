@@ -18,16 +18,18 @@ NAPPLER
 ~oNAPPLER = ~oMODULE <
 (
 // VARS
+\synth_instance: nil,
 \premixers:(),
 \attached_fx:(),
 //
 \available_loops:(),
-\selected_loop:\default,
+\selected_loop:"default.wav".asSymbol,
 //
-\pitch:1,
+\rate:1,
 \triggable:false,
 \note_map:(
 ),
+\selection_offset:0,
 // METHOD
 \init:{|o, router, root_path, on_ready, ar_route_map = nil, kr_route_map = nil|
 	var init_routine;
@@ -68,8 +70,8 @@ NAPPLER
 
 	var ar_route_map = ();
 	ar_route_map = (   // id : audio bus
-		\global_L:-2, // TRICK
-		\global_R:-1,
+		\global_L:0, // TRICK
+		\global_R:1,
 	);
 	ar_route_map;
 },
@@ -78,54 +80,54 @@ NAPPLER
 	kr_route_map = (\global:());
 	// inserting manual controls
 	kr_route_map[\global].add(\volume->0);
-	kr_route_map[\global].add(\pitch->1);
-	kr_route_map[\global].add(\lowpass->2);
-	kr_route_map[\global].add(\highpass->3);
-	next_kr = 4;
+	kr_route_map[\global].add(\lowpass->1);
+	kr_route_map[\global].add(\hipass->2);
+	next_kr = 3;
 	name = o.id++"_0";
-	kr_route_map[name.asSymbol] = (\fx_0:next_kr,\fx_1:next_kr+1);
+	kr_route_map[name.asSymbol] = (\fx_0:next_kr,\fx_1:next_kr+1,\fx_2:next_kr+2);
 	kr_route_map;
 },
 \generate_control_map:{|o|
 	var b;
-	/*
-	Library.put(\control_map,\dj3,\3,\104,o.func_route_map[\global][\memory]);
-	Library.put(\control_map,\dj3,\3,\112,o.func_route_map[\global][\density]);
-	Library.put(\control_map,\dj3,\3,\32,o.func_route_map[\global][\pitch]);
-	Library.put(\control_map,\dj3,\3,\33,o.func_route_map[\global][\decay]);
-	Library.put(\control_map,\dj3,\3,\48,o.func_route_map[\global][\atk]);
+
+	Library.put(\control_map,\dj3,\3,\42,o.func_route_map[\global][\rate]);
 
 	//kr
-	Library.put(\control_map,\dj3,\3,\0,o.kr_route_map[\global][\filter]);
-	Library.put(\control_map,\dj3,\3,\1,o.kr_route_map[\shots_0][\fx_0]);
-	Library.put(\control_map,\dj3,\3,\2,o.kr_route_map[\shots_0][\fx_1]);
-	Library.put(\control_map,\dj3,\3,\3,o.kr_route_map[\shots_0][\fx_2]);
+
+	Library.put(\control_map,\dj3,\3,\113,o.kr_route_map[\global][\volume]);
+	Library.put(\control_map,\dj3,\3,\4,o.kr_route_map[\global][\lowpass]);
+	Library.put(\control_map,\dj3,\3,\5,o.kr_route_map[\global][\hipass]);
+	Library.put(\control_map,\dj3,\3,\6,o.kr_route_map[\nappler_0][\fx_0]);
+	Library.put(\control_map,\dj3,\3,\7,o.kr_route_map[\nappler_0][\fx_2]);
 
 
 	// default bus
-	b = Bus.new('control',o.kr_route_map[\global][\filter],1,s);
+	b = Bus.new('control',o.kr_route_map[\global][\lowpass],1,s);
 	b.set(1);
-	*/
+	b = Bus.new('control',o.kr_route_map[\global][\hipass],1,s);
+	b.set(0);
+
+
 },
 \generate_note:{|o|
 	var note_map = ();
 
-	note_map = note_map.add(\88->{
-		//o.trig_shot(o.selected_kit, 0, 0.25, o.pitch, o.decay, o.atk, o.memory);
+	note_map = note_map.add(\92->{
+		o.set_loop(0);
 	}); // select first pad
-	note_map = note_map.add(\89->{
-		//o.trig_shot(o.selected_kit, 1, 0.25, o.pitch, o.decay, o.atk, o.memory);
+	note_map = note_map.add(\93->{
+		o.set_loop(1);
 	}); // select second pad
-	note_map = note_map.add(\90->{
-		//o.trig_shot(o.selected_kit, 2, 0.25, o.pitch, o.decay, o.atk, o.memory);
+	note_map = note_map.add(\94->{
+		o.set_loop(2);
 	}); // select third pad
-	note_map = note_map.add(\91->{
-		//o.trig_shot(o.selected_kit, 3, 0.25, o.pitch, o.decay, o.atk, o.memory);
+	note_map = note_map.add(\95->{
+		o.set_loop(3);
 	}); // select fouth pad
 
 	// next and prev
-	//note_map = note_map.add(\72->{ o.select_prev_kit(); });
-	//note_map = note_map.add(\73->{ o.select_next_kit(); });
+	note_map = note_map.add(\74->{ o.select_prev(); });
+	note_map = note_map.add(\75->{ o.select_next(); });
 	// reset pitch
 	//note_map = note_map.add(\0->{ o.pitch = 1; });
 	//note_map = note_map.add(\1->{ o.decay = 1; });
@@ -133,33 +135,53 @@ NAPPLER
 },
 \generate_func:{|o|
 	var func_route_map = ();
+
+	func_route_map[\global] = ().add(\rate->{|val|
+		val = (val*127)/128; // I hate relative CC, bad hack here
+		if(val < 0.5,{
+			o.rate = (o.rate + val).clip(0,2);
+		},{
+			o.rate = (o.rate - (1-val)).clip(0,2);
+		});
+		"Nappler rate: ".post; o.rate.postln;
+		o.synth_instance.set(\rate,o.rate);
+	});
 	// return
 	func_route_map;
 },
 \set_preset:{|o, archive|
-
+	var b;
+	b = Bus.new('control',o.kr_route_map[\global][\volume],1,s);
+	b.set(0);
+	o.selected_loop = archive.selected_loop;
+	o.rate = archive.rate;
+	o.synth_instance.set(\rate,o.rate);
+	o.synth_instance.set(\buffer,o.available_loops[o.selected_loop]);
 },
 \get_preset:{|o, callback|
 	var archive = ();
+	archive.rate = o.rate;
+	archive.selected_loop = o.selected_loop;
 	// will save the kits
 	archive;
 },
 \load:{|o, on_load|
-	var ct = 0;
+	var ct = 0, cmd;
 	"~oNAPPLER: loading samples, oneshots mainly (hope) ...".postln;
+	cmd = "find "++o.root_path++" -name \"*.wav\" | wc -l";
+	ct = cmd.unixCmdGetStdOut.asInteger;
+
 	o.root_path.pathMatch.sort.collect{|file|
 		o.available_loops = o.available_loops.add(
 			file.basename.asSymbol -> Buffer.read(s, file, action:{|b|
-
 				ct = ct -1;
-				"nappler loading: ".post;
-				ct.postln;
 				if(ct == 0,{
+					o.synth_instance.set(\buffer,o.available_loops[o.selected_loop]);
 					on_load.value();
 				});
 			});
 		);
-		ct = ct + 1;
+		0.01.wait;
 	};
 },
 \attach_fx:{|o, fx_module|
@@ -171,6 +193,7 @@ NAPPLER
 	{
 
 		var next_ar = o.ar_route_map.as(Set).minItem;
+
 		SynthDef((o.id++"_0").asSymbol, {
 				var sig;
 				sig = In.ar(next_ar, 1);
@@ -207,64 +230,25 @@ NAPPLER
 	}.fork;
 
 },
-\select_next_block:{|o|
-	/*
-	var index = 0;
-	var ordered_keys = o.available_kits.order;
-	index = ordered_keys.indexOf(o.selected_kit);
-	index = (index + 1).clip(0,o.available_kits.size-1);
-	o.selected_kit = ordered_keys[index];
-	"selected Shot kit: ".post; o.selected_kit.postln;
-	*/
+\select_next:{|o|
+	o.selection_offset = (o.selection_offset+4).clip(0,o.available_loops.size);
+	"NAPPLER, selection = ".post;
+	o.selection_offset.post; " to ".post; (o.selection_offset+4).postln;
 },
-\select_prev_block:{|o|
-	/*
-	var index = 0;
-	var ordered_keys = o.available_kits.order;
-	index = ordered_keys.indexOf(o.selected_kit);
-	index = (index - 1).clip(0,o.available_kits.size-1);
-	o.selected_kit = ordered_keys[index];
-	"selected Shot kit: ".post; o.selected_kit.postln;
-	*/
+\select_prev:{|o|
+	o.selection_offset = (o.selection_offset-4).clip(0,o.available_loops.size);
+		"NAPPLER: selection = ".post;
+	o.selection_offset.post; " to ".post; (o.selection_offset+4).postln;
 },
-\set_loop:{|o,name|
-	/*
-	var kit = o.available_kits[target_kit].asArray, buffs = [], low = 0, hi = 0;
-	var node_group;
-
-	node_group = o.router[\node_groups][\generators];
-	buffs = kit.at(idx.clip(0,3));
-	if(buffs != nil,{
-		low = buffs[0].bufnum;
-		hi = buffs[buffs.size-1].bufnum;
-
-		Synth.head(node_group,"nun_ossampler",[
-			\buf_bounds, [low,hi],
-			\filter_bus, o.kr_route_map[\global][\filter],
-			\out, o.ar_route_map[\global_L],
-			\vol, vol,
-			\rate, pitch,
-			\decay, decay.curvelin,
-			\atk, atk
-			]
-		);
-
-		if(memorize == true,{
-			var pad = (\kit:target_kit, \idx:idx, \pitch:pitch, \decay:decay, \atk: atk);
-			if(o.memory_pads.size < 8,{
-				o.memory_pads = o.memory_pads.add(pad);
-				},{
-					o.memory_pads = o.memory_pads.addFirst(pad);
-					o.memory_pads.pop;
-			});
-			"SHOT - Memorized : ".post;
-			target_kit.post; " idx: ".post;
-			idx.postln;
-		});
-	},{
-			"NO SAMPLES ON THIS SLOT".postln;
+\set_loop:{|o,num|
+	var buf;
+	buf = o.available_loops.asArray.at(o.selection_offset+num.clip(0,3));
+	if(buf != nil,{
+		"NAPPLER: loop ".post;
+		buf.path.basename.postln;
+		o.synth_instance.set(\t_fade,1);
+		o.synth_instance.set(\buffer,buf);
 	});
-	*/
 },
 \on_clock:{|o, val|
 
@@ -281,18 +265,34 @@ NAPPLER
 \generate_synths:{|o|
 	var node_group;
 	node_group = o.router[\node_groups][\generators];
+
+	o.synth_instance = Synth.head(node_group,"nun_looper",[
+		\vol_bus,o.kr_route_map[\global][\volume],
+		\lowpass_bus, o.kr_route_map[\global][\lowpass],
+		\hipass_bus, o.kr_route_map[\global][\hipass],
+		\out, o.ar_route_map[\global_L],
+		\buffer, 0
+	]);
 },
 \load_synthdefs:{|o|
 
-	SynthDef(\nun_looper, {|out = 0, buffer = 0, t_fade = 0|
+	SynthDef(\nun_looper, {
+		|
+		rate = 1, out = 0, buffer = 0, t_fade = 0, vol_bus = 0, lowpass_bus = 0, hipass_bus = 0, rate_bus = 0
+		|
+
 		var percent, ftime = 0.13;
 		var a_snd, a_aph, a_tr, a_env;
 		var b_snd, b_aph, b_tr, b_env;
 		var sig, fade_env;
-		var rate = 1;
+		var vol = 1;
+		var lp = 20000, hp = 200;
 
-		rate = MouseX.kr(0,2);
-		buffer = buffer.lag(0.01); // delay buffer change to trigger env beforehand
+		lp = \freq.asSpec.map(In.kr(lowpass_bus).lag(0.1));
+		hp = \freq.asSpec.map(In.kr(hipass_bus).lag(0.1));
+		vol = [0,1].asSpec.map(In.kr(vol_bus).lag(0.4));
+
+		buffer = buffer.lag(0.2); // delay buffer change to trigger env beforehand
 		ftime = ftime/rate;
 		percent = ftime/(BufFrames.kr(buffer)/s.sampleRate)*rate;
 		a_aph = Phasor.ar(0, BufRateScale.kr(buffer)*rate, 0, BufFrames.kr(buffer));
@@ -303,12 +303,13 @@ NAPPLER
 		b_tr = ((b_aph/BufFrames.kr(buffer))+percent).wrap(-0.00001,1);
 		a_env = 1-EnvGen.ar(Env.linen(ftime,0,ftime,1,1),a_tr);
 		b_env = 1-EnvGen.ar(Env.linen(ftime,0,ftime,1,1),b_tr);
-		fade_env = 1-EnvGen.kr(Env.linen(0,0,0.5,1,1),t_fade);
+		fade_env = 1-EnvGen.kr(Env.linen(0.1,0.2,2,1,1),t_fade);
 
 		a_snd = BufRd.ar(2, buffer, a_aph) * a_env * 0.7;
 		b_snd = BufRd.ar(2, buffer, b_aph) * b_env * 0.7;
 		sig = (a_snd+b_snd) * fade_env;
-		Out.ar(0,HPF.ar(Compander.ar(sig,sig,-16.dbamp,1,1.15,0.01,0.2),200));
+		sig = DFM1.ar(vol*RHPF.ar(Compander.ar(sig,sig,-16.dbamp,1,1.15,0.01,0.2),hp),lp);
+		Out.ar(out,sig);
 	}).add;
 }
 

@@ -181,7 +181,7 @@ ROUTER
 		o.activate_chain();
 	});
 },
-\register_module:{|o, module, devices|
+\register_module:{|o, module, devices, out_offset = 0| // just use offset to merge tracks
 	var min, num_busses;
 	var mod = (\module:module, \devices:devices);
 	o.modules = o.modules.add(mod);
@@ -208,14 +208,15 @@ ROUTER
 		// MIXER MODE
 
 		SynthDef("physical_out_%".format(module.id).asSymbol, {
+			arg out; // just to see;
 			var sig;
 			sig = In.ar(min, num_busses);
-			Out.ar(min-13, sig*0.9);
+			Out.ar(min-13-out_offset, sig*0.9);
 		}).add;
 
 		s.sync;
 
-		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol);
+		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol,[\out,min-13]);
 
 
 		// SOUND FLOWER
