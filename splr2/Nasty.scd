@@ -49,6 +49,7 @@ NASTY (FX)
 \generate_kr:{|o|
 	var kr_route_map = (\global: ());
 	kr_route_map[\global].add(\buffer->0);
+	kr_route_map[\global].add(\dist->1);
 	kr_route_map;
 },
 \generate_func:{|o|
@@ -72,12 +73,15 @@ NASTY (FX)
 			\chain, o.chain_bus,
 			\buffers, buffs,
 			\mix_buffer, int_buff,
-			\buf_bus, o.kr_route_map[\global][\buffer]
+			\buf_bus, o.kr_route_map[\global][\buffer],
+			\dist_bus, o.kr_route_map[\global][\dist]
+
 	]);
 },
 \generate_control_map:{|o|
 	var b;
 	Library.put(\control_map,\motu,\4,\8,o.kr_route_map[\global][\buffer]);
+	Library.put(\control_map,\motu,\4,\9,o.kr_route_map[\global][\dist]);
 },
 \on_clock:{|o, val|
 
@@ -87,25 +91,28 @@ NASTY (FX)
 \load_synthdefs:{|o|
 
 	SynthDef(\nun_waveshaper, {
-		arg in, out, buffers = #[0,0], mix_buffer, buf_bus = 0, chain = 0;
-		var input, shp, output = 0;
+		arg in, out, buffers = #[0,0], mix_buffer, buf_bus = 0, dist_bus = 0, chain = 0;
+		var input, shp, dist, output = 0;
 		var buf = [buffers[0], buffers[1]].asSpec.map(In.kr(buf_bus).lag(0.1));
+		var type = [1, 11].asSpec.map(In.kr(dist_bus).lag(0.1));
+
 		input = In.ar(in,1);
-
 		input = HPF.ar(input,50);
+		dist = LADSPA.ar(2,1771,input!2,type,60,0);
 
-		shp = Pan2.ar((Shaper.ar(buf,input,2)*0.15) + (Shaper.ar(buf,input,2)*0.15),LFNoise2.kr(100).range(-0.1,0.1));
+		shp = Pan2.ar((Shaper.ar(buf,dist,2)*0.15) + (Shaper.ar(buf,dist,2)*0.15),LFNoise2.kr(100).range(-0.1,0.1));
+
 		shp = LeakDC.ar(shp);
+		shp = shp;
+
 		shp = (Amplitude.kr(input)*16).abs.lag(0.1) * shp;
 		shp = Compander.ar(shp,shp,-16.dbamp, 1, 1.4, 0.2, 0.5, 1.2);
 
-		Out.ar(out, shp);
+		Out.ar(out, (0.6*shp)+dist);
 		//chain
 		Out.ar(chain, shp);
 	}).add;
 }
 )
 )
-
-
-//~oNASTY.cheb_buff;
+//LADSPA.listPlugins;

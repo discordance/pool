@@ -318,7 +318,7 @@ NAPPLER
 		a_snd = BufRd.ar(2, buffer, a_aph) * a_env * 0.7;
 		b_snd = BufRd.ar(2, buffer, b_aph) * b_env * 0.7;
 		sig = (a_snd+b_snd) * fade_env;
-		sig = DFM1.ar(vol*RHPF.ar(Compander.ar(sig,sig,-16.dbamp,1,1.15,0.01,0.2),hp),lp);
+		sig = DFM1.ar(vol*RHPF.ar(Compander.ar(sig,sig,-16.dbamp,1,1.15,0.01,0.2),hp),lp,0.5,1.02);
 		Out.ar(out,sig);
 	}).add;
 }
