@@ -85,7 +85,7 @@ REVERB (FX)
 			\lopass_kr, o.kr_route_map[\global][\lopass],
 			\room_kr, o.kr_route_map[\global][\room],
 			\damp_kr, o.kr_route_map[\global][\damp],
-			\vol, 0.75
+			\vol, 0.87
 	]);
 },
 \generate_control_map:{|o|
@@ -99,7 +99,7 @@ REVERB (FX)
 	b = Bus.new('control', o.kr_route_map[\global][\decay],1,s);
 	b.set(0.95);
 	b = Bus.new('control', o.kr_route_map[\global][\lopass],1,s);
-	b.set(0.85);
+	b.set(0.95);
 	b = Bus.new('control', o.kr_route_map[\global][\room],1,s);
 	b.set(1);
 	b = Bus.new('control', o.kr_route_map[\global][\damp],1,s);

@@ -21,6 +21,7 @@ MAIN
 (
 s.options.numInputBusChannels = 0;
 s.options.numOutputBusChannels = 16;
+s.options.numBuffers = 2048;
 s.waitForBoot({
 	/**
 	* LOAD CLASSES
@@ -102,6 +103,7 @@ s.waitForBoot({
 				~oSHOT.load({|o|
 					"~oSHOT : samples loaded.".postln;
 					// LOOPS
+
 					~oNAPPLER.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/loop/",{|o,init|
 						~oROUTER.register_module(~oNAPPLER, [~oMIDI.devices.dj3],2);
 						~oPRESET.register(~oNAPPLER);
@@ -112,6 +114,7 @@ s.waitForBoot({
 							"~oNAPPLER : samples loaded.".postln;
 						});
 					});
+
 				});
 			});
 		});
@@ -136,7 +139,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("TEST");
+                                         ~oPRESET.save_preset("111_gtek");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -146,7 +149,7 @@ s.waitForBoot({
  * Presets
  * vbn_deep1 - 115
  */
-~oPRESET.load_preset("TEST");
+~oPRESET.load_preset("111_ukh");//111_tribal //111_dubtech // 111_electr // 111_dirt //111_ukh // 111_gtek
 
  //VIDER LES PADS
 ~oSHOT.memory_pads = []; //VIDER LES PADS
@@ -226,8 +229,12 @@ s.stopRecording;
 
 ~oROUTER.fxs.size;
 
-
 ~oNAPPLER.synth_instance.set(\buffer,~oNAPPLER.available_loops[~oNAPPLER.selected_loop]);
 ~oNAPPLER.available_loops[~oNAPPLER.selected_loop];
 
 ~oNAPPLER.kr_route_map;
+~oNAPPLER.available_loops;
+
+
+
+~oNASTY

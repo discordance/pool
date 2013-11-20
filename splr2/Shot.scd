@@ -208,7 +208,7 @@ SHOT
 },
 \set_preset:{|o, archive|
 	o.memory_pads = archive.memory_pads;
-	o.density = archive.density;
+	o.density = 0;
 	o.selected_kit = archive.selected_kit;
 	o.pitch = archive.pitch;
 	o.decay = archive.decay;

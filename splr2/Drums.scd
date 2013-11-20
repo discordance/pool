@@ -223,6 +223,7 @@ DRUMS
 	o.synths[symb].set(\freq,freq);
 },
 \on_note:{|o, chan, num, val|
+
 	if(o.ready == true,{
 		if(o.note_map[num.asSymbol] == \kick,{
 			o.trig_drum(num,val); // trigg kick any case

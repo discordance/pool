@@ -58,8 +58,7 @@ NAPPLER
 
 		// assign from router
 		o.router.assign(o);
-		// add synths
-		o.generate_synths();
+
 		// generate control map
 		o.generate_control_map();
 
@@ -173,13 +172,18 @@ NAPPLER
 
 	o.root_path.pathMatch.sort.collect{|file|
 		o.available_loops = o.available_loops.add(
+
 			file.basename.asSymbol -> Buffer.read(s, file, action:{|b|
 				ct = ct -1;
 				if(ct == 0,{
-					o.synth_instance.set(\buffer,o.available_loops[o.selected_loop]);
+					//o.available_loops[o.selected_loop].postln;
+							// add synths
+					o.generate_synths();
+					//o.synth_instance.set(\buffer,o.available_loops[o.selected_loop]);
 					on_load.value();
 				});
 			});
+
 		);
 		0.01.wait;
 	};
@@ -246,8 +250,12 @@ NAPPLER
 	if(buf != nil,{
 		"NAPPLER: loop ".post;
 		buf.path.basename.postln;
+		o.selected_loop = buf.path.basename.asSymbol;
 		o.synth_instance.set(\t_fade,1);
-		o.synth_instance.set(\buffer,buf);
+		{
+			0.5.wait;
+			o.synth_instance.set(\buffer,buf);
+		}.fork;
 	});
 },
 \on_clock:{|o, val|
@@ -271,7 +279,7 @@ NAPPLER
 		\lowpass_bus, o.kr_route_map[\global][\lowpass],
 		\hipass_bus, o.kr_route_map[\global][\hipass],
 		\out, o.ar_route_map[\global_L],
-		\buffer, 0
+		\buffer, o.available_loops[o.selected_loop]
 	]);
 },
 \load_synthdefs:{|o|
@@ -292,7 +300,9 @@ NAPPLER
 		hp = \freq.asSpec.map(In.kr(hipass_bus).lag(0.1));
 		vol = [0,1].asSpec.map(In.kr(vol_bus).lag(0.4));
 
-		buffer = buffer.lag(0.2); // delay buffer change to trigger env beforehand
+		buffer.numChannels.poll;
+		// delay buffer change to trigger env beforehand
+
 		ftime = ftime/rate;
 		percent = ftime/(BufFrames.kr(buffer)/s.sampleRate)*rate;
 		a_aph = Phasor.ar(0, BufRateScale.kr(buffer)*rate, 0, BufFrames.kr(buffer));
@@ -303,7 +313,7 @@ NAPPLER
 		b_tr = ((b_aph/BufFrames.kr(buffer))+percent).wrap(-0.00001,1);
 		a_env = 1-EnvGen.ar(Env.linen(ftime,0,ftime,1,1),a_tr);
 		b_env = 1-EnvGen.ar(Env.linen(ftime,0,ftime,1,1),b_tr);
-		fade_env = 1-EnvGen.kr(Env.linen(0.1,0.2,2,1,1),t_fade);
+		fade_env = 1-EnvGen.kr(Env.pairs([[0, 0], [0.5, 1],  [1, 0]], \cub),t_fade);
 
 		a_snd = BufRd.ar(2, buffer, a_aph) * a_env * 0.7;
 		b_snd = BufRd.ar(2, buffer, b_aph) * b_env * 0.7;
@@ -317,3 +327,4 @@ NAPPLER
 
 
 )
+
