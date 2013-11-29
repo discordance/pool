@@ -15,7 +15,7 @@ ECHO DELAY (FX)
 (
 ~oECHO = ~oFX <
 (
-\lengths:[1, 0.75, 0.66, 0.5, 0.33, 0.25, 0.125],
+\lengths:[2, 1.75, 1.66, 1.5, 1.33, 1.25, 1.13, 1, 0.93, 0.75, 0.66, 0.5, 0.42, 0.33, 0.25, 0.125],
 \multiplier:0.25,
 \tempo:0,
 \last_time:0,
@@ -75,7 +75,7 @@ ECHO DELAY (FX)
 	[
 			\in, o.in_bus,
 			\out, o.out_bus,
-			\chain, o.chain_bus,
+			//\chain, o.chain_bus,
 			\decay_kr, o.kr_route_map[\global][\decay],
 			\lopass_kr, o.kr_route_map[\global][\lopass],
 			\stereo_kr, o.kr_route_map[\global][\stereo]
@@ -101,7 +101,7 @@ ECHO DELAY (FX)
 	time = Main.elapsedTime;
 	ival = (time - o.last_time)*24;
 	o.tempo = (60/ival).round.lag;
-	o.synths[\echo].set(\length, ival*o.multiplier);
+	o.synths[\echo].set(\length, ival*o.multiplier,\tempo, o.tempo);
 	o.last_time = time;
 },
 /* SynthDefs
@@ -109,8 +109,9 @@ ECHO DELAY (FX)
 \load_synthdefs:{|o|
 
 	SynthDef(\nun_dub_echo, {
-		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1, chain =0;
-		var sep = 0.012, decay = 1, freq = 20000, vol = 1, output, input, feedback, dly, dly2;
+
+		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, stereo_kr = 0, length = 1, tempo = 120,  chain = 0;
+		var sep = 0.012, decay = 1, freq = 20000, vol = 0.5, output, input, feedback, dly, dly2;
 
 		decay = [0,0.8].asSpec.map(In.kr(decay_kr).lag(0.1));
 		sep = [0.0, 1].asSpec.map(In.kr(stereo_kr).lag(0.1));
@@ -125,12 +126,16 @@ ECHO DELAY (FX)
 		dly = LeakDC.ar(CombC.ar(output*vol, 2, length, decay));
 		dly2 = LeakDC.ar(CombC.ar(output*vol, 2, length, decay))*sep;
 		LocalOut.ar(dly*EnvGen.kr(Env.perc(0.01,10,1),Amplitude.kr(input)));
-        Out.ar(out, dly+dly2);
+
+		LADSPA.ar(2,2588,(dly+dly2)!1,tempo,2,decay,1,0.25,440);
+		Out.ar(out, dly+dly2);
 		// chain
-		Out.ar(chain, dly+dly2);
+		Out.ar(chain, (dly+dly2)*0);
 	}).add;
 }
 )
 )
 
 //~oECHO.multiplier = 0.25;
+//LADSPA.listPlugins;
+

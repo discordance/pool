@@ -298,7 +298,7 @@ NAPPLER
 
 		lp = \freq.asSpec.map(In.kr(lowpass_bus).lag(0.1));
 		hp = \freq.asSpec.map(In.kr(hipass_bus).lag(0.1));
-		vol = [0,1].asSpec.map(In.kr(vol_bus).lag(0.4));
+		vol = [0,0.5].asSpec.map(In.kr(vol_bus).lag(0.4));
 
 		buffer.numChannels.poll;
 		// delay buffer change to trigger env beforehand

@@ -23,7 +23,7 @@ ROUTER
 \next_ar: 15, // routing assigned to modules out
 \next_fx_ar: 64, // next free input for FX, always mono
 \next_chain_ar: 96,
-\fx_bus_out:0,//8 // output for the FX
+\fx_bus_out:8,//8 // output for the FX
 \shape_buffers:nil,
 \mixshape_buffer:nil,
 \void_buffer:nil,
@@ -195,7 +195,7 @@ ROUTER
 		// dymanically creates a SynthDef
 
 		// DEBUG MODE
-
+		/*
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig;
 			sig = In.ar(min, num_busses);
@@ -205,9 +205,9 @@ ROUTER
 		s.sync;
 
 		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);
-
+		*/
 		// MIXER MODE
-		/*
+
 		SynthDef("physical_out_%".format(module.id).asSymbol, {
 			arg out; // just to see;
 			var sig;
@@ -218,7 +218,7 @@ ROUTER
 		s.sync;
 
 		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol,[\out,min-13]);
-		*/
+
 
 		// SOUND FLOWER
 	}.fork;
@@ -232,10 +232,10 @@ ROUTER
 	var nasty_in_verb = o.next_kr + 2;
 	var echo_in_verb = o.next_kr + 3;
 	o.next_kr = o.next_kr + 4;
-	Library.put(\control_map,\motu,\4,\12,verb_in_echo);
-	Library.put(\control_map,\motu,\4,\13,verb_in_nasty);
-	Library.put(\control_map,\motu,\4,\14,nasty_in_verb);
-	Library.put(\control_map,\motu,\4,\15,echo_in_verb);
+	//Library.put(\control_map,\motu,\4,\12,verb_in_echo);
+	//Library.put(\control_map,\motu,\4,\13,verb_in_nasty);
+	Library.put(\control_map,\motu,\4,\12,nasty_in_verb);
+	Library.put(\control_map,\motu,\4,\13,echo_in_verb);
 
 
 	SynthDef("fx_chain", {

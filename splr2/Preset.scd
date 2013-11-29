@@ -18,8 +18,10 @@ PRESET
 // VARS
 \root_path:"",
 \modules: (),
+\sysex_mode: false,
 // METHODS
-\init:{|o,root_path|
+\init:{|o,root_path,sysex_mode|
+	o.sysex_mode = sysex_mode;
 	o.root_path = root_path ? "";
 	if("/$".matchRegexp(o.root_path) !== true,{ o.root_path = o.root_path++"/"});
 	o.root_path = o.root_path.replace("//","/");

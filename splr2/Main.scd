@@ -45,6 +45,9 @@ s.waitForBoot({
 	// debug ui
 	"UI.scd".loadRelative;
 
+	// randomer
+	"Randomer.scd".loadRelative;
+
 	/**
 	* INIT AND LOAD
 	*/
@@ -53,9 +56,9 @@ s.waitForBoot({
 	// ROUTER FIRST
 	~oROUTER.init(true); // is is for debug on standard stereo
 	// THEN PRESET
-	~oPRESET.init("/Users/nunja/Documents/SuperCollider/presets/");
+	~oPRESET.init("/Users/nunja/Documents/SuperCollider/presets/", true); //
 	// THEN MIDI
-	~oMIDI.init(~oROUTER);
+	~oMIDI.init(~oROUTER, ~oPRESET, ~oRANDOMER, ~oDRUMS);
 	// ui
 	// now inits UI
 	~oUI.init();
@@ -119,17 +122,6 @@ s.waitForBoot({
 			});
 		});
 	});
-
-
-	// LOOPS
-	/*
-	~oNAPPLER.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/loop/",{|o,init|
-
-		~oNAPPLER.load({|o|
-			"~~oNAPPLER : samples loaded.".postln;
-		});
-	});
-	*/
 });
 )
 
@@ -139,7 +131,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("111_gtek");
+                                         ~oPRESET.save_preset("6b_decalus");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -147,94 +139,26 @@ s.waitForBoot({
 
 /**
  * Presets
- * vbn_deep1 - 115
+ * vbn_deep1 - 115s
  */
-~oPRESET.load_preset("111_ukh");//111_tribal //111_dubtech // 111_electr // 111_dirt //111_ukh // 111_gtek
+~oPRESET.load_preset("6b_joe");
+//6b_indiehop
+//6b_spanish
+//6b_rnd1
+//111_dubtech
+//111_electr
+//6b_joe
+//6b_tribal
+//6b_dirthouse
+//6b_crade
+
+//111_tribal
 
  //VIDER LES PADS
 ~oSHOT.memory_pads = []; //VIDER LES PADS
-~oSHOT.density = 0.5;
-~oSHOT.memory_pads;
 
 // UN MAX DE LOL
 (
-~oDRUMS.current_kit[\kick] = ~oDRUMS.available_kits[\kick].keys.asArray.choose.postln;
-~oDRUMS.current_kit[\drm1] = ~oDRUMS.available_kits[\drm1].keys.asArray.choose;
-~oDRUMS.current_kit[\drm2] = ~oDRUMS.available_kits[\drm2].keys.asArray.choose;
-~oDRUMS.current_kit[\snar] = ~oDRUMS.available_kits[\snar].keys.asArray.choose;
-~oDRUMS.current_kit[\clap] = ~oDRUMS.available_kits[\clap].keys.asArray.choose;
-~oDRUMS.current_kit[\cymb] = ~oDRUMS.available_kits[\cymb].keys.asArray.choose;
-~oDRUMS.current_kit[\hat1] = ~oDRUMS.available_kits[\hat1].keys.asArray.choose;
-~oDRUMS.current_kit[\hat2] = ~oDRUMS.available_kits[\hat2].keys.asArray.choose;
-~oDRUMS.density = 1;
-//~oDRUMS.kr_route_map.postcs;
-)
-Library.postTree;
-(
-//debug stuff
-{
-SynthDef(\nun_debug_out, {
-		var sig;
-		sig = Splay.ar(In.ar(15, 4),0);
-		Out.ar(0,sig);
-}).add;
-s.sync;
-	Synth.head(~oROUTER[\node_groups][\main_out], "nun_debug_out", [\in_start, 15, \in_end, 19]);
-}.fork;
-)
-(
-~oDRUMS.kr_route_map['premix_drums_3'];
+~oRANDOMER.randomize_drums(~oDRUMS);
 )
 
-
-~oDRUMS.kr_route_map;
-(
-var bus;
-bus = Bus.new('control', 46,s); // 38 41 44 47
-bus.set(0.6);
-)
-
-(
-var bus = Bus.new('control', 47,1,s); // 38 41 44 47
-bus.set(0);
-)
-
-~oDRUMS.available_kits.postcs;
-~oDRUMS.select_kit(\kick,0.8);
-~oSHOT.available_kits.postcs;
-~oSHOT.ar_route_map;
-
-~oSHOT.trig_shot(0);
-
-~oSHOT.kr_route_map;
-
-~oUI.bind_module(~oDRUMS);
-
-~oROUTER.modules;
-
-~oECHO.multiplier = 0.23;
-
-
-
-
-
-s.prepareForRecord;
-s.record;
-s.stopRecording;
-
-//
-
-
-~oDRUMS.synths[\kick].set(\t_trig,1);
-
-~oROUTER.fxs.size;
-
-~oNAPPLER.synth_instance.set(\buffer,~oNAPPLER.available_loops[~oNAPPLER.selected_loop]);
-~oNAPPLER.available_loops[~oNAPPLER.selected_loop];
-
-~oNAPPLER.kr_route_map;
-~oNAPPLER.available_loops;
-
-
-
-~oNASTY

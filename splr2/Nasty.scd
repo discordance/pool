@@ -98,7 +98,7 @@ NASTY (FX)
 
 		input = In.ar(in,1);
 		input = HPF.ar(input,50);
-		dist = LADSPA.ar(2,1771,input!2,type,60,0);
+		dist = LADSPA.ar(2,1771,input!2,type,52,0);
 
 		shp = Pan2.ar((Shaper.ar(buf,dist,2)*0.15) + (Shaper.ar(buf,dist,2)*0.15),LFNoise2.kr(100).range(-0.1,0.1));
 
@@ -108,7 +108,7 @@ NASTY (FX)
 		shp = (Amplitude.kr(input)*16).abs.lag(0.1) * shp;
 		shp = Compander.ar(shp,shp,-16.dbamp, 1, 1.4, 0.2, 0.5, 1.2);
 
-		Out.ar(out, (0.6*shp)+dist);
+		Out.ar(out, ((0.6*shp)+dist)*0.2);
 		//chain
 		Out.ar(chain, shp);
 	}).add;

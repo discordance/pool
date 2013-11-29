@@ -116,16 +116,16 @@ SHOT
 	var note_map = ();
 
 	note_map = note_map.add(\88->{
-		o.trig_shot(o.selected_kit, 0, 0.25, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 0, 0.2, o.pitch, o.decay, o.atk, o.memory);
 	}); // select first pad
 	note_map = note_map.add(\89->{
-		o.trig_shot(o.selected_kit, 1, 0.25, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 1, 0.2, o.pitch, o.decay, o.atk, o.memory);
 	}); // select second pad
 	note_map = note_map.add(\90->{
-		o.trig_shot(o.selected_kit, 2, 0.25, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 2, 0.2, o.pitch, o.decay, o.atk, o.memory);
 	}); // select third pad
 	note_map = note_map.add(\91->{
-		o.trig_shot(o.selected_kit, 3, 0.25, o.pitch, o.decay, o.atk, o.memory);
+		o.trig_shot(o.selected_kit, 3, 0.2, o.pitch, o.decay, o.atk, o.memory);
 	}); // select fouth pad
 
 	// next and prev
@@ -393,13 +393,13 @@ SHOT
 		if(o.memory_pads.size > 0,{
 			if(( (o.quav+offset) % step).floor == 0,{
 				var pad = o.memory_pads.choose;
-				o.trig_shot(pad.kit, pad.idx, 0.2-(0.2*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
+				o.trig_shot(pad.kit, pad.idx, 0.15-(0.15*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
 			},{
 				var thres = o.density/200;
 				var rnd = 1.0.rand;
 				if(rnd < thres,{
 					var pad = o.memory_pads.choose;
-					o.trig_shot(pad.kit, pad.idx, 0.2-(0.2*(o.density*0.6)), pad.pitch, pad.decay, pad.atk, false);
+					o.trig_shot(pad.kit, pad.idx, 0.15-(0.15*(o.density*0.6)), pad.pitch, pad.decay, pad.atk, false);
 				});
 			});
 		});

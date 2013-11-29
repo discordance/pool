@@ -113,12 +113,17 @@ REVERB (FX)
 		arg in = 0, out = 0, decay_kr = 0, lopass_kr = 0, room_kr = 0, damp_kr = 0, vol =1, chain = 0;
 		var sig, decay = 2, freq = 20000, room, damp;
 		decay = [0.1, 10].asSpec.map(In.kr(decay_kr).lag(0.1));
-		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.1));
+		freq = \freq.asSpec.map(In.kr(lopass_kr).lag(0.4));
 		room = [10, 200].asSpec.map(In.kr(room_kr).lag(0.1));
 		damp = [0, 1].asSpec.map(In.kr(damp_kr).lag(0.1));
 
 		sig = In.ar(in,1);
 		sig = GVerb.ar(sig, room, decay, damp, 0.5, 15, 0, 0.7, 0.8);
+		sig = LADSPA.ar(2, 1795, sig[0], sig[1],
+			[0, 1].asSpec.map(In.kr(room).lag(0.4)),
+			[0.1, 1].asSpec.map(In.kr(decay_kr).lag(0.4)),
+			0.1,
+			damp);
 		sig = DFM1.ar(sig, freq);
 		Out.ar(out, sig*vol);
 		// chain

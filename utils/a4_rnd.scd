@@ -73,8 +73,9 @@ MIDIClient.init;
 )
 
 (
-~rndz.value(~all,3);
-~rndz.value(~fx,4);
+~rndz.value(~lfo1++~lfo2,0
+);
+
 )
 
 

@@ -18,7 +18,7 @@ MIDI
 // VARS
 \devices:(),
 // METHODS
-\init:{|o, router|
+\init:{|o, router, preset, randomer, drums|
 	var first_time = true;
 	"~oMIDI : initializing ...".postln;
 	o.router = router;
@@ -51,6 +51,25 @@ MIDI
 		});
 		MIDIIn.addFuncTo(\sysrt, {|src, val|
 			router.on_clock(src, val);
+		});
+
+		MIDIIn.addFuncTo(\sysex, {|src, sysex|
+			var str, end;
+			end = (sysex.size-1);
+			str = "";
+			sysex.do{|byte,i|
+				if((i > 6).and( i < end),{
+					str = str ++ byte.asAscii;
+				});
+			};
+			if(preset.sysex_mode,{
+				if(str == "rnd",{
+					randomer.randomize_drums(drums);
+				},{
+					preset.load_preset(str);
+				});
+
+			});
 		});
 	});
 }
