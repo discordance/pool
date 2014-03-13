@@ -93,6 +93,9 @@ SHOT
 \generate_control_map:{|o|
 	var b;
 
+	// ON DJ3
+
+
 	Library.put(\control_map,\dj3,\3,\104,o.func_route_map[\global][\memory]);
 	Library.put(\control_map,\dj3,\3,\112,o.func_route_map[\global][\density]);
 	Library.put(\control_map,\dj3,\3,\32,o.func_route_map[\global][\pitch]);
@@ -107,6 +110,12 @@ SHOT
 	Library.put(\control_map,\dj3,\3,\2,o.kr_route_map[\shots_0][\fx_1]);
 	Library.put(\control_map,\dj3,\3,\3,o.kr_route_map[\shots_0][\fx_2]);
 
+
+	// ON MOTU
+	//Library.put(\control_map,\motu,\4,\32,o.func_route_map[\global][\density]);
+	//Library.put(\control_map,\motu,\4,\33,o.kr_route_map[\global][\filter]);
+	//Library.put(\control_map,\motu,\4,\34,o.kr_route_map[\shots_0][\fx_0]);
+	//Library.put(\control_map,\motu,\4,\35,o.kr_route_map[\shots_0][\fx_1]);
 
 	// default bus
 	b = Bus.new('control',o.kr_route_map[\global][\filter],1,s);
@@ -456,7 +465,7 @@ SHOT
 		// filter and DC
 		sig = LeakDC.ar(sig);
 		sig = DFM1.ar(sig, freq, 0.6, 1.2);
-
+		sig = Limiter.ar(sig,0.9);
 		Out.ar(out, sig*vol);
 	}).add;
 }

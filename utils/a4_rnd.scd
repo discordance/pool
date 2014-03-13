@@ -73,7 +73,7 @@ MIDIClient.init;
 )
 
 (
-~rndz.value(~lfo1++~lfo2,0
+~rndz.value(~lfo1++~lfo2++~envf, 0
 );
 
 )

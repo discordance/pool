@@ -126,12 +126,17 @@ s.waitForBoot({
 )
 
 /**
+* REGLAGES COOL OTO BISCUIT :
+* [b][r][b][.][b][b][b][b]
+*/
+
+/**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("6b_decalus");
+                                         ~oPRESET.save_preset("dly_senior");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -141,7 +146,8 @@ s.waitForBoot({
  * Presets
  * vbn_deep1 - 115s
  */
-~oPRESET.load_preset("6b_joe");
+~oPRESET.load_preset("6b_tribal");
+//ly_grithse avec a4 -> f10
 //6b_indiehop
 //6b_spanish
 //6b_rnd1
@@ -162,3 +168,21 @@ s.waitForBoot({
 ~oRANDOMER.randomize_drums(~oDRUMS);
 )
 
+~oSHOT.density = 0.4;
+
+~oSHOT.pitch = 1.3;
+~oSHOT.decay = 0.01;
+~oSHOT.atk = 0;
+
+// SHOT STORY
+~oSHOT.select_next_kit();
+~oSHOT.select_prev_kit();
+~oSHOT.trig_shot(~oSHOT.selected_kit, 0, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, false);
+~oSHOT.trig_shot(~oSHOT.selected_kit, 1, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, false);
+~oSHOT.trig_shot(~oSHOT.selected_kit, 2, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, false);
+~oSHOT.trig_shot(~oSHOT.selected_kit, 3, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, false);
+
+~oSHOT.trig_shot(~oSHOT.selected_kit, 0, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
+~oSHOT.trig_shot(~oSHOT.selected_kit, 1, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
+~oSHOT.trig_shot(~oSHOT.selected_kit, 2, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
+~oSHOT.trig_shot(~oSHOT.selected_kit, 3, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
