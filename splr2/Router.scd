@@ -23,7 +23,7 @@ ROUTER
 \next_ar: 15, // routing assigned to modules out
 \next_fx_ar: 64, // next free input for FX, always mono
 \next_chain_ar: 96,
-\fx_bus_out:8,//8 // output for the FX
+\fx_bus_out:0,//8 // output for the FX
 \shape_buffers:nil,
 \mixshape_buffer:nil,
 \void_buffer:nil,
@@ -146,7 +146,7 @@ ROUTER
 	var device = Library.at(\device_map,src), target;
 	target = Library.at(\control_map,device,chan.asSymbol,num.asSymbol);
 
-	//chan.asSymbol.post; " ".post; num.asSymbol.postln;
+	chan.asSymbol.post; " ".post; num.asSymbol.postln;
 
 	if(target !== nil, {
 		if(target.class.asString == "Function",{ // got function
@@ -195,9 +195,9 @@ ROUTER
 		// dymanically creates a SynthDef
 
 		// DEBUG MODE
-		/*
+
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
-			var sig;
+			var sig,bc;
 			sig = In.ar(min, num_busses);
 			Out.ar(0, Splay.ar(sig,0)*0.83); // too loud so we cut
 		}).add;
@@ -205,9 +205,9 @@ ROUTER
 		s.sync;
 
 		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);
-		*/
-		// MIXER MODE
 
+		// MIXER MODE
+		/*
 		SynthDef("physical_out_%".format(module.id).asSymbol, {
 			arg out; // just to see;
 			var sig;
@@ -218,7 +218,7 @@ ROUTER
 		s.sync;
 
 		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol,[\out,min-13]);
-
+		*/
 		// SOUND FLOWER
 	}.fork;
 

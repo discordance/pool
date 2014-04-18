@@ -2,7 +2,7 @@
 
 
 (
-~dir = "/Users/nunja/Documents/AudioLib/supercollider/os/";
+~dir = "/Users/nunja/Documents/AudioLib/supercollider/massacre/";
 ~list = [];
 ~buffs = [];
 ~parse_dir = {|dir|
@@ -25,7 +25,7 @@
 
 (
 {
-	|ba = 0, bb = 379|
+	|ba = 0, bb = 19|
 	var sig1, sig2, fin, fin2, smpl1, smpl2, rnd = 0, rnd2 = 0, imp, clean;
 	imp = Dust.ar(MouseY.kr(100,1, 1));
 	rnd = TRand.kr(ba,bb,imp);

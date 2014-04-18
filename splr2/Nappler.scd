@@ -78,17 +78,31 @@ NAPPLER
 	var kr_route_map, next_kr = 0, name;
 	kr_route_map = (\global:());
 	// inserting manual controls
-	kr_route_map[\global].add(\volume->0);
-	kr_route_map[\global].add(\lowpass->1);
-	kr_route_map[\global].add(\hipass->2);
-	next_kr = 3;
+	kr_route_map[\global].add(\rate->0);
+	kr_route_map[\global].add(\volume->1);
+	kr_route_map[\global].add(\lowpass->2);
+	kr_route_map[\global].add(\hipass->3);
+	next_kr = 4;
 	name = o.id++"_0";
 	kr_route_map[name.asSymbol] = (\fx_0:next_kr,\fx_1:next_kr+1,\fx_2:next_kr+2);
 	kr_route_map;
 },
 \generate_control_map:{|o|
 	var b;
+	// MOTU
+	/*
+	Library.put(\control_map,\motu,\4,\40,o.func_route_map[\global][\select]);
 
+	//kr
+	Library.put(\control_map,\motu,\4,\32,o.kr_route_map[\global][\rate]);
+	Library.put(\control_map,\motu,\4,\33,o.kr_route_map[\global][\volume]);
+	Library.put(\control_map,\motu,\4,\34,o.kr_route_map[\global][\lowpass]);
+	Library.put(\control_map,\motu,\4,\35,o.kr_route_map[\global][\hipass]);
+	Library.put(\control_map,\motu,\4,\36,o.kr_route_map[\nappler_0][\fx_0]);
+	Library.put(\control_map,\motu,\4,\37,o.kr_route_map[\nappler_0][\fx_2]);
+	*/
+
+	// DJ3
 	Library.put(\control_map,\dj3,\3,\42,o.func_route_map[\global][\rate]);
 
 	//kr
@@ -98,7 +112,6 @@ NAPPLER
 	Library.put(\control_map,\dj3,\3,\5,o.kr_route_map[\global][\hipass]);
 	Library.put(\control_map,\dj3,\3,\6,o.kr_route_map[\nappler_0][\fx_0]);
 	Library.put(\control_map,\dj3,\3,\7,o.kr_route_map[\nappler_0][\fx_2]);
-
 
 	// default bus
 	b = Bus.new('control',o.kr_route_map[\global][\lowpass],1,s);
@@ -134,6 +147,9 @@ NAPPLER
 },
 \generate_func:{|o|
 	var func_route_map = ();
+	func_route_map[\global] = ().add(\select->{|val|
+		o.select_loop(val);
+	});
 
 	func_route_map[\global] = ().add(\rate->{|val|
 		val = (val*127)/128; // I hate relative CC, bad hack here
@@ -145,6 +161,7 @@ NAPPLER
 		"Nappler rate: ".post; o.rate.postln;
 		o.synth_instance.set(\rate,o.rate);
 	});
+
 	// return
 	func_route_map;
 },
@@ -244,6 +261,20 @@ NAPPLER
 		"NAPPLER: selection = ".post;
 	o.selection_offset.post; " to ".post; (o.selection_offset+4).postln;
 },
+\select_loop:{|o,num|
+	var buf;
+	buf = o.available_loops.asArray.at((num*(o.available_loops.size-1)).floor);
+	if(buf != nil,{
+		"NAPPLER: loop ".post;
+		buf.path.basename.postln;
+		o.selected_loop = buf.path.basename.asSymbol;
+		o.synth_instance.set(\t_fade,1);
+		{
+			0.5.wait;
+			o.synth_instance.set(\buffer,buf);
+		}.fork;
+	});
+},
 \set_loop:{|o,num|
 	var buf;
 	buf = o.available_loops.asArray.at(o.selection_offset+num.clip(0,3));
@@ -276,6 +307,7 @@ NAPPLER
 
 	o.synth_instance = Synth.head(node_group,"nun_looper",[
 		\vol_bus,o.kr_route_map[\global][\volume],
+		\rate_bus, o.kr_route_map[\global][\rate],
 		\lowpass_bus, o.kr_route_map[\global][\lowpass],
 		\hipass_bus, o.kr_route_map[\global][\hipass],
 		\out, o.ar_route_map[\global_L],
@@ -296,6 +328,7 @@ NAPPLER
 		var vol = 1;
 		var lp = 20000, hp = 200;
 
+		//rate = [0.1, 1.9].asSpec.map(In.kr(rate_bus).lag(0.1));
 		lp = \freq.asSpec.map(In.kr(lowpass_bus).lag(0.1));
 		hp = \freq.asSpec.map(In.kr(hipass_bus).lag(0.1));
 		vol = [0,0.5].asSpec.map(In.kr(vol_bus).lag(0.4));

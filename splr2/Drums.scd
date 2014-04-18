@@ -147,7 +147,7 @@ DRUMS
 			var name = o.id++"_"++i.asString;
 
 			SynthDef(name.asSymbol, {
-				var sig;
+				var sig, decimated;
 				sig = In.ar(next_ar, 1);
 				// compress;
 
@@ -158,7 +158,6 @@ DRUMS
 					clampTime: 0.001,
 					relaxTime: 0.1
 				);
-
 				// bypass signal
 				Out.ar(next_ar, sig*0.73);
 
@@ -270,7 +269,7 @@ DRUMS
 	var node_group;
 	node_group = o.router[\node_groups][\generators];
 	// \kick
-	o.synths[\kick] = Synth.head(node_group,"nun_kick_sampler",[
+	o.synths[\kick] = Synth.head(node_group,"nun_kick2_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\kick][\decay],
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
@@ -281,7 +280,7 @@ DRUMS
 	);
 
 	// \drm1
-	o.synths[\drm1] = Synth.head(node_group,"nun_organic_sampler",[
+	o.synths[\drm1] = Synth.head(node_group,"nun_kick2_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\drm1][\decay],
 		\pitch_bus,o.kr_route_map[\drm1][\pitch],
@@ -303,7 +302,7 @@ DRUMS
 		]
 	);
 	// \snar
-	o.synths[\snar] = Synth.head(node_group,"nun_basic_sampler",[
+	o.synths[\snar] = Synth.head(node_group,"nun_basic2_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\snar][\decay],
 		\pitch_bus,o.kr_route_map[\snar][\pitch],
@@ -325,7 +324,7 @@ DRUMS
 		]
 	);
 	// \cymb
-	o.synths[\cymb] = Synth.head(node_group,"nun_basic_sampler",[
+	o.synths[\cymb] = Synth.head(node_group,"nun_basic2_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\cymb][\decay],
 		\pitch_bus,o.kr_route_map[\cymb][\pitch],
@@ -347,7 +346,7 @@ DRUMS
 		]
 	);
 	// \hh2
-	o.synths[\hat2] = Synth.head(node_group,"nun_basic_sampler",[
+	o.synths[\hat2] = Synth.head(node_group,"nun_basic2_sampler",[
 		\buf_bounds, [0,0],
 		\decay_bus, o.kr_route_map[\hat2][\decay],
 		\pitch_bus,o.kr_route_map[\hat2][\pitch],
@@ -593,7 +592,7 @@ DRUMS
 
 	SynthDef(\nun_kick_sampler, {
 		arg out = 0, buf_bounds = #[0,0], decay_bus = 0, pitch_bus = 0, vol_bus=0, lpf_bus=0,
-		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, base_vol = 1, vol = 1, on = 1, lowcut = 0;
+		atk = 0.01, decay = 5, rate = 1, freq = 20000, t_trig = 0, vol = 1, on = 1, lowcut = 0;
 		var sig, env, rate_mod, manual_vol = 1, lpf = 20000;
 
 		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
@@ -608,6 +607,75 @@ DRUMS
 		sig = PlayBuf.ar(1, a, BufRateScale.kr(a)*rate, trigger: t_trig) * env;
 		sig = MoogFF.ar(sig, lpf, 0.1);
 		Out.ar(out, sig*vol*on*manual_vol);
+	}).add;
+
+	SynthDef(\nun_kick2_sampler, {
+		arg out = 0,
+		t_trig,
+		atk = 0.001,
+		rel = 5,
+		rate = 1,
+		base_vol = 1,
+		buf_bounds = #[0,0],
+		decay_bus = 0,
+		pitch_bus = 0,
+		vol_bus=0,
+		vol = 1,
+		on = 1,
+		lpf_bus=0;
+
+		var sig, rate_env, env, ienv, dur, decay, buff, manual_vol = 1, lpf;
+		buff = buf_bounds[0];
+		dur = BufDur.kr(buff);
+
+		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		manual_vol = [0, 1].asSpec.map(In.kr(vol_bus).lag(0.1));
+		lpf = \freq.asSpec.map(In.kr(lpf_bus).lag(0.1));
+		vol = vol.lag(0.3);
+		rate = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
+
+		ienv = 1-EnvGen.ar(Env.perc(0.1,dur*0.1,0.0025,\sqr),t_trig.lag(0.02),1);
+		rate_env = EnvGen.ar(Env.pairs([[0, 1*ienv], [0, rate.clip(1,10)], [0.1, rate]], \exp),t_trig);
+		env = EnvGen.ar(Env.adsr(atk,0.1,0.8,decay),t_trig).lag(1-ienv);
+		sig = PlayBuf.ar(1,buff, BufRateScale.kr(buff)*rate_env, t_trig, 0, 0).lag(1-ienv);
+		sig = sig * env;
+		sig = MoogFF.ar(sig, lpf, 0.1);
+		Out.ar(out,sig*vol*on*manual_vol);
+	}).add;
+
+	SynthDef(\nun_basic2_sampler, {
+		arg out = 0,
+		t_trig,
+		atk = 0.001,
+		rel = 5,
+		rate = 1,
+		base_vol = 1,
+		buf_bounds = #[0,0],
+		decay_bus = 0,
+		pitch_bus = 0,
+		vol_bus=0,
+		vol = 1,
+		on = 1,
+		lpf_bus=0;
+
+		var sig, rate_env, env, ienv, dur, decay, buff, manual_vol = 1, lpf;
+		buff = buf_bounds[0];
+
+		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		manual_vol = [0, 1].asSpec.map(In.kr(vol_bus).lag(0.1));
+		lpf = \freq.asSpec.map(In.kr(lpf_bus).lag(0.1));
+		vol = vol.lag(0.3);
+		rate = [0.1, 1.9].asSpec.map(In.kr(pitch_bus).lag(0.1));
+
+		dur = BufDur.kr(buff);
+		ienv = 1-EnvGen.ar(Env.perc(0.1,dur*0.08,0.0001+LFNoise2.kr(50).range(0,0.0001),\sqr),t_trig.lag(0.02),1);
+		rate_env = EnvGen.ar(Env.pairs([[0, 1], [0, rate.clip(1,10)], [0.02, rate]], \exp),t_trig);
+		env = EnvGen.ar(Env([0.0, 1, 0.98, 0], [atk, decay, 0.1], -4),t_trig);
+		sig = PlayBuf.ar(1,buff, BufRateScale.kr(buff)*rate_env, t_trig, 0, 0).lag(1-ienv);
+		sig = sig * env;
+		sig = MoogFF.ar(sig, lpf, 0.1);
+		Out.ar(out, sig*vol*on*manual_vol);
+
 	}).add;
 }
 //--

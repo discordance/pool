@@ -22,9 +22,10 @@ MAIN
 s.options.numInputBusChannels = 0;
 s.options.numOutputBusChannels = 16;
 s.options.numBuffers = 2048;
+//s.options.device = "MOTU UltraLite mk3";
 s.waitForBoot({
 	/**
-	* LOAD CLASSES
+	* LOAD CLASSES"
 	*/
 	// load bootstrap for class inheritance;
 	"_bootstrap.scd".loadRelative;
@@ -136,7 +137,7 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("dly_senior");
+                                         ~oPRESET.save_preset("z_dscrd");
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -186,3 +187,4 @@ s.waitForBoot({
 ~oSHOT.trig_shot(~oSHOT.selected_kit, 1, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
 ~oSHOT.trig_shot(~oSHOT.selected_kit, 2, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
 ~oSHOT.trig_shot(~oSHOT.selected_kit, 3, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
+

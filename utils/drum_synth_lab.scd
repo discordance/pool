@@ -13,7 +13,6 @@ x = {
 	var sig, rate_env, env, dur, ienv;
 	dur = BufDur.kr(buff);
 	ienv = 1-EnvGen.ar(Env.perc(0.1,dur*0.08,0.0001+LFNoise2.kr(50).range(0,0.0001),\sqr),t_trig.lag(0.02),1);
-	ienv.poll;
 	rate_env = EnvGen.ar(Env.pairs([[0, 1], [0, rate.clip(1,10)], [0.02, rate]], \exp),t_trig);
 	env = EnvGen.ar(Env([0.0, 1, 0.98, 0], [atk, rel, 0.1], -4),t_trig);
 	sig = PlayBuf.ar(1,buff, BufRateScale.kr(buff)*rate_env, t_trig, 0, 0).lag(1-ienv);

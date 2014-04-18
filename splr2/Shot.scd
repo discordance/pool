@@ -94,8 +94,6 @@ SHOT
 	var b;
 
 	// ON DJ3
-
-
 	Library.put(\control_map,\dj3,\3,\104,o.func_route_map[\global][\memory]);
 	Library.put(\control_map,\dj3,\3,\112,o.func_route_map[\global][\density]);
 	Library.put(\control_map,\dj3,\3,\32,o.func_route_map[\global][\pitch]);
