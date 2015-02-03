@@ -28,7 +28,7 @@ SHOT
 \decay:1,
 \atk:0.05,
 \density: 0.5,
-\quant:[256,192,128,96,64,48,32,24,16,12,8,4],
+\quant:[256,192,128,96,64,48,32,24,16],
 \offset:0,
 \chaos:0,
 \memory:false,
@@ -400,13 +400,13 @@ SHOT
 		if(o.memory_pads.size > 0,{
 			if(( (o.quav+offset) % step).floor == 0,{
 				var pad = o.memory_pads.choose;
-				o.trig_shot(pad.kit, pad.idx, 0.15-(0.15*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
+				o.trig_shot(pad.kit, pad.idx, 0.14-(0.14*(o.density*0.4)), pad.pitch, pad.decay, pad.atk, false);
 			},{
 				var thres = o.density/200;
 				var rnd = 1.0.rand;
 				if(rnd < thres,{
 					var pad = o.memory_pads.choose;
-					o.trig_shot(pad.kit, pad.idx, 0.15-(0.15*(o.density*0.6)), pad.pitch, pad.decay, pad.atk, false);
+					o.trig_shot(pad.kit, pad.idx, 0.14-(0.14*(o.density*0.6)), pad.pitch, pad.decay, pad.atk, false);
 				});
 			});
 		});
@@ -463,8 +463,8 @@ SHOT
 		// filter and DC
 		sig = LeakDC.ar(sig);
 		sig = DFM1.ar(sig, freq, 0.6, 1.2);
-		sig = Limiter.ar(sig,0.9);
-		Out.ar(out, sig*vol);
+		sig = Limiter.ar(sig,0.8);
+		Out.ar(out, 0.92*sig*vol);
 	}).add;
 }
 );

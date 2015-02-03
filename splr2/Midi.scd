@@ -31,8 +31,11 @@ MIDI
 	o.devices.lpd8 = MIDIIn.findPort("LPD8", "LPD8") ? (\uid:0);
 	o.devices.ancient = MIDIIn.findPort("Ancient2 NOTES OUT", "Ancient2 NOTES OUT") ? (\uid:0);
 	o.devices.sync = MIDIIn.findPort("Ancient2 SYNC OUT", "Ancient2 SYNC OUT") ? (\uid:0);
-	o.devices.motu = MIDIIn.findPort("UltraLite mk3", "MIDI Port") ? (\uid:0);
+	o.devices.motu = MIDIIn.findPort("UltraLite mk3 #4", "MIDI Port") ? (\uid:0);
 	o.devices.dj3 = MIDIIn.findPort("Faderfox DJ3", "Faderfox DJ3") ? (\uid:0);
+
+
+	o.devices.postln;
 
 	Library.put(\device_map,o.devices.lpd8.uid,\lpd8);
 	Library.put(\device_map,o.devices.sync.uid,\sync);

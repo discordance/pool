@@ -18,6 +18,7 @@ NAPPLER
 ~oNAPPLER = ~oMODULE <
 (
 // VARS
+\fading:false,
 \synth_instance: nil,
 \premixers:(),
 \attached_fx:(),
@@ -89,9 +90,20 @@ NAPPLER
 },
 \generate_control_map:{|o|
 	var b;
+	// EL PD
+	/*Library.put(\control_map,\lpd8,\0,\4,o.func_route_map[\global][\select]);
+
+	Library.put(\control_map,\lpd8,\0,\2,o.kr_route_map[\global][\rate]);
+	Library.put(\control_map,\lpd8,\0,\1,o.kr_route_map[\global][\volume]);
+	Library.put(\control_map,\lpd8,\0,\3,o.kr_route_map[\global][\lowpass]);
+	Library.put(\control_map,\lpd8,\0,\5,o.kr_route_map[\global][\hipass]);
+	Library.put(\control_map,\lpd8,\0,\6,o.kr_route_map[\nappler_0][\fx_0]);
+	Library.put(\control_map,\lpd8,\0,\7,o.kr_route_map[\nappler_0][\fx_2]);
+	Library.put(\control_map,\lpd8,\0,\8,o.kr_route_map[\nappler_0][\fx_3]);*/
+
 	// MOTU
-	/*
-	Library.put(\control_map,\motu,\4,\40,o.func_route_map[\global][\select]);
+
+	/*Library.put(\control_map,\motu,\4,\40,o.func_route_map[\global][\select]);
 
 	//kr
 	Library.put(\control_map,\motu,\4,\32,o.kr_route_map[\global][\rate]);
@@ -99,10 +111,11 @@ NAPPLER
 	Library.put(\control_map,\motu,\4,\34,o.kr_route_map[\global][\lowpass]);
 	Library.put(\control_map,\motu,\4,\35,o.kr_route_map[\global][\hipass]);
 	Library.put(\control_map,\motu,\4,\36,o.kr_route_map[\nappler_0][\fx_0]);
-	Library.put(\control_map,\motu,\4,\37,o.kr_route_map[\nappler_0][\fx_2]);
-	*/
+	Library.put(\control_map,\motu,\4,\37,o.kr_route_map[\nappler_0][\fx_2]);*/
+
 
 	// DJ3
+
 	Library.put(\control_map,\dj3,\3,\42,o.func_route_map[\global][\rate]);
 
 	//kr
@@ -148,15 +161,17 @@ NAPPLER
 \generate_func:{|o|
 	var func_route_map = ();
 	func_route_map[\global] = ().add(\select->{|val|
+		val.postln;
 		o.select_loop(val);
 	});
 
 	func_route_map[\global] = ().add(\rate->{|val|
+
 		val = (val*127)/128; // I hate relative CC, bad hack here
 		if(val < 0.5,{
-			o.rate = (o.rate + val).clip(0,2);
+			o.rate = (o.rate + val).clip(0,4);
 		},{
-			o.rate = (o.rate - (1-val)).clip(0,2);
+			o.rate = (o.rate - (1-val)).clip(0,4);
 		});
 		"Nappler rate: ".post; o.rate.postln;
 		o.synth_instance.set(\rate,o.rate);
@@ -278,16 +293,22 @@ NAPPLER
 \set_loop:{|o,num|
 	var buf;
 	buf = o.available_loops.asArray.at(o.selection_offset+num.clip(0,3));
-	if(buf != nil,{
-		"NAPPLER: loop ".post;
-		buf.path.basename.postln;
-		o.selected_loop = buf.path.basename.asSymbol;
-		o.synth_instance.set(\t_fade,1);
-		{
-			0.5.wait;
-			o.synth_instance.set(\buffer,buf);
-		}.fork;
+	if(o.fading != true,{
+		if(buf != nil,{
+			"NAPPLER: loop ".post;
+			buf.path.basename.postln;
+			o.selected_loop = buf.path.basename.asSymbol;
+			o.synth_instance.set(\t_fade,1);
+			o.fading = true;
+			o.generate_synths();
+			{
+				1.wait;
+				//o.synth_instance.set(\buffer,buf);
+				o.fading = false;
+			}.fork;
+		});
 	});
+
 },
 \on_clock:{|o, val|
 
@@ -324,7 +345,7 @@ NAPPLER
 		var percent, ftime = 0.13;
 		var a_snd, a_aph, a_tr, a_env;
 		var b_snd, b_aph, b_tr, b_env;
-		var sig, fade_env;
+		var sig, fadeout_env, fadein_env;
 		var vol = 1;
 		var lp = 20000, hp = 200;
 
@@ -346,11 +367,12 @@ NAPPLER
 		b_tr = ((b_aph/BufFrames.kr(buffer))+percent).wrap(-0.00001,1);
 		a_env = 1-EnvGen.ar(Env.linen(ftime,0,ftime,1,1),a_tr);
 		b_env = 1-EnvGen.ar(Env.linen(ftime,0,ftime,1,1),b_tr);
-		fade_env = 1-EnvGen.kr(Env.pairs([[0, 0], [0.5, 1],  [1, 0]], \cub),t_fade);
+		fadeout_env = EnvGen.kr(Env.pairs([[0, 1], [1, 0],  [1, 0]], \cub),t_fade, doneAction:2);
+		fadein_env = EnvGen.kr(Env.pairs([[0, 0], [1, 1]], \cub),1);
 
 		a_snd = BufRd.ar(2, buffer, a_aph) * a_env * 0.7;
 		b_snd = BufRd.ar(2, buffer, b_aph) * b_env * 0.7;
-		sig = (a_snd+b_snd) * fade_env;
+		sig = (a_snd+b_snd) * fadeout_env * fadein_env;
 		sig = DFM1.ar(vol*RHPF.ar(Compander.ar(sig,sig,-16.dbamp,1,1.15,0.01,0.2),hp),lp,0.5,1.02);
 		Out.ar(out,sig);
 	}).add;
@@ -360,4 +382,3 @@ NAPPLER
 
 
 )
-

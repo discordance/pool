@@ -20,11 +20,18 @@ DRUMS
 // VARS
 \premixers:(),
 \attached_fx:(),
+\cv_enabled:false,
+\cv_out: 6,
 //
 \ticks:0,
 \quav:0,
 \quant: [64,48,32,24,16,12,8,6,4,3,2,1],
 \density:1.0,
+\synths_cv_gate:(
+	\gate_a: nil,
+	\gate_b: nil,
+	\gate_c: nil,
+),
 \synths:(
 	\kick: nil, //[(\name:"",\buffs:[]),(\name:"",\buffs:[])]
 	\drm1: nil,
@@ -211,6 +218,7 @@ DRUMS
 },
 \set_density: {|o,scope,val|
 	o.density = val;
+	o.density.postln;
 },
 \trig_drum:{|o,num,val|
 	var freq;
@@ -220,6 +228,23 @@ DRUMS
 	o.synths[symb].set(\vol,val/127);
 	freq = \freq.asSpec.map((val/127).lincurve);
 	o.synths[symb].set(\freq,freq);
+
+	// cv gate
+	o.trig_gate(num);
+},
+\trig_gate:{|o,num|
+	if(o.cv_enabled,{
+		if(num == 36,{
+			o.synths_cv_gate[\gate_a].set(\t_trig,1);
+		});
+		if(num == 38,{
+			o.synths_cv_gate[\gate_b].set(\t_trig,1);
+		});
+		if(num == 46,{
+			o.synths_cv_gate[\gate_c].set(\t_trig,1);
+		});
+		//o.synths_cv_gate[symb].set(\t_trig,1);
+	});
 },
 \on_note:{|o, chan, num, val|
 
@@ -275,7 +300,7 @@ DRUMS
 		\pitch_bus,o.kr_route_map[\kick][\pitch],
 		\vol_bus,o.kr_route_map[\kick][\volume],
 		\lpf_bus, o.kr_route_map[\kick][\lpf],
-		\out, o.ar_route_map[\kick], \base_vol, 0.3
+		\out, o.ar_route_map[\kick], \base_vol, 0.315
 		]
 	);
 
@@ -331,7 +356,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\cymb][\volume],
 		\lpf_bus, o.kr_route_map[\cymb][\lpf],
 		\out, o.ar_route_map[\cymb],
-		\lowcut, 120, \base_vol, 0.25
+		\lowcut, 120, \base_vol, 0.234
 		]
 	);
 	// \hh1
@@ -342,7 +367,7 @@ DRUMS
 		\vol_bus,o.kr_route_map[\hat1][\volume],
 		\lpf_bus, o.kr_route_map[\hat1][\lpf],
 		\out, o.ar_route_map[\hat1],
-		\lowcut, 120, \base_vol, 0.2
+		\lowcut, 120, \base_vol, 0.145
 		]
 	);
 	// \hh2
@@ -353,9 +378,13 @@ DRUMS
 		\vol_bus,o.kr_route_map[\hat2][\volume],
 		\lpf_bus, o.kr_route_map[\hat2][\lpf],
 		\out, o.ar_route_map[\hat2],
-		\lowcut, 900, \base_vol, 0.2
+		\lowcut, 900, \base_vol, 0.135
 		]
 	);
+
+	o.synths_cv_gate[\gate_a] = Synth.head(node_group,"nun_cv_gate",[\out, o.cv_out]);
+	o.synths_cv_gate[\gate_b] = Synth.head(node_group,"nun_cv_gate",[\out, o.cv_out+1]);
+	o.synths_cv_gate[\gate_c] = Synth.head(node_group,"nun_cv_gate",[\out, o.cv_out+2]);
 },
 \generate_ar:{|o|
 	var ar_route_map = ();
@@ -661,7 +690,7 @@ DRUMS
 		var sig, rate_env, env, ienv, dur, decay, buff, manual_vol = 1, lpf;
 		buff = buf_bounds[0];
 
-		decay = [0.03, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.1));
+		decay = [0.001, 5, \exp].asSpec.map(In.kr(decay_bus).lag(0.3));
 		manual_vol = [0, 1].asSpec.map(In.kr(vol_bus).lag(0.1));
 		lpf = \freq.asSpec.map(In.kr(lpf_bus).lag(0.1));
 		vol = vol.lag(0.3);
@@ -670,14 +699,28 @@ DRUMS
 		dur = BufDur.kr(buff);
 		ienv = 1-EnvGen.ar(Env.perc(0.1,dur*0.08,0.0001+LFNoise2.kr(50).range(0,0.0001),\sqr),t_trig.lag(0.02),1);
 		rate_env = EnvGen.ar(Env.pairs([[0, 1], [0, rate.clip(1,10)], [0.02, rate]], \exp),t_trig);
-		env = EnvGen.ar(Env([0.0, 1, 0.98, 0], [atk, decay, 0.1], -4),t_trig);
+		//env = EnvGen.ar(Env([0.0, 1, 0.98, 0], [atk, decay, 0.04], -4),t_trig);
+		env = EnvGen.ar(Env([0.0, 1, 0.66, 0.95, 0], [atk, 0.03*decay, decay*0.75, 0.08], -4),t_trig);
+		env = env + (env * LFNoise2.ar(80).range(-0.05,0.05));
 		sig = PlayBuf.ar(1,buff, BufRateScale.kr(buff)*rate_env, t_trig, 0, 0).lag(1-ienv);
 		sig = sig * env;
 		sig = MoogFF.ar(sig, lpf, 0.1);
 		Out.ar(out, sig*vol*on*manual_vol);
 
 	}).add;
+
+	SynthDef(\nun_cv_gate, {
+		arg out = 8,
+		t_trig = 0;
+		var gater;
+		gater = Trig1.kr(t_trig, 0.1).range(0, 5);
+		Out.ar(out, K2A.ar(gater));
+	}).add;
 }
 //--
 );
 )
+
+
+
+//Env([0.0, 1, 0.66, 0.95, 0], [0.001, 0.035*0.001, 0.001*0.75, 0.08], -4).plot

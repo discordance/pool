@@ -98,17 +98,31 @@ NASTY (FX)
 
 		input = In.ar(in,1);
 		input = HPF.ar(input,50);
-		dist = LADSPA.ar(2,1771,input!2,type,52,0);
+		input = input+(FaustZitaRev1.ar(
+		input,
+		input,
+		in_delay:100,
+		lf_x:4000,
+		low_rt60:1,
+		mid_rt60:2,
+		hf_damping:4000,
+		eq1_freq:300,
+		eq1_level:2,
+		eq2_freq:2000,
+		eq2_level:2,
+		dry_wet_mix:0.01,
+			level:2)*0.5);
+		dist = LADSPA.ar(2,1771,(input!2)*2,type,52,0);
 
 		shp = Pan2.ar((Shaper.ar(buf,dist,2)*0.15) + (Shaper.ar(buf,dist,2)*0.15),LFNoise2.kr(100).range(-0.1,0.1));
 
-		shp = LeakDC.ar(shp);
+		shp = LeakDC.ar(shp)*0.5;
 		shp = shp;
 
 		shp = (Amplitude.kr(input)*16).abs.lag(0.1) * shp;
 		shp = Compander.ar(shp,shp,-16.dbamp, 1, 1.4, 0.2, 0.5, 1.2);
 
-		Out.ar(out, ((0.6*shp)+dist)*0.2);
+		Out.ar(out, ((0.6*shp)+dist)*0.08);
 		//chain
 		Out.ar(chain, shp);
 	}).add;

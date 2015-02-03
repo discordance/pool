@@ -13,7 +13,7 @@ SPLR v2 - Vauban
 MAIN
 ******************************************************************/
 
-
+s.latency = 0.2;
 // TODO
 
 
@@ -22,7 +22,8 @@ MAIN
 s.options.numInputBusChannels = 0;
 s.options.numOutputBusChannels = 16;
 s.options.numBuffers = 2048;
-//s.options.device = "MOTU UltraLite mk3";
+s.options.device = "MOTU UltraLite mk3";
+s.latency = 0.3;
 s.waitForBoot({
 	/**
 	* LOAD CLASSES"
@@ -109,7 +110,7 @@ s.waitForBoot({
 					// LOOPS
 
 					~oNAPPLER.init(~oROUTER,"/Users/nunja/Documents/AudioLib/supercollider/loop/",{|o,init|
-						~oROUTER.register_module(~oNAPPLER, [~oMIDI.devices.dj3],2);
+						~oROUTER.register_module(~oNAPPLER, [~oMIDI.devices.dj3, ~oMIDI.devices.lpd8],2);
 						~oPRESET.register(~oNAPPLER);
 						~oNAPPLER.attach_fx(~oREVERB);
 						~oNAPPLER.attach_fx(~oECHO);
@@ -137,7 +138,13 @@ s.waitForBoot({
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
-                                         ~oPRESET.save_preset("z_dscrd");
+                                         ~oPRESET.save_preset("ua_smoothtek");
+//a0_tech
+//a0_dscrd_n
+//a0_ddub
+//a0_acitube
+//a0_beau
+//a0_ment
 /**
  * !!!!! ATTENTION CONNARD AVANT DE SAVE
  */
@@ -187,4 +194,8 @@ s.waitForBoot({
 ~oSHOT.trig_shot(~oSHOT.selected_kit, 1, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
 ~oSHOT.trig_shot(~oSHOT.selected_kit, 2, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
 ~oSHOT.trig_shot(~oSHOT.selected_kit, 3, 0.2, ~oSHOT.pitch, ~oSHOT.decay, ~oSHOT.atk, true);
+
+~oNAPPLER.select_loop(3);
+
+s.latency = 0.2;
 
