@@ -1,14 +1,10 @@
-
-// Server config
-
-
 (
 /*
  * Circularly choose a file to play, while preloading the next and the
  * previous files in temp buffers
  * Manage preloading next and previous buffers on selection of a buffer
  */
-~slidingLoopBuffer = (
+~circularLoopBuffer = (
 	// ### props
 	// # sorted array of path to the loops
 	\files:[],
@@ -20,7 +16,7 @@
 	// # audio data and preload next and previous
 	\cues: (\pre: nil, \cur: nil, \nex: nil),
 	// ### methods
-	// init the sliding buffer
+	// init the circular buffer
 	// takes a callback, done
 	\init: {|o, root, done|
 		// how many buffer are loaded
@@ -43,7 +39,7 @@
 		o.cues.nex = Buffer.read(s, o.files[1], 0, -1, counter);
 		true
 	},
-	\set_next: {|o, done|
+	\get_next: {|o, done|
 		var return;
 		if(o.loading != true,{
 			var pre_ref;
@@ -57,18 +53,43 @@
 			// load next
 			o.cues.nex.read(o.files[(o.current+1)%o.files.size],0, -1, 0, false, {
 				o.loading = false;
+				// callback with curr buffer
+				done.value(o.cues.cur);
 			});
 			//return current buffer
-			o.cues.postln;
 			return = o.cues.cur;
 		},{
 			return = false;
+			// callback with nil
+			done.value(nil);
+		});
+		return;
+	},
+	\get_prev: {|o, done|
+		var return;
+		if(o.loading != true,{
+			var nex_ref;
+			o.loading = true;
+			o.current = o.current-1;
+			// swap
+			nex_ref = o.cues.nex;
+			//o.cues.pre = o.cues.cur;
+			o.cues.cur = o.cues.pre;
+			o.cues.nex = o.cues.cur;
+			// load next
+			o.cues.pre.read(o.files[(o.current-1)%o.files.size],0, -1, 0, false, {
+				o.loading = false;
+				// callback with curr buffer
+				done.value(o.cues.cur);
+			});
+			//return current buffer
+			return = o.cues.cur;
+		},{
+			return = false;
+			// callback with nil
+			done.value(nil);
 		});
 		return;
 	}
 );
 )
-
-~slidingLoopBuffer.init("/Users/nunja/Documents/AudioLib/PImpler/loops/*");
-
-~slidingLoopBuffer.set_next();
