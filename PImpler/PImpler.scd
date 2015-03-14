@@ -1,5 +1,6 @@
 (
 // Server config
+s.reboot;
 s.waitForBoot{
 	/**
 	* LOAD THE LIBS
@@ -13,7 +14,10 @@ s.waitForBoot{
 
 
 // TESTS
-~quadTsBuffers.init("/Users/nunja/Documents/AudioLib/PImpler/timestretch/*");
+~quadTsBuffers.init("/Users/nunja/Documents/AudioLib/PImpler/timestretch/*",{
+	"BIG CALLBACK".postln;
+});
+~quadTsBuffers.songs;
 /*~circularLoopBuffer.init("/Users/nunja/Documents/AudioLib/PImpler/loops/*");
 ~circularLoopBuffer.get_next({|result|
 	result.postln;

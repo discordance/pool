@@ -29,9 +29,16 @@ var songs_index = ();
 		tempo = tempo_int;
 		(tempo_dec != nil).if({ tempo = tempo ++ "." ++ tempo_dec });
 		songs_index[song_name][\bpm] = tempo.asFloat;
+
+		// FFT Analysis
+
 	});
 });
 
 songs_index.postln;
 )
+
+
+PV_BufRd
+
 
