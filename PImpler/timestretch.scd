@@ -31,7 +31,7 @@
 		s.bind {
 			SynthDef("pvplay", { arg out=0, recBuf=1, winSize=1024;
 				var in, chain, bufnum;
-				var rate = MouseX.kr(0.5, 2);
+				var rate = 0.85;//MouseX.kr(0.5, 2);
 				rate.poll;
 				bufnum = LocalBuf.new(winSize, 1);
 				chain = PV_PlayBuf(bufnum, recBuf, rate, 0, 1);
@@ -39,7 +39,7 @@
 			}).send(s);
 
 			s.sync;
-			o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
+			//o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
 			o.trackTwo = Synth("pvplay", [\out, 0, \recBuf, o.cues[\2][\cur], \winSize, o.fftWindow ]);
 		};
 	},
@@ -164,7 +164,7 @@
 				Line.kr(1, 1, BufDur.kr(soundBufnum), doneAction: 2);
 				in = PlayBuf.ar(1, soundBufnum, BufRateScale.kr(soundBufnum), loop: 0);
 				// note the window type and overlaps... this is important for resynth parameters
-				chain = FFT(bufnum, in, hop, 0);
+				chain = FFT(bufnum, in, hop, 1);
 				chain = PV_RecordBuf(chain, recBuf, 0, 1, 0, hop, 1);
 			}).send(s);
 			// loaded
