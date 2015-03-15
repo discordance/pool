@@ -29,9 +29,8 @@
 	\startSynths: {|o, done|
 		// synthdef
 		s.bind {
-			SynthDef("pvplay", { arg out=0, recBuf=1, winSize=1024;
+			SynthDef("pvplay", { arg out=0, recBuf=1, winSize=1024, rate = 1;
 				var in, chain, bufnum;
-				var rate = 0.85;//MouseX.kr(0.5, 2);
 				rate.poll;
 				bufnum = LocalBuf.new(winSize, 1);
 				chain = PV_PlayBuf(bufnum, recBuf, rate, 0, 1);
@@ -39,9 +38,12 @@
 			}).send(s);
 
 			s.sync;
-			//o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
-			o.trackTwo = Synth("pvplay", [\out, 0, \recBuf, o.cues[\2][\cur], \winSize, o.fftWindow ]);
+			o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
+			//o.trackTwo = Synth("pvplay", [\out, 0, \recBuf, o.cues[\2][\cur], \winSize, o.fftWindow ]);
 		};
+	},
+	\setSpeed: {|o, speed|
+		o.trackOne.set(\rate, speed);
 	},
 	// takes a callback, done
 	\init: {|o, root, done|

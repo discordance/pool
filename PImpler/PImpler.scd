@@ -24,6 +24,7 @@ s.waitForBoot{
 )
 s.plotTree;
 ~quadTsBuffers.startSynths;
+~quadTsBuffers.setSpeed(2);
 ~quadTsBuffers.cues[\1][\cur];
 /*~circularLoopBuffer.init("/Users/nunja/Documents/AudioLib/PImpler/loops/*");
 ~circularLoopBuffer.get_next({|result|
