@@ -9,14 +9,40 @@
 	// root path
 	\root: nil,
 	// fft related
-	\fftWindow: 1024,
+	\fftWindow: 2048,
 	\fftHop: 0.25,
 	// is loading
 	\loading: false,
 	// current song selection
-	\current_song: \null,
+	\current_song: 0,
+	// current part selection
+	\current_part: 0,
 	// songs contain all the logic of song, the four tracks buffers timestretchable
 	\songs: nil,
+	// currently available buffers
+	\cues: (
+		\1: (\cur:nil,\nex:nil),
+		\2: (\cur:nil,\nex:nil)
+	),
+	\trackOne:nil,
+	\trackTwo:nil,
+	\startSynths: {|o, done|
+		// synthdef
+		s.bind {
+			SynthDef("pvplay", { arg out=0, recBuf=1, winSize=1024;
+				var in, chain, bufnum;
+				var rate = MouseX.kr(0.5, 2);
+				rate.poll;
+				bufnum = LocalBuf.new(winSize, 1);
+				chain = PV_PlayBuf(bufnum, recBuf, rate, 0, 1);
+				Out.ar(out, IFFT(chain, 1).dup);
+			}).send(s);
+
+			s.sync;
+			o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
+			o.trackTwo = Synth("pvplay", [\out, 0, \recBuf, o.cues[\2][\cur], \winSize, o.fftWindow ]);
+		};
+	},
 	// takes a callback, done
 	\init: {|o, root, done|
 		// create the songs
@@ -55,7 +81,51 @@
 				o.songs = songs_index;
 			});
 		});
-		o.analysis(root, o.songs, done);
+		o.analysis(root, o.songs, {
+			o.initBuffers(o.songs, done);
+		});
+	},
+	\initBuffers: {|o, songs, done|
+		//Library.at(\zeroBuffer).postln;
+		var song = o.songs.asArray[o.current_song];
+		// init to zero buff
+		var b1,b2, loaded = 0, toload = 0;
+		var assign = {
+			o.cues[\1][\cur] = b1;
+			o.cues[\2][\cur] = b2;
+		};
+		b1 = Library.at(\zeroBuffer);
+		b2 = Library.at(\zeroBuffer);
+		(song != nil).if({
+			(song.tracks[\1] != nil).if({
+				// select part
+				(song.tracks[\1].asArray[o.current_part] != nil).if({
+					toload = toload+1;
+					b1 = Buffer.read(s, song.tracks[\1].asArray[o.current_part], 0, -1, {|b|
+						b.postln;
+						loaded = loaded+1;
+						(loaded == toload).if({
+							assign.value();
+							done.value();
+						});
+					});
+				});
+			});
+			(song.tracks[\2] != nil).if({
+				// select part
+				(song.tracks[\2].asArray[o.current_part] != nil).if({
+					toload = toload+1;
+					b2 = Buffer.read(s, song.tracks[\2].asArray[o.current_part], 0, -1, {|b|
+						b.postln;
+						loaded = loaded+1;
+						(loaded == toload).if({
+							assign.value();
+							done.value();
+						});
+					});
+				});
+			});
+		});
 	},
 	\analysis: {|o, rootPath, songs, done|
 		var totalProcessed = 0;
@@ -88,14 +158,14 @@
 
 		s.bind {
 			// load analysis synthdef
-			SynthDef("pvrec", { arg recBuf=1, soundBufnum=2;
+			SynthDef("pvrec", { arg recBuf=1, soundBufnum=2, winSize=1024, hop=0.5;
 				var in, chain, bufnum;
-				bufnum = LocalBuf.new(1024);
+				bufnum = LocalBuf.new(winSize);
 				Line.kr(1, 1, BufDur.kr(soundBufnum), doneAction: 2);
 				in = PlayBuf.ar(1, soundBufnum, BufRateScale.kr(soundBufnum), loop: 0);
 				// note the window type and overlaps... this is important for resynth parameters
-				chain = FFT(bufnum, in, 0.25, 1);
-				chain = PV_RecordBuf(chain, recBuf, 0, 1, 0, 0.25, 1);
+				chain = FFT(bufnum, in, hop, 0);
+				chain = PV_RecordBuf(chain, recBuf, 0, 1, 0, hop, 1);
 			}).send(s);
 			// loaded
 			s.sync;
@@ -109,7 +179,7 @@
 						if( File.exists(getAnafilePath.value(rootPath, file)) == true , {
 							track[file_key] = getAnafilePath.value(rootPath, file);
 							counterFunc.value();
-						},{
+							},{
 								// here the file
 								// get some info about the file
 								sf = SoundFile.new(file);
@@ -124,7 +194,9 @@
 										var audio_buf = Buffer.read(s, file, 0, -1, {|buf|
 											var recSynth = Synth("pvrec", [
 												\recBuf, analysis_buf,
-												\soundBufnum, audio_buf
+												\soundBufnum, audio_buf,
+												\winSize, o.fftWindow,
+												\hop, o.fftHop
 											]);
 
 											recSynth.onFree({
