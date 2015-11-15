@@ -21,8 +21,8 @@
 	\songs: nil,
 	// currently available buffers
 	\cues: (
-		\1: (\cur:nil,\nex:nil),
-		\2: (\cur:nil,\nex:nil)
+		\1: (\pre:nil, \cur:nil, \nex:nil),
+		\2: (\pre:nil, \cur:nil, \nex:nil)
 	),
 	\trackOne:nil,
 	\trackTwo:nil,
@@ -30,20 +30,27 @@
 		// synthdef
 		s.bind {
 			SynthDef("pvplay", { arg out=0, recBuf=1, winSize=1024, rate = 1;
-				var in, chain, bufnum;
-				rate.poll;
+				var in, chain, bufnum, l;
 				bufnum = LocalBuf.new(winSize, 1);
 				chain = PV_PlayBuf(bufnum, recBuf, rate, 0, 1);
-				Out.ar(out, IFFT(chain, 1).dup);
+				//BufDur.kr(recBuf).poll;
+				l = IFFT(chain, 1);
+				// PSEUDO STEREO
+				// PV_Diffuser ????
+				Out.ar(out, Pan2.ar(l.dup,0));
 			}).send(s);
 
 			s.sync;
-			o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
-			//o.trackTwo = Synth("pvplay", [\out, 0, \recBuf, o.cues[\2][\cur], \winSize, o.fftWindow ]);
+
+			(o.trackOne != nil).if({ o.trackOne.free; });
+			(o.trackTwo != nil).if({ o.trackTwo.free; });
+			//o.trackOne = Synth("pvplay", [\out, 0, \recBuf, o.cues[\1][\cur], \winSize, o.fftWindow ]);
+			o.trackTwo = Synth("pvplay", [\out, 0, \recBuf, o.cues[\2][\cur], \winSize, o.fftWindow ]);
 		};
 	},
 	\setSpeed: {|o, speed|
 		o.trackOne.set(\rate, speed);
+		o.trackTwo.set(\rate, speed);
 	},
 	// takes a callback, done
 	\init: {|o, root, done|
@@ -93,8 +100,15 @@
 		// init to zero buff
 		var b1,b2, loaded = 0, toload = 0;
 		var assign = {
+			// cur
 			o.cues[\1][\cur] = b1;
 			o.cues[\2][\cur] = b2;
+			// prev
+			o.cues[\1][\pre] = Library.at(\zeroBuffer);
+			o.cues[\2][\pre] = Library.at(\zeroBuffer);
+			// next
+			o.cues[\1][\nex] = Library.at(\zeroBuffer);
+			o.cues[\2][\nex] = Library.at(\zeroBuffer);
 		};
 		b1 = Library.at(\zeroBuffer);
 		b2 = Library.at(\zeroBuffer);
@@ -160,11 +174,11 @@
 
 		s.bind {
 			// load analysis synthdef
-			SynthDef("pvrec", { arg recBuf=1, soundBufnum=2, winSize=1024, hop=0.5;
+			SynthDef("pvrec", { arg recBuf=1, soundBufnum=2, dur = 4.0, winSize=1024, hop=0.5;
 				var in, chain, bufnum;
 				bufnum = LocalBuf.new(winSize);
-				Line.kr(1, 1, BufDur.kr(soundBufnum), doneAction: 2);
-				in = PlayBuf.ar(1, soundBufnum, BufRateScale.kr(soundBufnum), loop: 0);
+				Line.ar(1, 1, dur, doneAction: 2);
+				in = PlayBuf.ar(1, soundBufnum, BufRateScale.kr(soundBufnum), loop: 1);
 				// note the window type and overlaps... this is important for resynth parameters
 				chain = FFT(bufnum, in, hop, 1);
 				chain = PV_RecordBuf(chain, recBuf, 0, 1, 0, hop, 1);
@@ -173,24 +187,27 @@
 			s.sync;
 			// perform the analysis
 			songs.keysValuesDo{|song_key, song|
+				var calcAcute = (((((60000.0*16.0*96000.0)/song.bpm)/1000.0)*100.0)/100.0)*4;
 				song.tracks.keysValuesDo{|track_key, track|
 					track.keysValuesDo{|file_key, file|
 						var sf, analysis_buf;
-
+						var fourBarDur = ((calcAcute/96000)/16)*4;
 						// check if analysis file is here already
 						if( File.exists(getAnafilePath.value(rootPath, file)) == true , {
 							track[file_key] = getAnafilePath.value(rootPath, file);
 							counterFunc.value();
 							},{
+								//
 								// here the file
 								// get some info about the file
 								sf = SoundFile.new(file);
 								sf.openRead;
 								sf.close;
+
 								analysis_buf = Buffer.alloc(
 									s,
-									sf.duration.calcPVRecSize(o.fftWindow, o.fftHop),
-									2,
+									calcAcute,
+									1,
 									// completion fonction
 									{
 										var audio_buf = Buffer.read(s, file, 0, -1, {|buf|
@@ -198,7 +215,8 @@
 												\recBuf, analysis_buf,
 												\soundBufnum, audio_buf,
 												\winSize, o.fftWindow,
-												\hop, o.fftHop
+												\hop, o.fftHop,
+												\dur, fourBarDur
 											]);
 
 											recSynth.onFree({
@@ -229,6 +247,3 @@
 	}
 );
 )
-
-
-

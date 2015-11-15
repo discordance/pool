@@ -22,7 +22,7 @@ s.latency = 0.2;
 s.options.numInputBusChannels = 0;
 s.options.numOutputBusChannels = 16;
 s.options.numBuffers = 2048;
-s.options.device = "MOTU UltraLite mk3";
+//s.options.device = "MOTU UltraLite mk3";
 s.latency = 0.3;
 s.waitForBoot({
 	/**

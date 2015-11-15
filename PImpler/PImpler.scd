@@ -24,11 +24,22 @@ s.waitForBoot{
 )
 s.plotTree;
 ~quadTsBuffers.startSynths;
-~quadTsBuffers.setSpeed(2);
+~quadTsBuffers.setSpeed(0.9);
 ~quadTsBuffers.cues[\1][\cur];
+
+
 /*~circularLoopBuffer.init("/Users/nunja/Documents/AudioLib/PImpler/loops/*");
 ~circularLoopBuffer.get_next({|result|
 	result.postln;
 });*/
 
 	~quadTsBuffers.cues.postln;
+
+
+1510820/2;
+
+7.86885*2;
+
+755409.83606557 * 2;
+
+6043356/2;

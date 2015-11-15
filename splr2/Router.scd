@@ -197,7 +197,7 @@ ROUTER
 
 		// DEBUG MODE
 
-		/*SynthDef("debug_out_%".format(module.id).asSymbol, {
+		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig,bc;
 			sig = In.ar(min, num_busses);
 			Out.ar(0, Splay.ar(sig,0)*0.83); // too loud so we cut
@@ -205,11 +205,11 @@ ROUTER
 
 		s.sync;
 
-		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);*/
+		Synth.head(o.node_groups[\main_out], "debug_out_%".format(module.id).asSymbol);
 
 		// MIXER MODE
 
-		SynthDef("physical_out_%".format(module.id).asSymbol, {
+		/*SynthDef("physical_out_%".format(module.id).asSymbol, {
 			arg out; // just to see;
 			var sig;
 			sig = In.ar(min, num_busses);
@@ -218,7 +218,7 @@ ROUTER
 
 		s.sync;
 
-		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol,[\out,min-o.offset]); // -13
+		Synth.head(o.node_groups[\main_out], "physical_out_%".format(module.id).asSymbol,[\out,min-o.offset]);*/ // -13
 
 		// SOUND FLOWER
 	}.fork;
