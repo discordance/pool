@@ -23,7 +23,7 @@ ROUTER
 \next_ar: 15, // routing assigned to modules out
 \next_fx_ar: 64, // next free input for FX, always mono
 \next_chain_ar: 96,
-\fx_bus_out:4,//8 // output for the FX
+\fx_bus_out:2,//8 // output for the FX
 \offset:15, // 13
 \shape_buffers:nil,
 \mixshape_buffer:nil,
@@ -166,6 +166,7 @@ ROUTER
 	});
 },
 \on_clock: {|o, src, val|
+	"clock".postln;
 	o.modules.do({|e,i|
 		e.devices.do({|ee,ii|
 			if(ee.uid == src,{
@@ -200,7 +201,7 @@ ROUTER
 		SynthDef("debug_out_%".format(module.id).asSymbol, {
 			var sig,bc;
 			sig = In.ar(min, num_busses);
-			Out.ar(0, Splay.ar(sig,0)*0.83); // too loud so we cut
+			Out.ar(2, Splay.ar(sig,0)*0.83); // too loud so we cut
 		}).add;
 
 		s.sync;
