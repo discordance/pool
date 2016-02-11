@@ -1,28 +1,34 @@
 
 b = Buffer.read(s,"/Users/nunja/Documents/AudioLib/PImpler/44/akpen_1_3_130-40.wav", 0,-1);
 //b = Buffer.read(s,"/Users/nunja/Documents/AudioLib/PImpler/44/akpen_2_1_130-40.wav", 0,-1);
+//b = Buffer.read(s,"/Users/nunja/Documents/AudioLib/PImpler/44/tmort.wav", 0,-1);
 
 (
-SynthDef(\looper, {|rate = 1, envlen = 1, out = 0, buffer = 0, t_tick = 0|
+SynthDef(\looper, {|beats = 0, rate = 1, envlen = 1, out = 0, buffer = 0, t_tick = 0|
 	var track_snd, track_phasor;
 	var track_env;
 	var selected_scale = 1;
 	var len_scale = 1;
 	var beat_divs = [0.25, 0.5, 1, 2, 4];
-	var track_impulse = 0;
+	var offset_val = 0;
+	var track_impulse = 1;
+	// metronom debug
+	var metro = 0;
 
 	var beat_impulse = PulseDivider.kr(t_tick, 24, 0);
 	var bar_impulse = PulseDivider.kr(t_tick, 96, 0);
+	// metronom debug
+	metro = EnvGen.ar(Env.perc(0.01,0.5),beat_impulse) * SinOsc.ar(3000,0,0.3) ! 2;
+	metro = metro + EnvGen.ar(Env.perc(0.01,0.5),bar_impulse) * SinOsc.ar(1800,0,0.15) ! 2;
 
-	len_scale = Latch.kr(Select.kr(MouseX.kr(0,beat_divs.size),beat_divs),beat_impulse);
+	offset_val = BufFrames.kr(buffer)/8;
+
+	len_scale = Latch.kr(Select.kr(MouseX.kr(0,beat_divs.size),beat_divs),bar_impulse);
 	envlen = len_scale*envlen;
 	track_impulse = PulseDivider.kr(t_tick, 24*len_scale, 0);
-	track_env = EnvGen.ar(Env([0, 0, 1, 1, 0], [0, 0.05, (envlen-0.05), 0.01]), track_impulse+HPZ2.kr(len_scale));
-	track_phasor = Phasor.ar(track_impulse, BufRateScale.kr(buffer)*rate, 0, BufFrames.kr(buffer));
-	track_snd = BufRd.ar(2, buffer, track_phasor, 0) * 1;
-	track_snd = track_snd * track_env;
-	//track_snd = PinkNoise.ar(0.3) * Amplitude.ar(track_snd, 0.001, 0.01);
-	Out.ar(out,track_snd);
+	track_snd = PlayBufCF.ar(2, buffer,  BufRateScale.kr(buffer)*rate, track_impulse, MouseY.kr(0,7).floor*offset_val, 0, 0.05, 3);
+
+	Out.ar(out, metro+track_snd);
 }).add;
 )
 
@@ -32,8 +38,8 @@ SynthDef(\looper, {|rate = 1, envlen = 1, out = 0, buffer = 0, t_tick = 0|
 
 // try to smoth out the tempo by 96 moving averaging
 (
-~barInSamples = {|tempo, sr|
-	(((60000.0*4*sr)/tempo)/1000.0);
+~barInSamples = {|tempo, sr, mult|
+	(((60000.0*4*sr)/tempo)/1000.0)*mult;
 };
 ~bufferLengthSec = {|buffer, rate|
 	(buffer.numFrames/buffer.sampleRate)*(1+(1-rate));
@@ -79,13 +85,13 @@ t.schedAbs(t.nextBar, {
 	tempo = (60/ival);
 	l = time;
 	tempo = ~smoothBpm.value(tempo);
-	~syh.set(\rate,(tempo/130.4), \envlen, 1*(60/tempo));
+	~syh.set(\beats, t.beats, \rate,(tempo/130.4), \envlen, 1*(60/tempo));
 	1/24;
 });
 )
-t.tempo = (130/60);
+t.tempo = (190/60);
 
-1*(60/120);
+1*(130/120);
 
 
-
+ PlayBuf
