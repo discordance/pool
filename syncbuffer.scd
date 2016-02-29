@@ -26,7 +26,7 @@ SynthDef(\looper, {|beats = 0, rate = 1, envlen = 1, out = 0, buffer = 0, t_tick
 	len_scale = Latch.kr(Select.kr(MouseX.kr(0,beat_divs.size),beat_divs),bar_impulse);
 	envlen = len_scale*envlen;
 	track_impulse = PulseDivider.kr(t_tick, 24*len_scale, 0);
-	track_snd = PlayBufCF.ar(2, buffer,  BufRateScale.kr(buffer)*rate, track_impulse, MouseY.kr(0,7).floor*offset_val, 0, 0.05, 3);
+	track_snd = PlayBufCF.ar(2, buffer,  BufRateScale.kr(buffer)*rate, track_impulse, MouseY.kr(0,7).floor*offset_val, 1, 0.05, 3);
 
 	Out.ar(out, metro+track_snd);
 }).add;
@@ -89,9 +89,9 @@ t.schedAbs(t.nextBar, {
 	1/24;
 });
 )
-t.tempo = (190/60);
+t.tempo = (90/60);
 
 1*(130/120);
 
 
- PlayBuf
+
