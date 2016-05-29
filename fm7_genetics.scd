@@ -43,7 +43,7 @@ fork
 		swipeR5 = 1, swipeDec5 = 0.001,
 		swipeR6 = 1, swipeDec6 = 0.001,
 		// noise
-		noiseAmp = 2, noiseDecay = 0.07, noiseFreq = 200, noiseRQ = 0.15;
+		noiseAmp = 2, noiseAtk = 0.01, noiseDecay = 0.07, noiseFreq = 200, noiseRQ = 0.15;
 
 		var ctls, mods, noise = 0, out = 0;
 		var t_ktrig = Impulse.ar(0), noiseEnv;
@@ -79,7 +79,7 @@ fork
 			m5 , 0  , 0  ,  i5 ,  0  ,  0  ,
 			0  , m6 , 0  ,  0  ,  i6 ,  0  ,
 		];
-		noiseEnv = EnvGen.ar(Env.perc(0.01, noiseDecay, noiseAmp, env_c), t_ktrig);
+		noiseEnv = EnvGen.ar(Env.perc(noiseAtk, noiseDecay, noiseAmp, env_c), t_ktrig);
 		noise = BPF.ar(WhiteNoise.ar(1) * noiseEnv, noiseFreq, noiseRQ);
 		out = FM7.ar(ctls, mods);
 		out = Mix.ar(out*EnvGen.ar(Env.perc(env_a,env_r,1,env_c))) + (noise * noiseAmp);
@@ -89,9 +89,9 @@ fork
 if(a.species == GAPmatch, { a.cleanUp; });
 a = GAPmatch.new
 (
-720*2, //poolSize
+720*4, //poolSize
 ~sDef, //our clueless synthdef
-"/Users/nunja/Documents/Audiolib/8000-WAVS.WAV/CONGAS/DM-CON A04.wav", //provide your sample here
+"/Users/nunja/Documents/Audiolib/8000-WAVS.WAV/CLAPS/DM-CLP A006.wav", //provide your sample here
 [
 	\env_a,
 	\env_r,
@@ -111,6 +111,7 @@ a = GAPmatch.new
 	\swipeDec6,
 
 	\noiseAmp,
+	\noiseAtk,
 	\noiseDecay,
 	\noiseFreq,
 	\noiseRQ,
@@ -177,34 +178,35 @@ a = GAPmatch.new
 ], //synth parameters
 {[
 	// env
-	exprand(0.001, 0.2),
-	exprand(0.1, 4.0),
+	exprand(0.001, 0.15),
+	exprand(0.05, 3.0),
 	rrand(-10, 10),
 	//swipe
-	exprand(0.9, 2), //
-	exprand(0.001, 0.1), //
-	exprand(0.9, 2), //
-	exprand(0.001, 0.1), //
-	exprand(0.9, 2), //
-	exprand(0.001, 0.1), //
-	exprand(0.9, 2), //
+	rrand(1, 3), //
 	exprand(0.001, 0.01), //
-	exprand(0.9, 2), //
+	rrand(1, 3), //
 	exprand(0.001, 0.01), //
-	exprand(0.9, 2), //
+	rrand(1, 3), //
+	exprand(0.001, 0.01), //
+	rrand(1, 3), //
+	exprand(0.001, 0.01), //
+	rrand(1, 3), //
+	exprand(0.001, 0.01), //
+	rrand(1, 3), //
 	exprand(0.001, 0.01), //
 	// noise
 	rrand(0, 4.0), //noiseAmp
-	exprand(0.01, 4), //noiseDecay
+	exprand(0.001, 0.15), //noiseAtk
+	exprand(0.001, 4), //noiseDecay
 	exprand(1, 20e3), //noiseFreq
 	rrand(0.01, 0.99), //noiseRQ
 	// base freq
-	rrand(30.0,16000.0),
-	rrand(30.0,16000.0),
-	rrand(30.0,16000.0),
-	rrand(30.0,16000.0),
-	rrand(30.0,16000.0),
-	rrand(30.0,16000.0),
+	rrand(1,16000),
+	rrand(1,16000),
+	rrand(1,16000),
+	rrand(1,16000),
+	rrand(1,16000),
+	rrand(1,16000),
 	// phases
 	rrand(0,2pi),
 	rrand(0,2pi),
