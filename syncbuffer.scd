@@ -2,7 +2,6 @@
 b = Buffer.read(s,"/Users/nunja/Documents/AudioLib/PImpler/44/akpen_1_3_130-40.wav", 0,-1);
 //b = Buffer.read(s,"/Users/nunja/Documents/AudioLib/PImpler/44/akpen_2_1_130-40.wav", 0,-1);
 //b = Buffer.read(s,"/Users/nunja/Documents/AudioLib/PImpler/44/tmort.wav", 0,-1);
-
 (
 SynthDef(\looper, {|beats = 0, rate = 1, envlen = 1, out = 0, buffer = 0, t_tick = 0|
 	var track_snd, track_phasor;
@@ -92,6 +91,20 @@ t.schedAbs(t.nextBar, {
 t.tempo = (90/60);
 
 1*(130/120);
+
+(
+var floor = 0;
+a = Signal.newClear(1024);
+a.waveFill({ arg x, old, i;
+	if(i%64 == 0, {
+		floor = 9.rand;
+	});
+	floor
+}, 0, 1);
+a.plot;
+)
+
+
 
 
 
